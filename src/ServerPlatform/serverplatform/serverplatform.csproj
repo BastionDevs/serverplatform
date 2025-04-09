@@ -48,6 +48,7 @@
   <ItemGroup>
     <Compile Include="PaperVersions.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="ProjectInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
