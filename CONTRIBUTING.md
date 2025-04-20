@@ -24,7 +24,7 @@ Thank you for your interest in contributing to the Bastion Server Platform! Whet
     git clone https://github.com/your-username/bastion-server-platform.git
     ```
 
-3. Add explanatory comments in your code.
+3. Add explanatory **comments** in your code.
 
 4. Make a **commit**:
 
