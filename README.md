@@ -3,9 +3,9 @@
 [![Bastion GSLP License](https://img.shields.io/badge/Bastion-GSLP%20v2.1-blue)](LICENSE.md)
 [![Discord](https://img.shields.io/discord/871577956852584488)](https://discord.gg/EmEG5Eecys)
   
-**Bastion Server Platform** is an open-source, Windows-based server management system designed for game server hosting. Built with C# and .NET Framework, Bastion provides a sleek web-based panel and powerful backend to manage, start, stop, and monitor game servers like Minecraft, CS:GO, and more — all with a Windows-native approach.
+Open-source, Windows-based server management system designed for Minecraft server hosting. Built with C# and .NET Framework, it provides a sleek web-based panel and powerful backend to manage, start, stop, and monitor your servers — all with a Windows-native approach.
 
-> Think of it like Pterodactyl Panel, but for Windows and written in C#.
+> Think of it like Pterodactyl Panel, but focused on Minecraft server hosting.
 
 ---
 
@@ -25,7 +25,7 @@
 
 ## 🛠️ Requirements
 
-- Windows 10 or newer
+- Windows 10 or newer recommended
 - [.NET Framework 4.7.2](https://dotnet.microsoft.com/download/dotnet-framework/net472)
 - Administrator privileges
 
@@ -42,7 +42,9 @@
 
 3. **Run Server Platform**'s components, including the *Backend* and *Frontend*.
 
-4. **Login with the default admin credentials:**
+4. **Access the Web Frontend** via the URL shown in the *Frontend* server screen.
+
+5. **Login with the default admin credentials:**
 
     - **Username:** `admin`  
     - **Password:** `admin123` *(Change this immediately!)*
