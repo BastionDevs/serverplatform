@@ -5,8 +5,6 @@
   
 Open-source, Windows-based server management system designed for Minecraft server hosting. Built with C# and .NET Framework, it provides a sleek web-based panel and powerful backend to manage, start, stop, and monitor your servers — all with a Windows-native approach.
 
-> Think of it like Pterodactyl Panel, but focused on Minecraft server hosting.
-
 ---
 
 ## 🚀 Features
