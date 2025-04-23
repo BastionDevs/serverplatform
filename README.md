@@ -1,9 +1,8 @@
 # 🛡️ Bastion Server Platform
 
-<img src="sp-banner.png" height="500" width="950"/>
-
 [![Bastion GSLP License](https://img.shields.io/badge/Bastion-GSLP%20v2.1-blue)](LICENSE.md)
 [![Discord](https://img.shields.io/discord/871577956852584488)](https://discord.gg/EmEG5Eecys)
+<img src="sp-banner.png" alt="Banner" height="400"/>
   
 Open-source, Windows-based server management system designed for Minecraft server hosting. Built with C# and .NET Framework, it provides a sleek web-based panel and powerful backend to manage, start, stop, and monitor your servers — all with a Windows-native approach.
 
