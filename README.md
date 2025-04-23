@@ -1,5 +1,7 @@
 # 🛡️ Bastion Server Platform
 
+<img src="sp-banner.png" height="500" width="950"/>
+
 [![Bastion GSLP License](https://img.shields.io/badge/Bastion-GSLP%20v2.1-blue)](LICENSE.md)
 [![Discord](https://img.shields.io/discord/871577956852584488)](https://discord.gg/EmEG5Eecys)
   
