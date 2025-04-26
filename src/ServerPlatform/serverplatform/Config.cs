@@ -10,7 +10,7 @@ namespace serverplatform
     internal class Config
     {
 
-        static IniFile spCnfFile= new IniFile("config.ini");
+        static readonly IniFile spCnfFile = new IniFile("config.ini");
 
         public static string GetConfig(string key, string section)
         {
