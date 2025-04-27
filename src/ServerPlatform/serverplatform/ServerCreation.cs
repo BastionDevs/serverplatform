@@ -19,5 +19,21 @@ namespace serverplatform
                 return BitConverter.ToString(hashBytes).Replace("-", "").ToLower();  // Convert to a lowercase hex string
             }
         }
+
+        public static void CreateServer(string name, string description)
+        {
+            string serversFolder = Config.GetConfig("ServersDir", "main");
+
+            if (Directory.Exists($@"{serversFolder}\\{name}"))
+            {
+                throw new Exception("Folder already exists.");
+            }
+            else
+            {
+
+            }
+
+
+        }
     }
 }

@@ -33,6 +33,9 @@ namespace serverplatform
             Console.Write("STABLE");
             Console.ForegroundColor = ConsoleColor.Gray;
             Console.WriteLine("] Release Channel");
+
+            int backendPort = int.Parse(Config.GetConfig("port", "backend"));
+            APIHandler.StartServer(backendPort).GetAwaiter().GetResult();
         }
     }
 }
