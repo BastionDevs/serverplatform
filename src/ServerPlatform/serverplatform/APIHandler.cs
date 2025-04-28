@@ -5,25 +5,54 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace serverplatform
 {
     internal class APIHandler
     {
-        public static async Task StartServer(int port)
+        public static async Task StartServer(CancellationToken token, int port)
         {
             HttpListener listener = new HttpListener();
-            listener.Prefixes.Add($"http://*:{port}/"); // Listen on port for all IP addresses
-            listener.Start();
-            Console.WriteLine($"Backend API listening on port {port}.");
+            listener.Prefixes.Add($"http://*:{port}/");
 
-            while (true)
+            try
             {
-                HttpListenerContext context = await listener.GetContextAsync();
-                _ = Task.Run(() => HandleRequest(context)); // Handle each request in its own task
+                listener.Start();
+                Console.WriteLine($"[HttpListener] Backend API started and listening on port {port}.");
+
+                while (!token.IsCancellationRequested)
+                {
+                    var contextTask = listener.GetContextAsync();
+                    var completedTask = await Task.WhenAny(contextTask, Task.Delay(-1, token));
+
+                    if (completedTask == contextTask)
+                    {
+                        HttpListenerContext context = contextTask.Result;
+                        _ = Task.Run(() => HandleRequest(context)); // Handle each request separately
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Normal shutdown
+            }
+            catch (HttpListenerException ex)
+            {
+                Console.WriteLine($"[HttpListener] Listener exception: {ex.Message}");
+            }
+            finally
+            {
+                if (listener.IsListening)
+                {
+                    listener.Stop();
+                    listener.Close();
+                }
+                Console.WriteLine("[HttpListener] Listener closed.");
             }
         }
+
 
         public static void HandleRequest(HttpListenerContext context)
         {

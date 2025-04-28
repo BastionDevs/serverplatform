@@ -2,14 +2,24 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace serverplatform
 {
     internal class Program
     {
+        static CancellationTokenSource _cts = new CancellationTokenSource();
+
         static void Main(string[] args)
         {
+            Console.CancelKeyPress += (sender, eventArgs) =>
+            {
+                Console.WriteLine("Stopping server...");
+                _cts.Cancel();
+                eventArgs.Cancel = true; // Prevent immediate termination
+            };
+
             Console.OutputEncoding = Encoding.UTF8;
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine("    ____             __  _             ___________\r\n   / __ )____ ______/ /_(_)___  ____  / ____/ ___/\r\n  / __  / __ `/ ___/ __/ / __ \\/ __ \\/ /    \\__ \\ \r\n / /_/ / /_/ (__  ) /_/ / /_/ / / / / /___ ___/ / \r\n/_____/\\__,_/____/\\__/_/\\____/_/ /_/\\____//____/");
@@ -34,8 +44,16 @@ namespace serverplatform
             Console.ForegroundColor = ConsoleColor.Gray;
             Console.WriteLine("] Release Channel");
 
-            int backendPort = int.Parse(Config.GetConfig("port", "backend"));
-            APIHandler.StartServer(backendPort).GetAwaiter().GetResult();
+            Console.WriteLine("Development use? [True/False]");
+            bool devMode = bool.Parse(Console.ReadLine());
+
+            int backendPort;
+            if (devMode) { backendPort = 1234; } else { backendPort = int.Parse(Config.GetConfig("port", "backend")); }
+            APIHandler.StartServer(_cts.Token, backendPort).GetAwaiter().GetResult();
+
+            //Server stopping
+            Console.WriteLine("Stopping Server Platform...");
+            Console.ReadLine();
         }
     }
 }
