@@ -13,6 +13,15 @@ namespace serverplatform
 
         static void Main(string[] args)
         {
+            //Firstrun logic
+            if (args.Length >= 1)
+            {
+                if (args[0] == "--firstrun")
+                {
+                    Config.MakeDefaultConfig();
+                }
+            }
+
             Console.CancelKeyPress += (sender, eventArgs) =>
             {
                 Console.WriteLine("Stopping server...");

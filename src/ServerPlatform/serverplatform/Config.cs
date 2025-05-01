@@ -17,5 +17,10 @@ namespace serverplatform
             return spCnfFile.Read(key, section);
         }
 
+        public static void MakeDefaultConfig()
+        {
+            spCnfFile.Write("port", "4100", "backend");
+        }
+
     }
 }
