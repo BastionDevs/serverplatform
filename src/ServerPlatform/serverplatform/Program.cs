@@ -71,6 +71,9 @@ namespace serverplatform
             Console.ForegroundColor = ConsoleColor.Gray;
             Console.WriteLine("] Release Channel");
 
+            ConsoleLogging.LogMessage("F̶u̶n̶ Devastating fact:");
+            ConsoleLogging.LogMessage("Countless innocent civillians get killed daily in Gaza by Israel.");
+
             Console.WriteLine("Development use? [True/False]");
             bool devMode = bool.Parse(Console.ReadLine());
 
