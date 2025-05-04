@@ -14,6 +14,7 @@ namespace serverplatform
 
         public static void LogError(string message)
         {
+            LogDirCheck();
             var sw = new StreamWriter(logFile, true);
             Console.ForegroundColor = ConsoleColor.Red;
             sw.WriteLine($"[ERROR] {message}");
@@ -24,6 +25,7 @@ namespace serverplatform
 
         public static void LogWarning(string message) 
         {
+            LogDirCheck();
             var sw = new StreamWriter(logFile, true);
             Console.ForegroundColor = ConsoleColor.Yellow;
             sw.WriteLine($"[WARN] {message}");
@@ -34,6 +36,7 @@ namespace serverplatform
 
         public static void LogMessage(string message)
         {
+            LogDirCheck();
             var sw = new StreamWriter(logFile, true);
             sw.WriteLine($"{message}");
             Console.WriteLine($"{message}");
@@ -42,30 +45,41 @@ namespace serverplatform
 
         public static void LogError(string message, string component)
         {
+            LogDirCheck();
             var sw = new StreamWriter(logFile, true);
             Console.ForegroundColor = ConsoleColor.Red;
-            sw.WriteLine($"[{component}: ERROR] {message}");
-            Console.WriteLine($"[{component}: ERROR] {message}");
+            sw.WriteLine($"[{component} - ERROR] {message}");
+            Console.WriteLine($"[{component} - ERROR] {message}");
             Console.ForegroundColor = ConsoleColor.Gray;
             sw.Close();
         }
 
         public static void LogWarning(string message, string component)
         {
+            LogDirCheck();
             var sw = new StreamWriter(logFile, true);
             Console.ForegroundColor = ConsoleColor.Yellow;
-            sw.WriteLine($"[WARN] {message}");
-            Console.WriteLine($"[WARN] {message}");
+            sw.WriteLine($"[{component} - WARN] {message}");
+            Console.WriteLine($"[{component} - WARN] {message}");
             Console.ForegroundColor = ConsoleColor.Gray;
             sw.Close();
         }
 
         public static void LogMessage(string message, string component)
         {
+            LogDirCheck();
             var sw = new StreamWriter(logFile, true);
             sw.WriteLine($"[{component}] {message}");
             Console.WriteLine($"[{component}] {message}");
             sw.Close();
+        }
+
+        static void LogDirCheck()
+        {
+            if (!Directory.Exists(logDir))
+            {
+                Directory.CreateDirectory(logDir);
+            }
         }
     }
 }
