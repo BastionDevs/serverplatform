@@ -72,7 +72,7 @@ namespace serverplatform
             Console.WriteLine("] Release Channel");
 
             ConsoleLogging.LogMessage("F̶u̶n̶ Devastating fact:");
-            ConsoleLogging.LogMessage("Countless innocent civillians get killed daily in Gaza by Israel.");
+            ConsoleLogging.LogMessage("Israel has been occupying Palestinian land illegally for longer than CubeNotFound has lived.");
 
             Console.WriteLine("Development use? [True/False]");
             bool devMode = bool.Parse(Console.ReadLine());
