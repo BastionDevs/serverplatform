@@ -19,12 +19,30 @@ namespace serverplatform
                 if (args[0] == "--firstrun")
                 {
                     Config.MakeDefaultConfig();
+                } else if (args[0] == "--clearlogs")
+                {
+                    if (args.Length >= 2)
+                    {
+                        if (args[1] == "true")
+                        {
+                            ConsoleLogging.ClearLogFolder(true);
+                            Environment.Exit(1);
+                        } else 
+                        { 
+                            ConsoleLogging.ClearLogFolder(false);
+                            Environment.Exit(2);
+                        }
+                    } else
+                    {
+                        ConsoleLogging.ClearLogFolder(false);
+                        Environment.Exit(2);
+                    }
                 }
             }
 
             Console.CancelKeyPress += (sender, eventArgs) =>
             {
-                Console.WriteLine("Stopping server...");
+                ConsoleLogging.LogMessage("Stopping server...");
                 _cts.Cancel();
                 eventArgs.Cancel = true; // Prevent immediate termination
             };
@@ -35,17 +53,17 @@ namespace serverplatform
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.Gray;
 
-            Console.WriteLine("Bastion Server Platform");
-            Console.WriteLine("Backend Server");
+            ConsoleLogging.LogMessage("Bastion Server Platform");
+            ConsoleLogging.LogMessage("Backend Server");
             Console.ForegroundColor = ConsoleColor.DarkCyan;
 
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.Gray;
-            Console.WriteLine("© 2025 Bastion Faculty of Computer Science");
+            ConsoleLogging.LogMessage("© 2025 Bastion Faculty of Computer Science");
             Console.WriteLine("https://www.bastionsg.rf.gd");
 
             Console.WriteLine();
-            Console.WriteLine("Version 1.0");
+            ConsoleLogging.LogMessage("Version 1.0");
 
             Console.Write("[");
             Console.ForegroundColor = ConsoleColor.Green;
@@ -61,7 +79,7 @@ namespace serverplatform
             APIHandler.StartServer(_cts.Token, backendPort).GetAwaiter().GetResult();
 
             //Server stopping
-            Console.WriteLine("Stopping Server Platform...");
+            ConsoleLogging.LogMessage("Stopping Server Platform...");
             Console.ReadLine();
         }
     }
