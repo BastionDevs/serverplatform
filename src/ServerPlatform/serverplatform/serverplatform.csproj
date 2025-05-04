@@ -51,6 +51,7 @@
   <ItemGroup>
     <Compile Include="APIHandler.cs" />
     <Compile Include="Config.cs" />
+    <Compile Include="ConsoleLogging.cs" />
     <Compile Include="IniFile.cs" />
     <Compile Include="PaperVersions.cs" />
     <Compile Include="Program.cs" />
