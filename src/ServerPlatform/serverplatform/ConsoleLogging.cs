@@ -81,5 +81,16 @@ namespace serverplatform
                 Directory.CreateDirectory(logDir);
             }
         }
+
+        public static void ClearLogFolder(bool conf)
+        {
+            if (conf)
+            {
+                Directory.Delete(logDir, true);
+            } else
+            {
+                LogWarning("User almost deleted all the logs!!", "Logging");
+            }
+        }
     }
 }
