@@ -20,6 +20,7 @@ namespace serverplatform
         public static void MakeDefaultConfig()
         {
             spCnfFile.Write("port", "4100", "backend");
+            UserAuth.CreateDefaultUsers();
         }
 
     }
