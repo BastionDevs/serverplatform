@@ -10,6 +10,7 @@ namespace serverplatform
 {
     internal class UserAuth
     {
+        static Dictionary<string, string> accessTokens;
         public static void CreateDefaultUsers()
         {
             var sw = new StreamWriter("users.json", true);
@@ -45,6 +46,26 @@ namespace serverplatform
                 byte[] hash = sha.ComputeHash(bytes);
                 return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
             }
+        }
+
+        public static string AuthenticateUser(string username, string password)
+        {
+            if (accessTokens.ContainsKey(username))
+            {
+                return accessTokens[username];
+            }
+
+            string accessToken = RandomString(15);
+            if (accessTokens.ContainsValue(accessToken))
+            {
+                accessToken = RandomString(15);
+                if (accessTokens.ContainsValue(accessToken))
+                {
+                    accessToken = RandomString(15);
+                }
+            }
+
+            return accessToken;
         }
 
         //Credit https://github.com/tylerablake/randomStringGenerator
