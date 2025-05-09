@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 
 namespace serverplatform
 {
@@ -50,22 +51,34 @@ namespace serverplatform
 
         public static string AuthenticateUser(string username, string password)
         {
-            if (accessTokens.ContainsKey(username))
-            {
-                return accessTokens[username];
-            }
+            string json = File.ReadAllText("users.json");
+            JArray users = JArray.Parse(json);
 
-            string accessToken = RandomString(15);
-            if (accessTokens.ContainsValue(accessToken))
+            if (users.FirstOrDefault(u => (string)u["username"] == username)?["passwordHash"]?.ToString() == SHA256Hash(password))
             {
-                accessToken = RandomString(15);
+                if (accessTokens.ContainsKey(username))
+                {
+                    return accessTokens[username];
+                }
+
+                string accessToken = RandomString(15);
                 if (accessTokens.ContainsValue(accessToken))
                 {
                     accessToken = RandomString(15);
+                    if (accessTokens.ContainsValue(accessToken))
+                    {
+                        accessToken = RandomString(15);
+                    }
                 }
-            }
 
-            return accessToken;
+                accessTokens[username] = accessToken;
+
+                return accessToken;
+            }
+            else
+            {
+                throw new Exception("invalidUserOrPwd");
+            }
         }
 
         //Credit https://github.com/tylerablake/randomStringGenerator
