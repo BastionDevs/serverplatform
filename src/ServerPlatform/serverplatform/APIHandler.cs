@@ -78,7 +78,7 @@ namespace serverplatform
                 {
                     Console.WriteLine("website");
 
-                    RespondHTML(context, "<p>Backend server</p>");
+                    RespondHTML(context, "<p>Server Platform Backend server</p><p>We recommend that you only port-forward the Frontend to prevent any intrusions.</p><br><p>Made with &#10084;&#65039;</p><p>&copy; 2025 BastionSG</p>");
                 }
                 else
                 {
