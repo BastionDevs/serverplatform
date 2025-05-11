@@ -80,6 +80,24 @@ namespace serverplatform
 
                     RespondHTML(context, "<p>Server Platform Backend server</p><p>We recommend that you only port-forward the Frontend to prevent any intrusions.</p><br><p>Made with &#10084;&#65039;</p><p>&copy; 2025 BastionSG</p>");
                 }
+                else if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/auth")
+                {
+                    string requestBody = new System.IO.StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
+                    ConsoleLogging.LogMessage($"User {JObject.Parse(requestBody)["username"]} attempting to authenticate...", "Authentication");
+                    string token = "";
+                    try {
+                        token = UserAuth.AuthenticateUser(JObject.Parse(requestBody)["username"].ToString(), JObject.Parse(requestBody)["password"].ToString());
+                    } 
+                    catch (Exception ex)
+                    {
+                        token = ex.Message;
+                    }
+                    finally
+                    {
+                        RespondText(context, token);
+                    }
+                    
+                }
                 else
                 {
                     context.Response.StatusCode = 404;
