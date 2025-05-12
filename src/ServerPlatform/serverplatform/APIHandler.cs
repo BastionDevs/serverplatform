@@ -1,8 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading;
@@ -53,41 +51,53 @@ namespace serverplatform
             }
         }
 
-
         public static void HandleRequest(HttpListenerContext context)
         {
             try
             {
+                // Handle CORS preflight request (OPTIONS)
+                if (context.Request.HttpMethod == "OPTIONS")
+                {
+                    context.Response.AddHeader("Access-Control-Allow-Origin", "*");
+                    context.Response.AddHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+                    context.Response.AddHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+                    context.Response.StatusCode = 204; // No content
+                    context.Response.Close();
+                    return;
+                }
+
                 Console.WriteLine($"Incoming {context.Request.HttpMethod} request for {context.Request.Url.AbsolutePath}");
 
                 if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/mcservers/start")
                 {
-                    string requestBody = new System.IO.StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
+                    string requestBody = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
                     Console.WriteLine($"[API] Starting server {JObject.Parse(requestBody)["id"]}");
 
                     RespondJson(context, "{\"status\":\"Server started\"}");
                 }
                 else if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/mcservers/stop")
                 {
-                    string requestBody = new System.IO.StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
+                    string requestBody = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
                     Console.WriteLine($"[API] Stopping server {JObject.Parse(requestBody)["id"]}");
 
                     RespondJson(context, "{\"status\":\"Server stopped\"}");
                 }
                 else if (context.Request.HttpMethod == "GET" && context.Request.Url.AbsolutePath == "/")
                 {
-                    Console.WriteLine("website");
+                    Console.WriteLine("Website");
 
                     RespondHTML(context, "<p>Server Platform Backend server</p><p>We recommend that you only port-forward the Frontend to prevent any intrusions.</p><br><p>Made with &#10084;&#65039;</p><p>&copy; 2025 BastionSG</p>");
                 }
                 else if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/auth")
                 {
-                    string requestBody = new System.IO.StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
+                    string requestBody = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
                     ConsoleLogging.LogMessage($"User {JObject.Parse(requestBody)["username"]} attempting to authenticate...", "Authentication");
+
                     string token = "";
-                    try {
+                    try
+                    {
                         token = UserAuth.AuthenticateUser(JObject.Parse(requestBody)["username"].ToString(), JObject.Parse(requestBody)["password"].ToString());
-                    } 
+                    }
                     catch (Exception ex)
                     {
                         token = ex.Message;
@@ -96,7 +106,6 @@ namespace serverplatform
                     {
                         RespondText(context, token);
                     }
-                    
                 }
                 else
                 {
@@ -114,7 +123,9 @@ namespace serverplatform
 
         public static void RespondJson(HttpListenerContext context, string json)
         {
-            context.Response.AddHeader("Access-Control-Allow-Origin", "*");
+            context.Response.AddHeader("Access-Control-Allow-Origin", "*"); // Allow all origins
+            context.Response.AddHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS"); // Allow specific HTTP methods
+            context.Response.AddHeader("Access-Control-Allow-Headers", "Content-Type, Authorization"); // Allow specific headers
             byte[] buffer = Encoding.UTF8.GetBytes(json);
             context.Response.ContentType = "application/json";
             context.Response.ContentLength64 = buffer.Length;
@@ -126,6 +137,8 @@ namespace serverplatform
         public static void RespondText(HttpListenerContext context, string text)
         {
             context.Response.AddHeader("Access-Control-Allow-Origin", "*");
+            context.Response.AddHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+            context.Response.AddHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
             byte[] buffer = Encoding.UTF8.GetBytes(text);
             context.Response.ContentType = "text/plain";
             context.Response.ContentLength64 = buffer.Length;
@@ -137,6 +150,8 @@ namespace serverplatform
         public static void RespondHTML(HttpListenerContext context, string text)
         {
             context.Response.AddHeader("Access-Control-Allow-Origin", "*");
+            context.Response.AddHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+            context.Response.AddHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
             context.Response.StatusCode = 200;
             byte[] buffer = Encoding.UTF8.GetBytes(text);
             context.Response.ContentType = "text/html";
