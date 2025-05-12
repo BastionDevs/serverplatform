@@ -61,7 +61,7 @@ namespace serverplatform
 
             if (users == null)
             {
-                ConsoleLogging.LogWarning("Deserialization returned null. Check JSON format.", "Auth");
+                ConsoleLogging.LogWarning("Deserialization returned null. Check JSON format.", "AUTH");
                 return "serverError";
             }
 
@@ -73,6 +73,7 @@ namespace serverplatform
                     {
                         if (accessTokens.ContainsKey(username))
                         {
+                            ConsoleLogging.LogMessage($"User {username} already has token.", "AUTH");
                             string alrdygeneratedtoken = "";
                             accessTokens.TryGetValue(username, out alrdygeneratedtoken);
                             return alrdygeneratedtoken;
@@ -89,13 +90,13 @@ namespace serverplatform
                     }
                     else
                     {
-                        ConsoleLogging.LogWarning($"User {username} failed to authenticate: Incorrect password", "Auth");
+                        ConsoleLogging.LogWarning($"User {username} failed to authenticate: Incorrect password", "AUTH");
                         return "wrongPassword";
                     }
                 }
             }
 
-            ConsoleLogging.LogWarning($"User {username} not found", "Auth");
+            ConsoleLogging.LogWarning($"User {username} not found", "AUTH");
             return "userNotFound";
         }
 
