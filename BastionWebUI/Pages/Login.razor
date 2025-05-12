@@ -1,13 +1,24 @@
 ﻿@page "/login"
 @using MudBlazor
 @inject HttpClient Http
+@inject NavigationManager NavigationManager
 
 <MudContainer MaxWidth="MaxWidth.Medium">
     <MudCard>
         <MudCardContent>
+            @if (!string.IsNullOrEmpty(statusMessage))
+            {
+                <MudAlert Severity="@currentSeverity" Variant="Variant.Filled" Dense="true" Elevation="0">
+                    @statusMessage
+                </MudAlert>
+            }
+
             <MudTextField Label="Username" @bind-Value="username" Variant="Variant.Filled" FullWidth />
             <MudTextField Label="Password" @bind-Value="password" Variant="Variant.Filled" FullWidth InputType="InputType.Password" />
-            <MudButton OnClick="HandleLogin" Color="Color.Primary" Variant="Variant.Filled">Login</MudButton>
+
+            <MudButton OnClick="HandleLogin" Color="Color.Primary" Variant="Variant.Filled" Disabled="@isLoading">
+                @LoginButtonContent()
+            </MudButton>
         </MudCardContent>
     </MudCard>
 </MudContainer>
@@ -15,48 +26,76 @@
 @code {
     private string username = string.Empty;
     private string password = string.Empty;
-    private string errorMessage = string.Empty;
+    private string statusMessage = string.Empty;
+    private Severity currentSeverity = Severity.Normal;
+    private bool isLoading = false;
 
     private async Task HandleLogin()
     {
-        // Check if username and password are provided
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
         {
-            errorMessage = "Username or password cannot be empty.";
+            statusMessage = "Username or password cannot be empty.";
+            currentSeverity = Severity.Warning;
             return;
         }
 
         try
         {
+            isLoading = true;
+            statusMessage = "Logging in...";
+            currentSeverity = Severity.Info;
+
             var loginData = new
             {
                 username = username,
                 password = password
             };
 
-            // Send POST request to backend API for authentication
             var response = await Http.PostAsJsonAsync("/auth", loginData);
 
             if (response.IsSuccessStatusCode)
             {
-                // If login is successful, handle the received token
                 var token = await response.Content.ReadAsStringAsync();
                 Console.WriteLine($"Login successful! Token: {token}");
 
-                // Here you can store the token for further authenticated requests
-                // Example: LocalStorage.SetItem("authToken", token);
-                errorMessage = string.Empty; // Clear any previous error message
+                statusMessage = "Login successful!";
+                currentSeverity = Severity.Success;
+
+                await Task.Delay(500); // brief success display
+
+                NavigationManager.NavigateTo("/dashboard", forceLoad: false);
             }
             else
             {
-                // Handle invalid login attempt
-                errorMessage = "Invalid username or password.";
+                statusMessage = "Invalid username or password.";
+                currentSeverity = Severity.Error;
             }
         }
         catch (Exception ex)
         {
-            // Handle any errors with the request
-            errorMessage = $"Error: {ex.Message}";
+            statusMessage = $"Error: {ex.Message}";
+            currentSeverity = Severity.Error;
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
+
+    private RenderFragment LoginButtonContent() => __builder =>
+    {
+        if (isLoading)
+        {
+            __builder.OpenComponent<MudProgressCircular>(0);
+            __builder.AddAttribute(1, "Size", 16);
+            __builder.AddAttribute(2, "Indeterminate", true);
+            __builder.AddAttribute(3, "Class", "me-2");
+            __builder.CloseComponent();
+            __builder.AddContent(4, "Logging in...");
+        }
+        else
+        {
+            __builder.AddContent(5, "Login");
+        }
+    };
 }
