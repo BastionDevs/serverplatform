@@ -1,5 +1,6 @@
 ﻿@page "/login"
 @using MudBlazor
+@inject HttpClient Http
 
 <MudContainer MaxWidth="MaxWidth.Medium">
     <MudCard>
@@ -12,12 +13,50 @@
 </MudContainer>
 
 @code {
-    private string username;
-    private string password;
+    private string username = string.Empty;
+    private string password = string.Empty;
+    private string errorMessage = string.Empty;
 
     private async Task HandleLogin()
     {
-        // Authentication logic here
-        Console.WriteLine($"Attempting to log in as {username}");
+        // Check if username and password are provided
+        if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+        {
+            errorMessage = "Username or password cannot be empty.";
+            return;
+        }
+
+        try
+        {
+            var loginData = new
+            {
+                username = username,
+                password = password
+            };
+
+            // Send POST request to backend API for authentication
+            var response = await Http.PostAsJsonAsync("/auth", loginData);
+
+            if (response.IsSuccessStatusCode)
+            {
+                // If login is successful, handle the received token
+                var token = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Login successful! Token: {token}");
+
+                // Here you can store the token for further authenticated requests
+                // Example: LocalStorage.SetItem("authToken", token);
+                errorMessage = string.Empty; // Clear any previous error message
+            }
+            else
+            {
+                // Handle invalid login attempt
+                errorMessage = "Invalid username or password.";
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle any errors with the request
+            errorMessage = $"Error: {ex.Message}";
+        }
     }
 }
