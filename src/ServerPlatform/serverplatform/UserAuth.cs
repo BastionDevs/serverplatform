@@ -14,13 +14,14 @@ namespace serverplatform
         static Dictionary<string, string> accessTokens;
         public static void CreateDefaultUsers()
         {
-            var sw = new StreamWriter("users.json", true);
+            var sw = new StreamWriter("users.json", false);
             sw.WriteLine("[");
             sw.WriteLine("    {");
             sw.WriteLine("        \"Username\": \"admin\",");
             sw.WriteLine("        \"PasswordHash\": \"240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9\"");
             sw.WriteLine("    }");
             sw.WriteLine("]");
+            sw.Close();
         }
 
         public static string SHA256Hash(string password, bool nodash)
