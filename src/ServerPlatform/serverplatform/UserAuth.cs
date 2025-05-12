@@ -5,13 +5,20 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace serverplatform
 {
     internal class UserAuth
     {
-        static Dictionary<string, string> accessTokens;
+        class User
+        {
+            public string Username { get; set; }
+            public string PasswordHash { get; set; }
+        }
+
+        static Dictionary<string, string> accessTokens = new Dictionary<string, string>();
         public static void CreateDefaultUsers()
         {
             var sw = new StreamWriter("users.json", false);
@@ -24,22 +31,6 @@ namespace serverplatform
             sw.Close();
         }
 
-        public static string SHA256Hash(string password, bool nodash)
-        {
-            using (SHA256 sha = SHA256.Create())
-            {
-                byte[] bytes = Encoding.UTF8.GetBytes(password);
-                byte[] hash = sha.ComputeHash(bytes);
-
-                if (nodash)
-                {
-                    return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                } else
-                {
-                    return BitConverter.ToString(hash).ToLowerInvariant();
-                }
-            }
-        }
         public static string SHA256Hash(string password)
         {
             using (SHA256 sha = SHA256.Create())
@@ -52,40 +43,68 @@ namespace serverplatform
 
         public static string AuthenticateUser(string username, string password)
         {
-            string json = File.ReadAllText("users.json");
-            JArray users = JArray.Parse(json);
-
-            if (users.FirstOrDefault(u => (string)u["username"] == username)?["passwordHash"]?.ToString() == SHA256Hash(password))
+            if (!File.Exists("users.json"))
             {
-                if (accessTokens.ContainsKey(username))
-                {
-                    return accessTokens[username];
-                }
+                ConsoleLogging.LogError("users.json not found.");
+                return "serverError";
+            }
 
-                string accessToken = RandomString(15);
-                if (accessTokens.ContainsValue(accessToken))
+            string json = File.ReadAllText("users.json");
+
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                ConsoleLogging.LogError("users.json is empty.");
+                return "serverError";
+            }
+
+            List<User> users = JsonConvert.DeserializeObject<List<User>>(json);
+
+            if (users == null)
+            {
+                ConsoleLogging.LogWarning("Deserialization returned null. Check JSON format.", "Auth");
+                return "serverError";
+            }
+
+            foreach (var user in users)
+            {
+                if (user.Username == username)
                 {
-                    accessToken = RandomString(15);
-                    if (accessTokens.ContainsValue(accessToken))
+                    if (user.PasswordHash == SHA256Hash(password))
                     {
-                        accessToken = RandomString(15);
+                        if (accessTokens.ContainsKey(username))
+                        {
+                            string alrdygeneratedtoken = "";
+                            accessTokens.TryGetValue(username, out alrdygeneratedtoken);
+                            return alrdygeneratedtoken;
+                        }
+
+                        string accessToken;
+                        do
+                        {
+                            accessToken = RandomString(15);
+                        } while (accessTokens.ContainsValue(accessToken));
+
+                        accessTokens.Add(username, accessToken);
+                        return accessToken;
+                    }
+                    else
+                    {
+                        ConsoleLogging.LogWarning($"User {username} failed to authenticate: Incorrect password", "Auth");
+                        return "wrongPassword";
                     }
                 }
-
-                accessTokens[username] = accessToken;
-
-                return accessToken;
             }
-            else
-            {
-                throw new Exception("invalidUserOrPwd");
-            }
+
+            ConsoleLogging.LogWarning($"User {username} not found", "Auth");
+            return "userNotFound";
         }
+
 
         //Credit https://github.com/tylerablake/randomStringGenerator
         //To generate a random alphanumeric string of a specified length
         public static string RandomString(int length)
         {
+            ConsoleLogging.LogWarning("At phase where we begin random generation");
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             var random = new Random();
             return new string(Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)]).ToArray()).ToLower();
