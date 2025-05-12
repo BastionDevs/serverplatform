@@ -104,7 +104,6 @@ namespace serverplatform
         //To generate a random alphanumeric string of a specified length
         public static string RandomString(int length)
         {
-            ConsoleLogging.LogWarning("At phase where we begin random generation");
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             var random = new Random();
             return new string(Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)]).ToArray()).ToLower();
