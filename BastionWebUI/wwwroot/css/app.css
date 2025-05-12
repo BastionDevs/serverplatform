@@ -1,0 +1,17 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f5f5f5;
+}
+
+.MudDrawer {
+    width: 250px;
+    background-color: #1c1c1c;
+}
+
+.MudAppBar {
+    background-color: #333;
+}
+
+.MudPaper {
+    padding: 20px;
+}
