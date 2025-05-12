@@ -114,6 +114,7 @@ namespace serverplatform
 
         public static void RespondJson(HttpListenerContext context, string json)
         {
+            context.Response.AddHeader("Access-Control-Allow-Origin", "*");
             byte[] buffer = Encoding.UTF8.GetBytes(json);
             context.Response.ContentType = "application/json";
             context.Response.ContentLength64 = buffer.Length;
@@ -124,6 +125,7 @@ namespace serverplatform
 
         public static void RespondText(HttpListenerContext context, string text)
         {
+            context.Response.AddHeader("Access-Control-Allow-Origin", "*");
             byte[] buffer = Encoding.UTF8.GetBytes(text);
             context.Response.ContentType = "text/plain";
             context.Response.ContentLength64 = buffer.Length;
@@ -134,6 +136,7 @@ namespace serverplatform
 
         public static void RespondHTML(HttpListenerContext context, string text)
         {
+            context.Response.AddHeader("Access-Control-Allow-Origin", "*");
             context.Response.StatusCode = 200;
             byte[] buffer = Encoding.UTF8.GetBytes(text);
             context.Response.ContentType = "text/html";

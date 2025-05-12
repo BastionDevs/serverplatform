@@ -1,0 +1,23 @@
+﻿@page "/login"
+@using MudBlazor
+
+<MudContainer MaxWidth="MaxWidth.Medium">
+    <MudCard>
+        <MudCardContent>
+            <MudTextField Label="Username" @bind-Value="username" Variant="Variant.Filled" FullWidth />
+            <MudTextField Label="Password" @bind-Value="password" Variant="Variant.Filled" FullWidth InputType="InputType.Password" />
+            <MudButton OnClick="HandleLogin" Color="Color.Primary" Variant="Variant.Filled">Login</MudButton>
+        </MudCardContent>
+    </MudCard>
+</MudContainer>
+
+@code {
+    private string username;
+    private string password;
+
+    private async Task HandleLogin()
+    {
+        // Authentication logic here
+        Console.WriteLine($"Attempting to log in as {username}");
+    }
+}
