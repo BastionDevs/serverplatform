@@ -26,13 +26,28 @@ namespace serverplatform
 
         private static string LoadJwtSecret()
         {
-            var config = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())  // Use Directory.GetCurrentDirectory()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .Build();
+            try
+            {
+                string jsonContent = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "appsettings.json"));
+                JObject config = JObject.Parse(jsonContent);
 
-            return config["Jwt:Secret"];
+                // Access the Jwt Secret from the loaded JSON
+                var secret = config["Jwt"]?["Secret"]?.ToString();
+
+                if (string.IsNullOrEmpty(secret))
+                {
+                    throw new Exception("JWT Secret is missing in appsettings.json");
+                }
+
+                return secret;
+            }
+            catch (Exception ex)
+            {
+                ConsoleLogging.LogError($"Error loading JWT Secret: {ex.Message}");
+                throw;  // Rethrow the exception to maintain the stack trace
+            }
         }
+
 
         public static void CreateDefaultUsers()
         {
