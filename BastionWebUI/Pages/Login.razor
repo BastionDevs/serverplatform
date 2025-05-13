@@ -1,5 +1,6 @@
 ﻿@page "/login"
 @using MudBlazor
+@using System.Text.Json
 @inject HttpClient Http
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
@@ -57,19 +58,40 @@
             };
 
             var response = await Http.PostAsJsonAsync("/auth", loginData);
+            var jsonString = await response.Content.ReadAsStringAsync();
+            var json = JsonSerializer.Deserialize<JsonElement>(jsonString);
 
-            if (response.IsSuccessStatusCode)
+            if (response.IsSuccessStatusCode &&
+                json.TryGetProperty("success", out var successElement) &&
+                successElement.ValueKind == JsonValueKind.True)
             {
-                var token = await response.Content.ReadAsStringAsync();
+                string token = json.TryGetProperty("token", out var tokenElement)
+                    ? tokenElement.GetString() ?? "NO_TOKEN"
+                    : "NO_TOKEN";
+
                 Console.WriteLine($"Login successful! Token: {token}");
                 Snackbar.Add("Login successful!", Severity.Success);
-                await Task.Delay(1000); // Let user see it for 1 second
-                NavigationManager.NavigateTo("/dashboard");
 
+                // TODO: Save the token securely (e.g., in local storage or protected storage)
+
+                await Task.Delay(1000);
+                NavigationManager.NavigateTo("/dashboard");
             }
             else
             {
-                Snackbar.Add("Invalid username or password.", Severity.Error);
+                string errorType = json.TryGetProperty("error", out var errorElement)
+                    ? errorElement.GetString() ?? "unknown"
+                    : "unknown";
+
+                string errorMessage = errorType switch
+                {
+                    "wrongPassword" => "Incorrect password.",
+                    "userNotFound" => "User not found.",
+                    "internalError" => "Server error. Please try again later.",
+                    _ => "Login failed."
+                };
+
+                Snackbar.Add(errorMessage, Severity.Error);
             }
         }
         catch (Exception ex)
