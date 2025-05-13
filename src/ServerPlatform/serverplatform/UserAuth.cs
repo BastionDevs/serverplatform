@@ -4,9 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 
 namespace serverplatform
 {
@@ -18,7 +20,18 @@ namespace serverplatform
             public string PasswordHash { get; set; }
         }
 
-        static Dictionary<string, string> accessTokens = new Dictionary<string, string>();
+        private static readonly string jwtSecret = LoadJwtSecret();
+
+        private static string LoadJwtSecret()
+        {
+            var config = new ConfigurationBuilder()
+                .SetBasePath(AppContext.BaseDirectory)
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .Build();
+
+            return config["Jwt:Secret"];
+        }
+
         public static void CreateDefaultUsers()
         {
             var sw = new StreamWriter("users.json", false);
@@ -70,17 +83,7 @@ namespace serverplatform
                 {
                     if (user.PasswordHash == SHA256Hash(password))
                     {
-                        string token;
-                        if (!accessTokens.TryGetValue(username, out token))
-                        {
-                            do
-                            {
-                                token = RandomString(15);
-                            } while (accessTokens.ContainsValue(token));
-
-                            accessTokens.Add(username, token);
-                        }
-
+                        string token = GenerateJwtToken(username);
                         return JObject.FromObject(new { success = true, token = token });
                     }
 
@@ -93,15 +96,49 @@ namespace serverplatform
             return JObject.FromObject(new { success = false, error = "userNotFound" });
         }
 
-
-
-        //Credit https://github.com/tylerablake/randomStringGenerator
-        //To generate a random alphanumeric string of a specified length
-        public static string RandomString(int length)
+        private static string GenerateJwtToken(string username)
         {
-            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            var random = new Random();
-            return new string(Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)]).ToArray()).ToLower();
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(jwtSecret);
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[]
+                {
+                    new Claim(ClaimTypes.Name, username)
+                }),
+                Expires = DateTime.UtcNow.AddHours(1), // Adjust as needed
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(token);
         }
+
+        public static ClaimsPrincipal ValidateJwtToken(string token)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(jwtSecret);
+
+            var validationParams = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ClockSkew = TimeSpan.Zero // Optional: reduce default 5-min tolerance
+            };
+
+            try
+            {
+                var principal = tokenHandler.ValidateToken(token, validationParams, out SecurityToken validatedToken);
+                return principal;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
     }
 }
