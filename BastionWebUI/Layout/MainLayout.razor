@@ -1,7 +1,6 @@
 ﻿@inherits LayoutComponentBase
 
 <MudThemeProvider Theme="@Potatoes" />
-
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -15,6 +14,9 @@
 
         <!-- Login Button (Replaces GitHub Icon) -->
         <MudIconButton Icon="@Icons.Material.Filled.Login" Color="Color.Inherit" Href="/login" />
+
+        <!-- Logout Button (Hardcoded for now) -->
+        <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" Href="/logout" />
     </MudAppBar>
 
     <!-- Drawer -->
@@ -24,7 +26,6 @@
         </MudDrawerHeader>
         <MudNavMenu>
             <MudNavLink Match="NavLinkMatch.All" Href="/home">Servers</MudNavLink>
-            <!-- Removed /login from the sidebar -->
             <MudNavLink Match="NavLinkMatch.All" Href="/dashboard">Dashboard</MudNavLink>
         </MudNavMenu>
     </MudDrawer>

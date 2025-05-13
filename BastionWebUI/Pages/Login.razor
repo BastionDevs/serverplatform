@@ -1,9 +1,11 @@
 ﻿@page "/login"
 @using MudBlazor
 @using System.Text.Json
+@using BastionWebUI.Services
 @inject HttpClient Http
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
+@inject StorageService StorageService
 
 <MudContainer MaxWidth="MaxWidth.Medium">
     <MudCard>
@@ -72,7 +74,8 @@
                 Console.WriteLine($"Login successful! Token: {token}");
                 Snackbar.Add("Login successful!", Severity.Success);
 
-                // TODO: Save the token securely (e.g., in local storage or protected storage)
+                // Save the token to localStorage or sessionStorage
+                await StorageService.SetItemAsync("jwtToken", token);
 
                 await Task.Delay(1000);
                 NavigationManager.NavigateTo("/dashboard");
@@ -120,4 +123,15 @@
             __builder.AddContent(5, "Login");
         }
     };
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Check if the user is already logged in by checking localStorage
+        var storedToken = await StorageService.GetItemAsync("jwtToken");
+        if (!string.IsNullOrEmpty(storedToken))
+        {
+            // Token found, navigate to dashboard
+            NavigationManager.NavigateTo("/dashboard");
+        }
+    }
 }
