@@ -1,6 +1,7 @@
 ﻿@inherits LayoutComponentBase
 
-<MudThemeProvider />
+<MudThemeProvider Theme="@Potatoes" />
+
 <MudPopoverProvider />
 
 
@@ -44,4 +45,15 @@
     {
         _drawerOpen = !_drawerOpen;
     }
+
+    private MudTheme Potatoes = new MudTheme()
+    {
+        Typography = new Typography()
+        {
+            Default = new DefaultTypography()
+            {
+                FontFamily = new[] { "Space Grotesk", "Helvetica", "Arial", "sans-serif" }
+            }
+        }
+    };
 }
