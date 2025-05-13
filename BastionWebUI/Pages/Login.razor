@@ -2,21 +2,31 @@
 @using MudBlazor
 @inject HttpClient Http
 @inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
 
 <MudContainer MaxWidth="MaxWidth.Medium">
     <MudCard>
         <MudCardContent>
-            @if (!string.IsNullOrEmpty(statusMessage))
-            {
-                <MudAlert Severity="@currentSeverity" Variant="Variant.Filled" Dense="true" Elevation="0">
-                    @statusMessage
-                </MudAlert>
-            }
+            <MudText Typo="Typo.h5" Class="mb-2">Login</MudText>
 
-            <MudTextField Label="Username" @bind-Value="username" Variant="Variant.Filled" FullWidth />
-            <MudTextField Label="Password" @bind-Value="password" Variant="Variant.Filled" FullWidth InputType="InputType.Password" />
+            <MudTextField Label="Username"
+                          @bind-Value="username"
+                          Variant="Variant.Filled"
+                          FullWidth
+                          Required="true" />
 
-            <MudButton OnClick="HandleLogin" Color="Color.Primary" Variant="Variant.Filled" Disabled="@isLoading">
+            <MudTextField Label="Password"
+                          @bind-Value="password"
+                          Variant="Variant.Filled"
+                          FullWidth
+                          InputType="InputType.Password"
+                          Required="true" />
+
+            <MudButton OnClick="HandleLogin"
+                       Color="Color.Primary"
+                       Variant="Variant.Filled"
+                       Class="mt-4"
+                       Disabled="@isLoading">
                 @LoginButtonContent()
             </MudButton>
         </MudCardContent>
@@ -26,24 +36,19 @@
 @code {
     private string username = string.Empty;
     private string password = string.Empty;
-    private string statusMessage = string.Empty;
-    private Severity currentSeverity = Severity.Normal;
     private bool isLoading = false;
 
     private async Task HandleLogin()
     {
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
         {
-            statusMessage = "Username or password cannot be empty.";
-            currentSeverity = Severity.Warning;
+            Snackbar.Add("Username or password cannot be empty.", Severity.Warning);
             return;
         }
 
         try
         {
             isLoading = true;
-            statusMessage = "Logging in...";
-            currentSeverity = Severity.Info;
 
             var loginData = new
             {
@@ -57,24 +62,19 @@
             {
                 var token = await response.Content.ReadAsStringAsync();
                 Console.WriteLine($"Login successful! Token: {token}");
+                Snackbar.Add("Login successful!", Severity.Success);
+                await Task.Delay(1000); // Let user see it for 1 second
+                NavigationManager.NavigateTo("/dashboard");
 
-                statusMessage = "Login successful!";
-                currentSeverity = Severity.Success;
-
-                await Task.Delay(500); // brief success display
-
-                NavigationManager.NavigateTo("/dashboard", forceLoad: false);
             }
             else
             {
-                statusMessage = "Invalid username or password.";
-                currentSeverity = Severity.Error;
+                Snackbar.Add("Invalid username or password.", Severity.Error);
             }
         }
         catch (Exception ex)
         {
-            statusMessage = $"Error: {ex.Message}";
-            currentSeverity = Severity.Error;
+            Snackbar.Add($"Login failed: {ex.Message}", Severity.Error);
         }
         finally
         {

@@ -1,6 +1,12 @@
 ﻿@inherits LayoutComponentBase
 
 <MudThemeProvider />
+<MudPopoverProvider />
+
+
+<MudDialogProvider />
+
+<MudSnackbarProvider />
 
 <MudLayout>
     <!-- App Bar -->
@@ -17,9 +23,9 @@
             <MudText Typo="Typo.h6">My App</MudText>
         </MudDrawerHeader>
         <MudNavMenu>
-            <MudNavLink Match="NavLinkMatch.All" Href="/home">Home</MudNavLink>
-            <MudNavLink Match="NavLinkMatch.All" Href="/login">Store</MudNavLink>
-            <MudNavLink Match="NavLinkMatch.All" Href="/dashboard">Library</MudNavLink>
+            <MudNavLink Match="NavLinkMatch.All" Href="/home">Servers</MudNavLink>
+            <MudNavLink Match="NavLinkMatch.All" Href="/login">Login</MudNavLink>
+            <MudNavLink Match="NavLinkMatch.All" Href="/dashboard">dashboard</MudNavLink>
         </MudNavMenu>
     </MudDrawer>
 
