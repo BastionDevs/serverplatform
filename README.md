@@ -19,7 +19,7 @@ Open-source, Windows-based server management system designed for Minecraft serve
 - 📦 **File Manager** with Upload/Download/Permissions
 - 🔁 **Scheduler & Task Automation**
 - 🌐 **Web API** for integrations
-- 🖼️ **Modern UI** designed with inspiration from the Fluent Design Language
+- 🖼️ **Modern UI** designed with inspiration from the Material Design Language
 
 ---
 
