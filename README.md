@@ -27,6 +27,7 @@ Open-source, Windows-based server management system designed for Minecraft serve
 
 - Windows 10 or newer recommended
 - [.NET Framework 4.7.2](https://dotnet.microsoft.com/download/dotnet-framework/net472)
+- [.NET 9.0](https://dotnet.microsoft.com/en-us/download/dotnet/9.0)
 - Administrator privileges
 
 ---
