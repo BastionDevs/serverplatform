@@ -41,12 +41,12 @@ namespace serverplatform
             }
         }
 
-        public static string AuthenticateUser(string username, string password)
+        public static JObject AuthenticateUser(string username, string password)
         {
             if (!File.Exists("users.json"))
             {
                 ConsoleLogging.LogError("users.json not found.");
-                return "serverError";
+                return JObject.FromObject(new { success = false, error = "serverError" });
             }
 
             string json = File.ReadAllText("users.json");
@@ -54,15 +54,14 @@ namespace serverplatform
             if (string.IsNullOrWhiteSpace(json))
             {
                 ConsoleLogging.LogError("users.json is empty.");
-                return "serverError";
+                return JObject.FromObject(new { success = false, error = "serverError" });
             }
 
             List<User> users = JsonConvert.DeserializeObject<List<User>>(json);
-
             if (users == null)
             {
                 ConsoleLogging.LogWarning("Deserialization returned null. Check JSON format.", "AUTH");
-                return "serverError";
+                return JObject.FromObject(new { success = false, error = "serverError" });
             }
 
             foreach (var user in users)
@@ -71,34 +70,29 @@ namespace serverplatform
                 {
                     if (user.PasswordHash == SHA256Hash(password))
                     {
-                        if (accessTokens.ContainsKey(username))
+                        string token;
+                        if (!accessTokens.TryGetValue(username, out token))
                         {
-                            ConsoleLogging.LogMessage($"User {username} already has token.", "AUTH");
-                            string alrdygeneratedtoken = "";
-                            accessTokens.TryGetValue(username, out alrdygeneratedtoken);
-                            return alrdygeneratedtoken;
+                            do
+                            {
+                                token = RandomString(15);
+                            } while (accessTokens.ContainsValue(token));
+
+                            accessTokens.Add(username, token);
                         }
 
-                        string accessToken;
-                        do
-                        {
-                            accessToken = RandomString(15);
-                        } while (accessTokens.ContainsValue(accessToken));
+                        return JObject.FromObject(new { success = true, token = token });
+                    }
 
-                        accessTokens.Add(username, accessToken);
-                        return accessToken;
-                    }
-                    else
-                    {
-                        ConsoleLogging.LogWarning($"User {username} failed to authenticate: Incorrect password", "AUTH");
-                        return "wrongPassword";
-                    }
+                    ConsoleLogging.LogWarning($"User {username} failed to authenticate: Incorrect password", "AUTH");
+                    return JObject.FromObject(new { success = false, error = "wrongPassword" });
                 }
             }
 
             ConsoleLogging.LogWarning($"User {username} not found", "AUTH");
-            return "userNotFound";
+            return JObject.FromObject(new { success = false, error = "userNotFound" });
         }
+
 
 
         //Credit https://github.com/tylerablake/randomStringGenerator
