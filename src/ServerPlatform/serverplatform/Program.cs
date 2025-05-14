@@ -3,7 +3,6 @@ using System.Text;
 using System.Threading;
 using System.IO;
 
-
 namespace serverplatform
 {
     internal class Program
@@ -19,7 +18,7 @@ namespace serverplatform
                 {
                     if (File.Exists("users.json") || File.Exists("appsettings.json"))
                     {
-                        ConsoleLogging.LogWarning("First run has already been completed. Aborting setup.", "SETUP");
+                        ConsoleLogging.LogWarning("First run has already been completed. Aborting setup.");
                         Environment.Exit(1);
                     }
                     else
@@ -71,8 +70,10 @@ namespace serverplatform
             ConsoleLogging.LogMessage("Version 1.0");
 
             Console.Write("[");
+
             Console.ForegroundColor = ConsoleColor.Green;
             Console.Write("STABLE");
+
             Console.ForegroundColor = ConsoleColor.Gray;
             Console.WriteLine("] Release Channel");
 
@@ -94,10 +95,14 @@ namespace serverplatform
                 backendPort = int.Parse(Config.GetConfig("port", "backend"));
             }
 
+            // Start server
+            ConsoleLogging.LogSuccess("Server is now online and listening.");
             APIHandler.StartServer(_cts.Token, backendPort).GetAwaiter().GetResult();
 
+            // Server stopping
+            ConsoleLogging.LogSuccess("Server has stopped cleanly.");
             ConsoleLogging.LogMessage("Stopping Server Platform...");
             Console.ReadLine();
         }
-            }
+    }
 }

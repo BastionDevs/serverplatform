@@ -88,10 +88,9 @@
 
                 string errorMessage = errorType switch
                 {
-                    "wrongPassword" => "Incorrect password.",
-                    "userNotFound" => "User not found.",
+                    "incorrectusrorpwd" => "Incorrect User or Password.",
                     "internalError" => "Server error. Please try again later.",
-                    _ => "Login failed."
+                    _ => "Login failed. Please contact your Administrator"
                 };
 
                 Snackbar.Add(errorMessage, Severity.Error);

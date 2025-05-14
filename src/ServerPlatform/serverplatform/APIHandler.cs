@@ -18,7 +18,7 @@ namespace serverplatform
             try
             {
                 listener.Start();
-                Console.WriteLine($"[HttpListener] Backend API started and listening on port {port}.");
+                ConsoleLogging.LogSuccess($"Backend API started and listening on port {port}.", "HttpListener");
 
                 while (!token.IsCancellationRequested)
                 {
@@ -28,7 +28,7 @@ namespace serverplatform
                     if (completedTask == contextTask)
                     {
                         HttpListenerContext context = contextTask.Result;
-                        _ = Task.Run(() => HandleRequest(context)); // Handle each request separately
+                        _ = Task.Run(() => HandleRequest(context));
                     }
                 }
             }
@@ -38,7 +38,7 @@ namespace serverplatform
             }
             catch (HttpListenerException ex)
             {
-                Console.WriteLine($"[HttpListener] Listener exception: {ex.Message}");
+                ConsoleLogging.LogError($"Listener exception: {ex.Message}", "HttpListener");
             }
             finally
             {
@@ -47,7 +47,7 @@ namespace serverplatform
                     listener.Stop();
                     listener.Close();
                 }
-                Console.WriteLine("[HttpListener] Listener closed.");
+                ConsoleLogging.LogMessage("Listener closed.", "HttpListener");
             }
         }
 
@@ -55,21 +55,22 @@ namespace serverplatform
         {
             try
             {
-                // Handle CORS preflight request (OPTIONS)
+                // Handle CORS preflight request
                 if (context.Request.HttpMethod == "OPTIONS")
                 {
                     AddCORSHeaders(context.Response);
-                    context.Response.StatusCode = 204; // No content
+                    context.Response.StatusCode = 204;
                     context.Response.Close();
                     return;
                 }
 
-                Console.WriteLine($"Incoming {context.Request.HttpMethod} request for {context.Request.Url.AbsolutePath}");
+                ConsoleLogging.LogMessage(
+                    $"Incoming {context.Request.HttpMethod} request for {context.Request.Url.AbsolutePath}",
+                    "API");
 
-                // Check for protected routes requiring authentication
-                if (context.Request.HttpMethod == "POST" && (context.Request.Url.AbsolutePath == "/mcservers/start" || context.Request.Url.AbsolutePath == "/mcservers/stop"))
+                if (context.Request.HttpMethod == "POST" &&
+                    (context.Request.Url.AbsolutePath == "/mcservers/start" || context.Request.Url.AbsolutePath == "/mcservers/stop"))
                 {
-                    // Validate JWT token for protected routes
                     string authHeader = context.Request.Headers["Authorization"];
                     if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
                     {
@@ -87,29 +88,25 @@ namespace serverplatform
                         return;
                     }
 
-                    // Proceed with the protected endpoint logic
-                    // Optionally, get the username from the token
                     string username = principal.Identity.Name;
 
-                    // Continue processing the request
-                    if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/mcservers/start")
-                    {
-                        string requestBody = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
-                        Console.WriteLine($"[API] Starting server {JObject.Parse(requestBody)["id"]}");
+                    string requestBody = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
+                    string serverId = JObject.Parse(requestBody)["id"]?.ToString() ?? "unknown";
 
+                    if (context.Request.Url.AbsolutePath == "/mcservers/start")
+                    {
+                        ConsoleLogging.LogMessage($"User {username} requested to start server {serverId}", "API");
                         RespondJson(context, JObject.FromObject(new { status = "Server started" }).ToString());
                     }
-                    else if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/mcservers/stop")
+                    else if (context.Request.Url.AbsolutePath == "/mcservers/stop")
                     {
-                        string requestBody = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
-                        Console.WriteLine($"[API] Stopping server {JObject.Parse(requestBody)["id"]}");
-
+                        ConsoleLogging.LogMessage($"User {username} requested to stop server {serverId}", "API");
                         RespondJson(context, JObject.FromObject(new { status = "Server stopped" }).ToString());
                     }
                 }
                 else if (context.Request.HttpMethod == "GET" && context.Request.Url.AbsolutePath == "/")
                 {
-                    Console.WriteLine("Website");
+                    ConsoleLogging.LogMessage("Root endpoint accessed.", "API");
 
                     RespondHTML(context,
                         "<p>Server Platform Backend server</p>" +
@@ -129,23 +126,39 @@ namespace serverplatform
                     try
                     {
                         JObject result = UserAuth.AuthenticateUser(username, password);
-                        RespondJson(context, result.ToString());
+
+                        if (result["success"]?.Value<bool>() == true)
+                        {
+                            ConsoleLogging.LogSuccess($"User {username} successfully authenticated.", "Authentication");
+                            RespondJson(context, result.ToString());
+                        }
+                        else
+                        {
+                            string backendError = result["error"]?.ToString();
+                            ConsoleLogging.LogWarning($"User {username} failed to authenticate: {backendError}", "AUTH");
+
+                            // Send only a generic error to the client
+                            result["error"] = "incorrectusrorpwd";
+                            RespondJson(context, result.ToString());
+                        }
                     }
                     catch (Exception ex)
                     {
-                        ConsoleLogging.LogError($"Authentication error: {ex.Message}");
+                        ConsoleLogging.LogError($"Authentication error: {ex.Message}", "AUTH");
                         RespondJson(context, JObject.FromObject(new { success = false, error = "internalError" }).ToString());
                     }
                 }
+
                 else
                 {
                     context.Response.StatusCode = 404;
+                    ConsoleLogging.LogWarning($"404 - Endpoint not found: {context.Request.Url.AbsolutePath}", "API");
                     RespondJson(context, JObject.FromObject(new { error = "Not Found" }).ToString());
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error: {ex.Message}");
+                ConsoleLogging.LogError($"Internal server error: {ex.Message}", "API");
                 context.Response.StatusCode = 500;
                 RespondJson(context, JObject.FromObject(new { error = "Internal Server Error" }).ToString());
             }
