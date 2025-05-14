@@ -59,7 +59,7 @@
                 password = password
             };
 
-            var response = await Http.PostAsJsonAsync("/auth", loginData);
+            var response = await Http.PostAsJsonAsync("/auth/login", loginData);
             var jsonString = await response.Content.ReadAsStringAsync();
             var json = JsonSerializer.Deserialize<JsonElement>(jsonString);
 

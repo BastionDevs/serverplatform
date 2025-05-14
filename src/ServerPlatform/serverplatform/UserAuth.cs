@@ -33,6 +33,9 @@ namespace serverplatform
             }
         }
 
+        // In-memory blacklist for invalidated tokens
+        private static HashSet<string> _blacklistedTokens = new HashSet<string>();
+
         private static string LoadJwtSecret()
         {
             try
@@ -74,7 +77,6 @@ namespace serverplatform
 
             ConsoleLogging.LogSuccess("First run completed: Default user and appsettings.json created.");
         }
-
 
         public static string SHA256Hash(string password)
         {
@@ -135,7 +137,7 @@ namespace serverplatform
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new[]
+                Subject = new ClaimsIdentity(new[] 
                 {
                     new Claim(ClaimTypes.Name, username)
                 }),
@@ -149,6 +151,12 @@ namespace serverplatform
 
         public static ClaimsPrincipal ValidateJwtToken(string token)
         {
+            if (_blacklistedTokens.Contains(token))
+            {
+                // Token is blacklisted, invalidating the request
+                return null;
+            }
+
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(JwtSecret);
 
@@ -170,6 +178,23 @@ namespace serverplatform
             {
                 return null;
             }
+        }
+
+        public static JObject LogoutUser(string token)
+        {
+            // Add the token to the blacklist to invalidate it
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return JObject.FromObject(new { success = false, error = "Token is required" });
+            }
+
+            if (_blacklistedTokens.Contains(token))
+            {
+                return JObject.FromObject(new { success = true, message = "User already logged out" });
+            }
+
+            _blacklistedTokens.Add(token); // Invalidate the token
+            return JObject.FromObject(new { success = true, message = "User logged out successfully" });
         }
     }
 }

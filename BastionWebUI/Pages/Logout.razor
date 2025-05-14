@@ -1,29 +1,47 @@
 ﻿@page "/logout"
-@inject NavigationManager NavigationManager
-@inject StorageService StorageService
-@inject ISnackbar Snackbar
-@using BastionWebUI.Services
+@using System.Net.Http.Headers
+@inject IJSRuntime JS
+@inject HttpClient Http
+@inject NavigationManager Navigation
 
-
-<MudContainer MaxWidth="MaxWidth.Medium">
-    <MudCard>
-        <MudCardContent>
-            <MudText Typo="Typo.h5" Class="mb-2">Logging Out...</MudText>
-            <MudProgressCircular Size="Size.Large" Indeterminate="true" Color="Color.Primary" />
-        </MudCardContent>
-    </MudCard>
-</MudContainer>
+<h3>Logging out...</h3>
 
 @code {
     protected override async Task OnInitializedAsync()
     {
-        // Clear the JWT token from localStorage or sessionStorage
-        await StorageService.RemoveItemAsync("jwtToken");
+        // Retrieve JWT token from localStorage
+        var token = await JS.InvokeAsync<string>("localStorage.getItem", "jwtToken");
 
-        // Show logout success message
-        Snackbar.Add("You have been logged out.", Severity.Info);
+        if (string.IsNullOrEmpty(token))
+        {
+            // No token, redirect to login page
+            Navigation.NavigateTo("/login");
+            return;
+        }
 
-        // Redirect to login page
-        NavigationManager.NavigateTo("/login");
+        // Prepare the HTTP request
+        var requestMessage = new HttpRequestMessage(HttpMethod.Post, "http://localhost:1234/auth/logout");
+        requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Send the request to log out
+        var response = await Http.SendAsync(requestMessage);
+
+        if (response.IsSuccessStatusCode)
+        {
+            // Remove the JWT token from localStorage
+            await JS.InvokeVoidAsync("localStorage.removeItem", "jwtToken");
+
+            // Redirect the user to the login page or another page
+            Navigation.NavigateTo("/login");
+        }
+        else
+        {
+            // Handle logout failure
+            var errorResponse = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Logout failed: {errorResponse}");
+
+            // Optionally, redirect to an error page or show a message
+            Navigation.NavigateTo("/error");
+        }
     }
 }
