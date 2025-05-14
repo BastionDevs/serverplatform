@@ -59,6 +59,10 @@ namespace serverplatform
             sw.WriteLine("    }");
             sw.WriteLine("]");
             sw.Close();
+
+            var swappsettings = new StreamWriter("appsettings.json", false);
+            swappsettings.WriteLine("{\r\n  \"Jwt\": {\r\n    \"Secret\": \"&&Z8dAl0!1$jxBIJMv1cUy7iaAsa#Vat\"\r\n  }\r\n}");
+            swappsettings.Close();
         }
 
         public static string SHA256Hash(string password)
