@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace serverplatform
 {
@@ -65,6 +62,18 @@ namespace serverplatform
             sw.Close();
         }
 
+        public static void LogSuccess(string message)
+        {
+            LogDirCheck();
+            var sw = new StreamWriter(logFile, true);
+            Console.ForegroundColor = ConsoleColor.Green;
+            sw.WriteLine($"[SUCCESS] {message}");
+            Console.WriteLine($"[SUCCESS] {message}");
+            Console.ForegroundColor = ConsoleColor.Gray;
+            sw.Close();
+        }
+
+        
         public static void LogMessage(string message, string component)
         {
             LogDirCheck();

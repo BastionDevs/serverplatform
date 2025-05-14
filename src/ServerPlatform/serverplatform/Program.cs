@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
+using System.IO;
+
 
 namespace serverplatform
 {
@@ -13,26 +12,32 @@ namespace serverplatform
 
         static void Main(string[] args)
         {
-            //Firstrun logic
+            // First run logic
             if (args.Length >= 1)
             {
                 if (args[0] == "--firstrun")
                 {
-                    Config.MakeDefaultConfig();
-                } else if (args[0] == "--clearlogs")
-                {
-                    if (args.Length >= 2)
+                    if (File.Exists("users.json") || File.Exists("appsettings.json"))
                     {
-                        if (args[1] == "true")
-                        {
-                            ConsoleLogging.ClearLogFolder(true);
-                            Environment.Exit(1);
-                        } else 
-                        { 
-                            ConsoleLogging.ClearLogFolder(false);
-                            Environment.Exit(2);
-                        }
-                    } else
+                        ConsoleLogging.LogWarning("First run has already been completed. Aborting setup.", "SETUP");
+                        Environment.Exit(1);
+                    }
+                    else
+                    {
+                        Config.MakeDefaultConfig();
+                        UserAuth.CreateDefaultUsers(); // Add this if user creation is part of first run
+                        ConsoleLogging.LogSuccess("First run completed successfully.");
+                        Environment.Exit(0);
+                    }
+                }
+                else if (args[0] == "--clearlogs")
+                {
+                    if (args.Length >= 2 && args[1] == "true")
+                    {
+                        ConsoleLogging.ClearLogFolder(true);
+                        Environment.Exit(1);
+                    }
+                    else
                     {
                         ConsoleLogging.ClearLogFolder(false);
                         Environment.Exit(2);
@@ -44,7 +49,7 @@ namespace serverplatform
             {
                 ConsoleLogging.LogMessage("Stopping server...");
                 _cts.Cancel();
-                eventArgs.Cancel = true; // Prevent immediate termination
+                eventArgs.Cancel = true;
             };
 
             Console.OutputEncoding = Encoding.UTF8;
@@ -80,12 +85,19 @@ namespace serverplatform
             bool devMode = bool.Parse(Console.ReadLine());
 
             int backendPort;
-            if (devMode) { backendPort = 1234; } else { backendPort = int.Parse(Config.GetConfig("port", "backend")); }
+            if (devMode)
+            {
+                backendPort = 1234;
+            }
+            else
+            {
+                backendPort = int.Parse(Config.GetConfig("port", "backend"));
+            }
+
             APIHandler.StartServer(_cts.Token, backendPort).GetAwaiter().GetResult();
 
-            //Server stopping
             ConsoleLogging.LogMessage("Stopping Server Platform...");
             Console.ReadLine();
         }
-    }
+            }
 }
