@@ -1,7 +1,5 @@
 ﻿@page "/login"
-@using MudBlazor
 @using System.Text.Json
-@using BastionWebUI.Services
 @inject HttpClient Http
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
@@ -16,14 +14,14 @@
                           @bind-Value="username"
                           Variant="Variant.Filled"
                           FullWidth
-                          Required="true" />
+                          Required="true"/>
 
             <MudTextField Label="Password"
                           @bind-Value="password"
                           Variant="Variant.Filled"
                           FullWidth
                           InputType="InputType.Password"
-                          Required="true" />
+                          Required="true"/>
 
             <MudButton OnClick="HandleLogin"
                        Color="Color.Primary"
@@ -39,7 +37,7 @@
 @code {
     private string username = string.Empty;
     private string password = string.Empty;
-    private bool isLoading = false;
+    private bool isLoading;
 
     private async Task HandleLogin()
     {
@@ -55,8 +53,7 @@
 
             var loginData = new
             {
-                username = username,
-                password = password
+                username, password
             };
 
             var response = await Http.PostAsJsonAsync("/auth/login", loginData);
@@ -67,7 +64,7 @@
                 json.TryGetProperty("success", out var successElement) &&
                 successElement.ValueKind == JsonValueKind.True)
             {
-                string token = json.TryGetProperty("token", out var tokenElement)
+                var token = json.TryGetProperty("token", out var tokenElement)
                     ? tokenElement.GetString() ?? "NO_TOKEN"
                     : "NO_TOKEN";
 
@@ -82,11 +79,11 @@
             }
             else
             {
-                string errorType = json.TryGetProperty("error", out var errorElement)
+                var errorType = json.TryGetProperty("error", out var errorElement)
                     ? errorElement.GetString() ?? "unknown"
                     : "unknown";
 
-                string errorMessage = errorType switch
+                var errorMessage = errorType switch
                 {
                     "incorrectusrorpwd" => "Incorrect User or Password.",
                     "internalError" => "Server error. Please try again later.",
@@ -106,22 +103,25 @@
         }
     }
 
-    private RenderFragment LoginButtonContent() => __builder =>
+    private RenderFragment LoginButtonContent()
     {
-        if (isLoading)
+        return __builder =>
         {
-            __builder.OpenComponent<MudProgressCircular>(0);
-            __builder.AddAttribute(1, "Size", 16);
-            __builder.AddAttribute(2, "Indeterminate", true);
-            __builder.AddAttribute(3, "Class", "me-2");
-            __builder.CloseComponent();
-            __builder.AddContent(4, "Logging in...");
-        }
-        else
-        {
-            __builder.AddContent(5, "Login");
-        }
-    };
+            if (isLoading)
+            {
+                __builder.OpenComponent<MudProgressCircular>(0);
+                __builder.AddAttribute(1, "Size", 16);
+                __builder.AddAttribute(2, "Indeterminate", true);
+                __builder.AddAttribute(3, "Class", "me-2");
+                __builder.CloseComponent();
+                __builder.AddContent(4, "Logging in...");
+            }
+            else
+            {
+                __builder.AddContent(5, "Login");
+            }
+        };
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -133,4 +133,5 @@
             NavigationManager.NavigateTo("/dashboard");
         }
     }
+
 }

@@ -1,18 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace servermgr
 {
     internal class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             Console.OutputEncoding = Encoding.UTF8;
             Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine("    ____             __  _             ___________\r\n   / __ )____ ______/ /_(_)___  ____  / ____/ ___/\r\n  / __  / __ `/ ___/ __/ / __ \\/ __ \\/ /    \\__ \\ \r\n / /_/ / /_/ (__  ) /_/ / /_/ / / / / /___ ___/ / \r\n/_____/\\__,_/____/\\__/_/\\____/_/ /_/\\____//____/");
+            Console.WriteLine(
+                "    ____             __  _             ___________\r\n   / __ )____ ______/ /_(_)___  ____  / ____/ ___/\r\n  / __  / __ `/ ___/ __/ / __ \\/ __ \\/ /    \\__ \\ \r\n / /_/ / /_/ (__  ) /_/ / /_/ / / / / /___ ___/ / \r\n/_____/\\__,_/____/\\__/_/\\____/_/ /_/\\____//____/");
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.Gray;
 

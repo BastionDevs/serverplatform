@@ -1,14 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace serverplatform
+﻿namespace serverplatform
 {
     internal class ProjectInfo
     {
-
         /*
             ____             __  _             ___________
            / __ )____ ______/ /_(_)___  ____  / ____/ ___/
@@ -19,9 +12,8 @@ namespace serverplatform
         Project Information Standardisation
         */
 
-        static string ProjectName = "ServerPlatform",
+        private static string ProjectName = "ServerPlatform",
             ProjectVersion = "1.0",
             ReleaseChannel = "STABLE";
-
     }
 }

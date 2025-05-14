@@ -1,15 +1,15 @@
 ﻿using System;
+using System.IO;
 using System.Text;
 using System.Threading;
-using System.IO;
 
 namespace serverplatform
 {
     internal class Program
     {
-        static CancellationTokenSource _cts = new CancellationTokenSource();
+        private static readonly CancellationTokenSource _cts = new CancellationTokenSource();
 
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             // First run logic
             if (args.Length >= 1)
@@ -53,47 +53,58 @@ namespace serverplatform
 
             Console.OutputEncoding = Encoding.UTF8;
             Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine("    ____             __  _             ___________\r\n   / __ )____ ______/ /_(_)___  ____  / ____/ ___/\r\n  / __  / __ `/ ___/ __/ / __ \\/ __ \\/ /    \\__ \\ \r\n / /_/ / /_/ (__  ) /_/ / /_/ / / / / /___ ___/ / \r\n/_____/\\__,_/____/\\__/_/\\____/_/ /_/\\____//____/");
-            Console.WriteLine();
+
+            // Fancy ASCII Logo
+            Console.WriteLine(" ▄▄▄▄    ▄▄▄        ██████ ▄▄▄█████▓ ██▓ ▒█████   ███▄    █  ▄████▄    ██████ ");
+            Console.WriteLine("▓█████▄ ▒████▄    ▒██    ▒ ▓  ██▒ ▓▒▓██▒▒██▒  ██▒ ██ ▀█   █ ▒██▀ ▀█  ▒██    ▒ ");
+            Console.WriteLine("▒██▒ ▄██▒██  ▀█▄  ░ ▓██▄   ▒ ▓██░ ▒░▒██▒▒██░  ██▒▓██  ▀█ ██▒▒▓█    ▄ ░ ▓██▄   ");
+            Console.WriteLine("▒██░█▀  ░██▄▄▄▄██   ▒   ██▒░ ▓██▓ ░ ░██░▒██   ██░▓██▒  ▐▌██▒▒▓▓▄ ▄██▒  ▒   ██▒");
+            Console.WriteLine("░▓█  ▀█▓ ▓█   ▓██▒▒██████▒▒  ▒██▒ ░ ░██░░ ████▓▒░▒██░   ▓██░▒ ▓███▀ ░▒██████▒▒");
+            Console.WriteLine("░▒▓███▀▒ ▒▒   ▓▒█░▒ ▒▓▒ ▒ ░  ▒ ░░   ░▓  ░ ▒░▒░▒░ ░ ▒░   ▒ ▒ ░ ░▒ ▒  ░▒ ▒▓▒ ▒ ░");
+            Console.WriteLine("▒░▒   ░   ▒   ▒▒ ░░ ░▒  ░ ░    ░     ▒ ░  ░ ▒ ▒░ ░ ░░   ░ ▒░  ░  ▒   ░ ░▒  ░ ░");
+            Console.WriteLine(" ░    ░   ░   ▒   ░  ░  ░    ░       ▒ ░░ ░ ░ ▒     ░   ░ ░ ░        ░  ░  ░  ");
+            Console.WriteLine(" ░            ░  ░      ░            ░      ░ ░           ░ ░ ░            ░");
+            Console.WriteLine("      ░                                                     ░              ");
             Console.ForegroundColor = ConsoleColor.Gray;
 
-            ConsoleLogging.LogMessage("Bastion Server Platform");
-            ConsoleLogging.LogMessage("Backend Server");
-            Console.ForegroundColor = ConsoleColor.DarkCyan;
+            Console.WriteLine();
+            Console.ForegroundColor = ConsoleColor.DarkGreen;
+            ConsoleLogging.LogMessage("Bastion Server Platform — Backend Server");
+
+            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.WriteLine("Visit " + "https://www.bastionsg.rf.gd");
 
             Console.WriteLine();
-            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.ForegroundColor = ConsoleColor.DarkGray;
             ConsoleLogging.LogMessage("© 2025 Bastion Faculty of Computer Science");
-            Console.WriteLine("https://www.bastionsg.rf.gd");
 
             Console.WriteLine();
-            ConsoleLogging.LogMessage("Version 1.0");
+            Console.ForegroundColor = ConsoleColor.Gray;
+            ConsoleLogging.LogMessage("Version 1.0.0");
 
             Console.Write("[");
-
             Console.ForegroundColor = ConsoleColor.Green;
             Console.Write("STABLE");
-
             Console.ForegroundColor = ConsoleColor.Gray;
             Console.WriteLine("] Release Channel");
 
             Console.WriteLine();
-            ConsoleLogging.LogMessage("Devastating fact:");
-            ConsoleLogging.LogMessage("Israel has been occupying Palestinian land illegally for longer than CubeNotFound has lived.");
+            Console.ForegroundColor = ConsoleColor.Red;
+            ConsoleLogging.LogMessage("💣 Devastating Fact:");
+            Console.ForegroundColor = ConsoleColor.Gray;
+            ConsoleLogging.LogMessage(
+                "Israel has been occupying Palestinian land illegally longer than CubeNotFound has lived.");
             Console.WriteLine();
 
+
             Console.WriteLine("Development use? [True/False]");
-            bool devMode = bool.Parse(Console.ReadLine());
+            var devMode = bool.Parse(Console.ReadLine());
 
             int backendPort;
             if (devMode)
-            {
                 backendPort = 1234;
-            }
             else
-            {
                 backendPort = int.Parse(Config.GetConfig("port", "backend"));
-            }
 
             // Start server
             ConsoleLogging.LogSuccess("Server is now online and listening.");

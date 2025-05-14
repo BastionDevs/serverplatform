@@ -1,54 +1,43 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.IO;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.IdentityModel.Tokens.Jwt;
-using Microsoft.IdentityModel.Tokens;
-using System.Security.Claims;
 
 namespace serverplatform
 {
     internal class UserAuth
     {
-        class User
-        {
-            public string Username { get; set; }
-            public string PasswordHash { get; set; }
-        }
-
         // Lazy-loaded JWT secret
         private static string _jwtSecret;
+
+        // In-memory blacklist for invalidated tokens
+        private static readonly HashSet<string> _blacklistedTokens = new HashSet<string>();
+
         private static string JwtSecret
         {
             get
             {
-                if (_jwtSecret == null)
-                {
-                    _jwtSecret = LoadJwtSecret();
-                }
+                if (_jwtSecret == null) _jwtSecret = LoadJwtSecret();
                 return _jwtSecret;
             }
         }
-
-        // In-memory blacklist for invalidated tokens
-        private static HashSet<string> _blacklistedTokens = new HashSet<string>();
 
         private static string LoadJwtSecret()
         {
             try
             {
-                string jsonContent = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "appsettings.json"));
-                JObject config = JObject.Parse(jsonContent);
+                var jsonContent = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "appsettings.json"));
+                var config = JObject.Parse(jsonContent);
 
                 var secret = config["Jwt"]?["Secret"]?.ToString();
 
-                if (string.IsNullOrEmpty(secret))
-                {
-                    throw new Exception("JWT Secret is missing in appsettings.json");
-                }
+                if (string.IsNullOrEmpty(secret)) throw new Exception("JWT Secret is missing in appsettings.json");
 
                 return secret;
             }
@@ -68,11 +57,13 @@ namespace serverplatform
             }
 
             var sw = new StreamWriter("users.json", false);
-            sw.WriteLine("[\r\n    {\r\n        \"Username\": \"admin\",\r\n        \"PasswordHash\": \"240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9\"\r\n    }\r\n]");
+            sw.WriteLine(
+                "[\r\n    {\r\n        \"Username\": \"admin\",\r\n        \"PasswordHash\": \"240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9\"\r\n    }\r\n]");
             sw.Close();
 
             var swappsettings = new StreamWriter("appsettings.json", false);
-            swappsettings.WriteLine("{\r\n  \"Jwt\": {\r\n    \"Secret\": \"&&Z8dAl0!1$jxBIJMv1cUy7iaAsa#Vat\"\r\n  }\r\n}");
+            swappsettings.WriteLine(
+                "{\r\n  \"Jwt\": {\r\n    \"Secret\": \"&&Z8dAl0!1$jxBIJMv1cUy7iaAsa#Vat\"\r\n  }\r\n}");
             swappsettings.Close();
 
             ConsoleLogging.LogSuccess("First run completed: Default user and appsettings.json created.");
@@ -80,10 +71,10 @@ namespace serverplatform
 
         public static string SHA256Hash(string password)
         {
-            using (SHA256 sha = SHA256.Create())
+            using (var sha = SHA256.Create())
             {
-                byte[] bytes = Encoding.UTF8.GetBytes(password);
-                byte[] hash = sha.ComputeHash(bytes);
+                var bytes = Encoding.UTF8.GetBytes(password);
+                var hash = sha.ComputeHash(bytes);
                 return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
             }
         }
@@ -96,7 +87,7 @@ namespace serverplatform
                 return JObject.FromObject(new { success = false, error = "serverError" });
             }
 
-            string json = File.ReadAllText("users.json");
+            var json = File.ReadAllText("users.json");
 
             if (string.IsNullOrWhiteSpace(json))
             {
@@ -104,7 +95,7 @@ namespace serverplatform
                 return JObject.FromObject(new { success = false, error = "serverError" });
             }
 
-            List<User> users = JsonConvert.DeserializeObject<List<User>>(json);
+            var users = JsonConvert.DeserializeObject<List<User>>(json);
             if (users == null)
             {
                 ConsoleLogging.LogWarning("Deserialization returned null. Check JSON format.", "AUTH");
@@ -112,19 +103,17 @@ namespace serverplatform
             }
 
             foreach (var user in users)
-            {
                 if (user.Username == username)
                 {
                     if (user.PasswordHash == SHA256Hash(password))
                     {
-                        string token = GenerateJwtToken(username);
-                        return JObject.FromObject(new { success = true, token = token });
+                        var token = GenerateJwtToken(username);
+                        return JObject.FromObject(new { success = true, token });
                     }
 
                     ConsoleLogging.LogWarning($"User {username} failed to authenticate: Incorrect password", "AUTH");
                     return JObject.FromObject(new { success = false, error = "wrongPassword" });
                 }
-            }
 
             ConsoleLogging.LogWarning($"User {username} not found", "AUTH");
             return JObject.FromObject(new { success = false, error = "userNotFound" });
@@ -137,12 +126,13 @@ namespace serverplatform
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new[] 
+                Subject = new ClaimsIdentity(new[]
                 {
                     new Claim(ClaimTypes.Name, username)
                 }),
                 Expires = DateTime.UtcNow.AddHours(1),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key),
+                    SecurityAlgorithms.HmacSha256Signature)
             };
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
@@ -152,10 +142,8 @@ namespace serverplatform
         public static ClaimsPrincipal ValidateJwtToken(string token)
         {
             if (_blacklistedTokens.Contains(token))
-            {
                 // Token is blacklisted, invalidating the request
                 return null;
-            }
 
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(JwtSecret);
@@ -171,7 +159,7 @@ namespace serverplatform
 
             try
             {
-                var principal = tokenHandler.ValidateToken(token, validationParams, out SecurityToken validatedToken);
+                var principal = tokenHandler.ValidateToken(token, validationParams, out var validatedToken);
                 return principal;
             }
             catch
@@ -184,17 +172,19 @@ namespace serverplatform
         {
             // Add the token to the blacklist to invalidate it
             if (string.IsNullOrWhiteSpace(token))
-            {
                 return JObject.FromObject(new { success = false, error = "Token is required" });
-            }
 
             if (_blacklistedTokens.Contains(token))
-            {
                 return JObject.FromObject(new { success = true, message = "User already logged out" });
-            }
 
             _blacklistedTokens.Add(token); // Invalidate the token
             return JObject.FromObject(new { success = true, message = "User logged out successfully" });
+        }
+
+        private class User
+        {
+            public string Username { get; set; }
+            public string PasswordHash { get; set; }
         }
     }
 }
