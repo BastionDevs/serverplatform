@@ -5,12 +5,9 @@ using System.Security.Cryptography;
 using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Microsoft.Extensions.Configuration;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
-
-
 
 namespace serverplatform
 {
@@ -22,7 +19,19 @@ namespace serverplatform
             public string PasswordHash { get; set; }
         }
 
-        private static readonly string jwtSecret = LoadJwtSecret();
+        // Lazy-loaded JWT secret
+        private static string _jwtSecret;
+        private static string JwtSecret
+        {
+            get
+            {
+                if (_jwtSecret == null)
+                {
+                    _jwtSecret = LoadJwtSecret();
+                }
+                return _jwtSecret;
+            }
+        }
 
         private static string LoadJwtSecret()
         {
@@ -31,7 +40,6 @@ namespace serverplatform
                 string jsonContent = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "appsettings.json"));
                 JObject config = JObject.Parse(jsonContent);
 
-                // Access the Jwt Secret from the loaded JSON
                 var secret = config["Jwt"]?["Secret"]?.ToString();
 
                 if (string.IsNullOrEmpty(secret))
@@ -44,21 +52,29 @@ namespace serverplatform
             catch (Exception ex)
             {
                 ConsoleLogging.LogError($"Error loading JWT Secret: {ex.Message}");
-                throw;  // Rethrow the exception to maintain the stack trace
+                throw;
             }
         }
 
-
         public static void CreateDefaultUsers()
         {
+            if (File.Exists("users.json") || File.Exists("appsettings.json"))
+            {
+                ConsoleLogging.LogWarning("First run has already been completed. Aborting setup.", "SETUP");
+                return;
+            }
+
             var sw = new StreamWriter("users.json", false);
-            sw.WriteLine("[\r\n    {\r\n        \"Username\": \"admin\",\r\n        \"PasswordHash\": \"240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9\"\r\n    }\r\n]\r\n");
+            sw.WriteLine("[\r\n    {\r\n        \"Username\": \"admin\",\r\n        \"PasswordHash\": \"240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9\"\r\n    }\r\n]");
             sw.Close();
 
             var swappsettings = new StreamWriter("appsettings.json", false);
             swappsettings.WriteLine("{\r\n  \"Jwt\": {\r\n    \"Secret\": \"&&Z8dAl0!1$jxBIJMv1cUy7iaAsa#Vat\"\r\n  }\r\n}");
             swappsettings.Close();
+
+            ConsoleLogging.LogSuccess("First run completed: Default user and appsettings.json created.");
         }
+
 
         public static string SHA256Hash(string password)
         {
@@ -115,7 +131,7 @@ namespace serverplatform
         private static string GenerateJwtToken(string username)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(jwtSecret);
+            var key = Encoding.ASCII.GetBytes(JwtSecret);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
@@ -123,7 +139,7 @@ namespace serverplatform
                 {
                     new Claim(ClaimTypes.Name, username)
                 }),
-                Expires = DateTime.UtcNow.AddHours(1), // Adjust as needed
+                Expires = DateTime.UtcNow.AddHours(1),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 
@@ -134,7 +150,7 @@ namespace serverplatform
         public static ClaimsPrincipal ValidateJwtToken(string token)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(jwtSecret);
+            var key = Encoding.ASCII.GetBytes(JwtSecret);
 
             var validationParams = new TokenValidationParameters
             {
@@ -142,7 +158,7 @@ namespace serverplatform
                 IssuerSigningKey = new SymmetricSecurityKey(key),
                 ValidateIssuer = false,
                 ValidateAudience = false,
-                ClockSkew = TimeSpan.Zero // Optional: reduce default 5-min tolerance
+                ClockSkew = TimeSpan.Zero
             };
 
             try
@@ -155,6 +171,5 @@ namespace serverplatform
                 return null;
             }
         }
-
     }
 }
