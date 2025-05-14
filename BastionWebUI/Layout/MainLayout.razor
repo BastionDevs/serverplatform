@@ -1,12 +1,8 @@
 ﻿@inherits LayoutComponentBase
 
 <MudThemeProvider Theme="@Potatoes" />
-
 <MudPopoverProvider />
-
-
 <MudDialogProvider />
-
 <MudSnackbarProvider />
 
 <MudLayout>
@@ -15,7 +11,12 @@
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
         <MudText Typo="Typo.h5" Class="ml-3">Bastion Web UI</MudText>
         <MudSpacer />
-        <MudIconButton Icon="@Icons.Custom.Brands.GitHub" Color="Color.Inherit" Href="https://github.com/MudBlazor/MudBlazor" Target="_blank" />
+
+        <!-- Login Button (Replaces GitHub Icon) -->
+        <MudIconButton Icon="@Icons.Material.Filled.Login" Color="Color.Inherit" Href="/login" />
+
+        <!-- Logout Button (Hardcoded for now) -->
+        <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" Href="/logout" />
     </MudAppBar>
 
     <!-- Drawer -->
@@ -25,8 +26,7 @@
         </MudDrawerHeader>
         <MudNavMenu>
             <MudNavLink Match="NavLinkMatch.All" Href="/home">Servers</MudNavLink>
-            <MudNavLink Match="NavLinkMatch.All" Href="/login">Login</MudNavLink>
-            <MudNavLink Match="NavLinkMatch.All" Href="/dashboard">dashboard</MudNavLink>
+            <MudNavLink Match="NavLinkMatch.All" Href="/dashboard">Dashboard</MudNavLink>
         </MudNavMenu>
     </MudDrawer>
 
@@ -47,13 +47,13 @@
     }
 
     private MudTheme Potatoes = new MudTheme()
-    {
-        Typography = new Typography()
         {
-            Default = new DefaultTypography()
+            Typography = new Typography()
             {
-                FontFamily = new[] { "Space Grotesk", "Helvetica", "Arial", "sans-serif" }
+                Default = new DefaultTypography()
+                {
+                    FontFamily = new[] { "Space Grotesk", "Helvetica", "Arial", "sans-serif" }
+                }
             }
-        }
-    };
+        };
 }

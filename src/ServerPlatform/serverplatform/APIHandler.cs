@@ -66,19 +66,46 @@ namespace serverplatform
 
                 Console.WriteLine($"Incoming {context.Request.HttpMethod} request for {context.Request.Url.AbsolutePath}");
 
-                if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/mcservers/start")
+                // Check for protected routes requiring authentication
+                if (context.Request.HttpMethod == "POST" && (context.Request.Url.AbsolutePath == "/mcservers/start" || context.Request.Url.AbsolutePath == "/mcservers/stop"))
                 {
-                    string requestBody = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
-                    Console.WriteLine($"[API] Starting server {JObject.Parse(requestBody)["id"]}");
+                    // Validate JWT token for protected routes
+                    string authHeader = context.Request.Headers["Authorization"];
+                    if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
+                    {
+                        context.Response.StatusCode = 401;
+                        RespondJson(context, JObject.FromObject(new { error = "Missing or invalid Authorization header" }).ToString());
+                        return;
+                    }
 
-                    RespondJson(context, JObject.FromObject(new { status = "Server started" }).ToString());
-                }
-                else if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/mcservers/stop")
-                {
-                    string requestBody = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
-                    Console.WriteLine($"[API] Stopping server {JObject.Parse(requestBody)["id"]}");
+                    string token = authHeader.Substring("Bearer ".Length);
+                    var principal = UserAuth.ValidateJwtToken(token);
+                    if (principal == null)
+                    {
+                        context.Response.StatusCode = 401;
+                        RespondJson(context, JObject.FromObject(new { error = "Invalid or expired token" }).ToString());
+                        return;
+                    }
 
-                    RespondJson(context, JObject.FromObject(new { status = "Server stopped" }).ToString());
+                    // Proceed with the protected endpoint logic
+                    // Optionally, get the username from the token
+                    string username = principal.Identity.Name;
+
+                    // Continue processing the request
+                    if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/mcservers/start")
+                    {
+                        string requestBody = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
+                        Console.WriteLine($"[API] Starting server {JObject.Parse(requestBody)["id"]}");
+
+                        RespondJson(context, JObject.FromObject(new { status = "Server started" }).ToString());
+                    }
+                    else if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/mcservers/stop")
+                    {
+                        string requestBody = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
+                        Console.WriteLine($"[API] Stopping server {JObject.Parse(requestBody)["id"]}");
+
+                        RespondJson(context, JObject.FromObject(new { status = "Server stopped" }).ToString());
+                    }
                 }
                 else if (context.Request.HttpMethod == "GET" && context.Request.Url.AbsolutePath == "/")
                 {
