@@ -1,0 +1,29 @@
+﻿@page "/logout"
+@inject NavigationManager NavigationManager
+@inject StorageService StorageService
+@inject ISnackbar Snackbar
+@using BastionWebUI.Services
+
+
+<MudContainer MaxWidth="MaxWidth.Medium">
+    <MudCard>
+        <MudCardContent>
+            <MudText Typo="Typo.h5" Class="mb-2">Logging Out...</MudText>
+            <MudProgressCircular Size="Size.Large" Indeterminate="true" Color="Color.Primary" />
+        </MudCardContent>
+    </MudCard>
+</MudContainer>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        // Clear the JWT token from localStorage or sessionStorage
+        await StorageService.RemoveItemAsync("jwtToken");
+
+        // Show logout success message
+        Snackbar.Add("You have been logged out.", Severity.Info);
+
+        // Redirect to login page
+        NavigationManager.NavigateTo("/login");
+    }
+}
