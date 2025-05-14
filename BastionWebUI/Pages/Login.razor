@@ -59,7 +59,7 @@
                 password = password
             };
 
-            var response = await Http.PostAsJsonAsync("/auth", loginData);
+            var response = await Http.PostAsJsonAsync("/auth/login", loginData);
             var jsonString = await response.Content.ReadAsStringAsync();
             var json = JsonSerializer.Deserialize<JsonElement>(jsonString);
 
@@ -88,10 +88,9 @@
 
                 string errorMessage = errorType switch
                 {
-                    "wrongPassword" => "Incorrect password.",
-                    "userNotFound" => "User not found.",
+                    "incorrectusrorpwd" => "Incorrect User or Password.",
                     "internalError" => "Server error. Please try again later.",
-                    _ => "Login failed."
+                    _ => "Login failed. Please contact your Administrator"
                 };
 
                 Snackbar.Add(errorMessage, Severity.Error);

@@ -1,105 +1,64 @@
 ﻿using System;
 using System.IO;
 
-
 namespace serverplatform
 {
     internal class ConsoleLogging
     {
-        static string logDir = Environment.CurrentDirectory + @"\logs";
-        static string logFile = logDir + $@"\{DateTime.Now.ToString("yyyy-dd-MMM-hh-mm-tt").ToLower()}.log";
+        static string logDir = Path.Combine(Environment.CurrentDirectory, "logs");
+        static string logFile = Path.Combine(logDir, $"{DateTime.Now:yyyy-dd-MMM-hh-mm-tt}".ToLower() + ".log");
 
-        public static void LogError(string message)
-        {
-            LogDirCheck();
-            var sw = new StreamWriter(logFile, true);
-            Console.ForegroundColor = ConsoleColor.Red;
-            sw.WriteLine($"[ERROR] {message}");
-            Console.WriteLine($"[ERROR] {message}");
-            Console.ForegroundColor = ConsoleColor.Gray;
-            sw.Close();
-        }
+        public static void LogError(string message, string component = null)
+            => WriteLog(message, component, "ERROR", ConsoleColor.Red);
 
-        public static void LogWarning(string message) 
-        {
-            LogDirCheck();
-            var sw = new StreamWriter(logFile, true);
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            sw.WriteLine($"[WARN] {message}");
-            Console.WriteLine($"[WARN] {message}");
-            Console.ForegroundColor = ConsoleColor.Gray;
-            sw.Close();
-        }
+        public static void LogWarning(string message, string component = null)
+            => WriteLog(message, component, "WARN", ConsoleColor.Yellow);
 
-        public static void LogMessage(string message)
-        {
-            LogDirCheck();
-            var sw = new StreamWriter(logFile, true);
-            sw.WriteLine($"{message}");
-            Console.WriteLine($"{message}");
-            sw.Close();
-        }
+        public static void LogSuccess(string message, string component = null)
+            => WriteLog(message, component, "SUCCESS", ConsoleColor.Green);
 
-        public static void LogError(string message, string component)
-        {
-            LogDirCheck();
-            var sw = new StreamWriter(logFile, true);
-            Console.ForegroundColor = ConsoleColor.Red;
-            sw.WriteLine($"[{component} - ERROR] {message}");
-            Console.WriteLine($"[{component} - ERROR] {message}");
-            Console.ForegroundColor = ConsoleColor.Gray;
-            sw.Close();
-        }
+        public static void LogMessage(string message, string component = null)
+            => WriteLog(message, component, null, Console.ForegroundColor);
 
-        public static void LogWarning(string message, string component)
+        public static void ClearLogFolder(bool confirm)
         {
-            LogDirCheck();
-            var sw = new StreamWriter(logFile, true);
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            sw.WriteLine($"[{component} - WARN] {message}");
-            Console.WriteLine($"[{component} - WARN] {message}");
-            Console.ForegroundColor = ConsoleColor.Gray;
-            sw.Close();
-        }
-
-        public static void LogSuccess(string message)
-        {
-            LogDirCheck();
-            var sw = new StreamWriter(logFile, true);
-            Console.ForegroundColor = ConsoleColor.Green;
-            sw.WriteLine($"[SUCCESS] {message}");
-            Console.WriteLine($"[SUCCESS] {message}");
-            Console.ForegroundColor = ConsoleColor.Gray;
-            sw.Close();
-        }
-
-        
-        public static void LogMessage(string message, string component)
-        {
-            LogDirCheck();
-            var sw = new StreamWriter(logFile, true);
-            sw.WriteLine($"[{component}] {message}");
-            Console.WriteLine($"[{component}] {message}");
-            sw.Close();
-        }
-
-        static void LogDirCheck()
-        {
-            if (!Directory.Exists(logDir))
+            if (confirm)
             {
-                Directory.CreateDirectory(logDir);
+                if (Directory.Exists(logDir))
+                    Directory.Delete(logDir, true);
             }
-        }
-
-        public static void ClearLogFolder(bool conf)
-        {
-            if (conf)
-            {
-                Directory.Delete(logDir, true);
-            } else
+            else
             {
                 LogWarning("User almost deleted all the logs!!", "Logging");
             }
+        }
+
+        // Internal logging logic
+        private static void WriteLog(string message, string component, string level, ConsoleColor color)
+        {
+            LogDirCheck();
+            string timestamp = $"[{DateTime.Now:HH:mm:ss}]";
+            string prefix = level != null
+                ? $"[{(component != null ? $"{component} - " : "")}{level}]"
+                : component != null
+                    ? $"[{component}]"
+                    : "";
+
+            string fullMessage = $"{timestamp} {prefix} {message}".Trim();
+
+            using (var sw = new StreamWriter(logFile, true))
+            {
+                Console.ForegroundColor = color;
+                sw.WriteLine(fullMessage);
+                Console.WriteLine(fullMessage);
+                Console.ForegroundColor = ConsoleColor.Gray;
+            }
+        }
+
+        private static void LogDirCheck()
+        {
+            if (!Directory.Exists(logDir))
+                Directory.CreateDirectory(logDir);
         }
     }
 }
