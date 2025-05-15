@@ -1,15 +1,15 @@
-﻿@page "/login"
+@page "/register"
 @using System.Text.Json
 @inject HttpClient Http
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
 @inject StorageService StorageService
 
-<MudText Typo="Typo.h3" GutterBottom="true">Log in</MudText>
+<MudText Typo="Typo.h3" GutterBottom="true">Register</MudText>
 
 <MudGrid>
     <MudItem md="6">
-        <MudText Typo="Typo.body1" GutterBottom="true">Use a local account to log in.</MudText>
+        <MudText Typo="Typo.body1" GutterBottom="true">Create a new account.</MudText>
 
         <MudForm @ref="form">
             <MudGrid>
@@ -21,6 +21,7 @@
                                   Required="true"
                                   For="@(() => username)" />
                 </MudItem>
+
                 <MudItem md="12">
                     <MudTextField Label="Password"
                                   @bind-Value="password"
@@ -30,16 +31,24 @@
                                   Required="true"
                                   For="@(() => password)" />
                 </MudItem>
+
                 <MudItem md="12">
-                    <MudCheckBox @bind-Value="rememberMe" Label="Remember Me"></MudCheckBox>
+                    <MudTextField Label="Confirm Password"
+                                  @bind-Value="confirmPassword"
+                                  Variant="Variant.Filled"
+                                  FullWidth="true"
+                                  InputType="InputType.Password"
+                                  Required="true"
+                                  For="@(() => confirmPassword)" />
                 </MudItem>
+
                 <MudItem md="12">
-                    <MudButton OnClick="HandleLogin"
+                    <MudButton OnClick="HandleRegister"
                                Color="Color.Primary"
                                Variant="Variant.Filled"
                                FullWidth="true"
                                Disabled="@isLoading">
-                        @LoginButtonContent()
+                        @RegisterButtonContent()
                     </MudButton>
                 </MudItem>
             </MudGrid>
@@ -47,14 +56,13 @@
 
         <MudGrid Class="mt-4">
             <MudItem md="12">
-                <MudLink Href="/forgot-password">Forgot your password?</MudLink><br />
-                <MudLink Href="/register">Register as a new user</MudLink><br />
+                <MudLink Href="/login">Already have an account? Log in</MudLink>
             </MudItem>
         </MudGrid>
     </MudItem>
 
     <MudItem md="6">
-        <MudText GutterBottom="true" Typo="Typo.body1">Use another service to log in.</MudText>
+        <MudText Typo="Typo.body1" GutterBottom="true">Or use another service to register.</MudText>
         <ExternalLoginPicker />
     </MudItem>
 </MudGrid>
@@ -63,11 +71,14 @@
     private MudForm? form;
     private string username = string.Empty;
     private string password = string.Empty;
-    private bool rememberMe = false;
+    private string confirmPassword = string.Empty;
     private bool isLoading = false;
 
-    private async Task HandleLogin()
+    private async Task HandleRegister()
     {
+        
+        Console.WriteLine("task called!"); // Debug, Can remove once no longer needed 
+        
         if (form is null)
         {
             Snackbar.Add("Form is not initialized.", Severity.Error);
@@ -82,17 +93,23 @@
             return;
         }
 
+        if (password != confirmPassword)
+        {
+            Snackbar.Add("Passwords do not match.", Severity.Error);
+            return;
+        }
+
         try
         {
             isLoading = true;
 
-            var loginData = new
+            var registerData = new
             {
                 username,
                 password
             };
 
-            var response = await Http.PostAsJsonAsync("/auth/login", loginData);
+            var response = await Http.PostAsJsonAsync("http://localhost:1234/auth/register", registerData);
             var jsonString = await response.Content.ReadAsStringAsync();
             var json = JsonSerializer.Deserialize<JsonElement>(jsonString);
 
@@ -100,16 +117,9 @@
                 json.TryGetProperty("success", out var successElement) &&
                 successElement.ValueKind == JsonValueKind.True)
             {
-                var token = json.TryGetProperty("token", out var tokenElement)
-                    ? tokenElement.GetString() ?? "NO_TOKEN"
-                    : "NO_TOKEN";
-
-                Snackbar.Add("Login successful!", Severity.Success);
-
-                await StorageService.SetItemAsync("jwtToken", token);
-
+                Snackbar.Add("Registration successful! Please log in.", Severity.Success);
                 await Task.Delay(1000);
-                NavigationManager.NavigateTo("/dashboard");
+                NavigationManager.NavigateTo("/login");
             }
             else
             {
@@ -119,9 +129,9 @@
 
                 var errorMessage = errorType switch
                 {
-                    "incorrectusrorpwd" => "Incorrect User or Password.",
+                    "userexists" => "Username is already taken.",
                     "internalError" => "Server error. Please try again later.",
-                    _ => "Login failed. Please contact your Administrator"
+                    _ => "Registration failed. Please contact your Administrator"
                 };
 
                 Snackbar.Add(errorMessage, Severity.Error);
@@ -129,7 +139,7 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Login failed: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Registration failed: {ex.Message}", Severity.Error);
         }
         finally
         {
@@ -137,7 +147,7 @@
         }
     }
 
-    private RenderFragment LoginButtonContent()
+    private RenderFragment RegisterButtonContent()
     {
         return __builder =>
         {
@@ -148,11 +158,11 @@
                 __builder.AddAttribute(2, "Indeterminate", true);
                 __builder.AddAttribute(3, "Class", "me-2");
                 __builder.CloseComponent();
-                __builder.AddContent(4, "Logging in...");
+                __builder.AddContent(4, "Registering...");
             }
             else
             {
-                __builder.AddContent(5, "Log in");
+                __builder.AddContent(5, "Register");
             }
         };
     }
@@ -165,5 +175,6 @@
             Snackbar.Add("You are already logged in!", Severity.Error);
             NavigationManager.NavigateTo("/dashboard");
         }
+    
     }
 }

@@ -119,6 +119,65 @@ namespace serverplatform
             return JObject.FromObject(new { success = false, error = "userNotFound" });
         }
 
+        public static JObject RegisterUser(string username, string password)
+        {
+            // Input validation
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+                return JObject.FromObject(new { success = false, error = "missingFields" });
+
+            var usersFilePath = "users.json";
+
+            List<User> users;
+
+            // If the file exists, read existing users
+            if (File.Exists(usersFilePath))
+            {
+                var json = File.ReadAllText(usersFilePath);
+
+                try
+                {
+                    users = JsonConvert.DeserializeObject<List<User>>(json) ?? new List<User>();
+                }
+                catch (Exception ex)
+                {
+                    ConsoleLogging.LogError($"Failed to parse users.json: {ex.Message}");
+                    return JObject.FromObject(new { success = false, error = "serverError" });
+                }
+            }
+            else
+            {
+                users = new List<User>();
+            }
+
+            // Check for duplicate username
+            if (users.Exists(u => u.Username.Equals(username, StringComparison.OrdinalIgnoreCase)))
+            {
+                ConsoleLogging.LogWarning($"Attempt to register existing username: {username}", "AUTH");
+                return JObject.FromObject(new { success = false, error = "userExists" });
+            }
+
+            // Add new user
+            var newUser = new User
+            {
+                Username = username,
+                PasswordHash = SHA256Hash(password)
+            };
+            users.Add(newUser);
+
+            try
+            {
+                File.WriteAllText(usersFilePath, JsonConvert.SerializeObject(users, Formatting.Indented));
+                ConsoleLogging.LogSuccess($"New user registered: {username}", "AUTH");
+                return JObject.FromObject(new { success = true, message = "User registered successfully" });
+            }
+            catch (Exception ex)
+            {
+                ConsoleLogging.LogError($"Failed to write to users.json: {ex.Message}");
+                return JObject.FromObject(new { success = false, error = "serverError" });
+            }
+        }
+
+        
         private static string GenerateJwtToken(string username)
         {
             var tokenHandler = new JwtSecurityTokenHandler();

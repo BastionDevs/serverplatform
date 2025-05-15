@@ -83,10 +83,10 @@ namespace serverplatform
                     {
                         HandleLogout(context);
                     }
-                    // else if (pathParts.Length == 3 && pathParts[2] == "register")
-                    // {
-                    //     HandleRegister(context);
-                    // }
+                    else if (pathParts.Length == 3 && pathParts[2] == "register")
+                    {
+                        HandleRegister(context);
+                    }
                     else
                     {
                         context.Response.StatusCode = 404;
@@ -119,7 +119,7 @@ namespace serverplatform
             var username = body["username"]?.ToString();
             var password = body["password"]?.ToString();
 
-            ConsoleLogging.LogMessage($"User {username} attempting to authenticate...", "Authentication");
+            ConsoleLogging.LogMessage($"User {username} attempting to authenticate...", "AUTH");
 
             try
             {
@@ -127,7 +127,7 @@ namespace serverplatform
 
                 if (result["success"]?.Value<bool>() == true)
                 {
-                    ConsoleLogging.LogSuccess($"User {username} successfully authenticated.", "Authentication");
+                    ConsoleLogging.LogSuccess($"User {username} successfully authenticated.", "AUTH");
                     RespondJson(context, result.ToString());
                 }
                 else
@@ -171,50 +171,49 @@ namespace serverplatform
             // Invalidate the token (this depends on your JWT strategy, e.g., token blacklisting)
             // For simplicity, you may just log it for now or set an expiration.
 
-            ConsoleLogging.LogSuccess("User successfully logged out", "Authentication");
+            ConsoleLogging.LogSuccess("User successfully logged out", "AUTH");
 
             RespondJson(context,
                 JObject.FromObject(new { success = true, message = "Successfully logged out" }).ToString());
         }
 
-        // private static void HandleRegister(HttpListenerContext context)
-        // {
-        //     // Implement registration functionality (e.g., create a new user)
-        //     string requestBody = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
-        //     JObject body = JObject.Parse(requestBody);
-        //
-        //     string username = body["username"]?.ToString();
-        //     string password = body["password"]?.ToString();
-        //     string email = body["email"]?.ToString();
-        //
-        //     ConsoleLogging.LogMessage($"Attempting to register user {username}...", "Authentication");
-        //
-        //     try
-        //     {
-        //         // Registration logic (e.g., validate, hash password, create user)
-        //         var result = UserAuth.RegisterUser(username, password, email);
-        //
-        //         if (result["success"]?.Value<bool>() == true)
-        //         {
-        //             ConsoleLogging.LogSuccess($"User {username} successfully registered.", "Authentication");
-        //             RespondJson(context, result.ToString());
-        //         }
-        //         else
-        //         {
-        //             string backendError = result["error"]?.ToString();
-        //             ConsoleLogging.LogWarning($"User {username} failed to register: {backendError}", "AUTH");
-        //
-        //             // Send only a generic error to the client
-        //             result["error"] = "registrationfailed";
-        //             RespondJson(context, result.ToString());
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         ConsoleLogging.LogError($"Registration error: {ex.Message}", "AUTH");
-        //         RespondJson(context, JObject.FromObject(new { success = false, error = "internalError" }).ToString());
-        //     }
-        // }
+        private static void HandleRegister(HttpListenerContext context)
+        {
+            // Implement registration functionality (e.g., create a new user)
+            string requestBody = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
+            JObject body = JObject.Parse(requestBody);
+        
+            string username = body["username"]?.ToString();
+            string password = body["password"]?.ToString();
+        
+            ConsoleLogging.LogMessage($"Attempting to register user {username}...", "AUTH");
+        
+            try
+            {
+                // Registration logic (e.g., validate, hash password, create user)
+                var result = UserAuth.RegisterUser(username, password);
+        
+                if (result["success"]?.Value<bool>() == true)
+                {
+                    ConsoleLogging.LogSuccess($"User {username} successfully registered.", "AUTH");
+                    RespondJson(context, result.ToString());
+                }
+                else
+                {
+                    string backendError = result["error"]?.ToString();
+                    ConsoleLogging.LogWarning($"User {username} failed to register: {backendError}", "AUTH");
+        
+                    // Send only a generic error to the client
+                    result["error"] = "registrationfailed";
+                    RespondJson(context, result.ToString());
+                }
+            }
+            catch (Exception ex)
+            {
+                ConsoleLogging.LogError($"Registration error: {ex.Message}", "AUTH");
+                RespondJson(context, JObject.FromObject(new { success = false, error = "internalError" }).ToString());
+            }
+        }
 
         public static void AddCORSHeaders(HttpListenerResponse response)
         {
