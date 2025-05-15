@@ -13,11 +13,14 @@
         <MudText Typo="Typo.h5" Class="ml-3">Bastion Web UI</MudText>
         <MudSpacer/>
 
-        <!-- Login Button (Replaces GitHub Icon) -->
-        <MudIconButton Icon="@Icons.Material.Filled.Login" Color="Color.Inherit" Href="/login"/>
 
-        <!-- Logout Button (Hardcoded for now) -->
-        <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" Href="/logout"/>
+        <MudMenu Icon="@Icons.Material.Filled.AccountCircle"
+                 Color="Color.Default"
+                 AriaLabel="Open user menu">
+            <MudMenuItem Label="My account" />
+            <MudMenuItem Label="Logout" Href="/logout" />
+            <MudMenuItem Label="Support"/> 
+        </MudMenu>
     </MudAppBar>
 
     <!-- Drawer -->
