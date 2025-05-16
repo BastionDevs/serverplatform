@@ -1,32 +1,29 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using installer.Properties;
 
 namespace installer
 {
     public partial class Page2 : UserControl
     {
-        public event Action<string> SwitchForm;
+        private readonly Image[] images =
+        {
+            Resources.bastion_original_on_white,
+            Resources.CubeNotFound_250
+        };
+
+        private int imageIndex;
 
         private Timer timer1;
-        private int imageIndex = 0;
-        private Image[] images = new Image[]
-        {
-            Properties.Resources.bastion_original_on_white,
-            Properties.Resources.CubeNotFound_250
-        };
 
         public Page2()
         {
             InitializeComponent();
             InitializeTimer();
         }
+
+        public event Action<string> SwitchForm;
 
         private void InitializeTimer()
         {
@@ -55,24 +52,19 @@ namespace installer
 
         private void radioButton1_CheckedChanged(object sender, EventArgs e)
         {
-            if (radioButton2.Checked)
-            {
-                radioButton2.Checked = false;
-            }
+            if (radioButton2.Checked) radioButton2.Checked = false;
         }
 
         private void radioButton2_CheckedChanged(object sender, EventArgs e)
         {
-            if (radioButton2.Checked)
-            {
-                radioButton2.Checked = false;
-            }
+            if (radioButton2.Checked) radioButton2.Checked = false;
         }
 
         private void button3_Click(object sender, EventArgs e)
         {
-            DialogResult dr = MessageBox.Show("Are you sure you want to exit Setup?", "", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-            if (dr == DialogResult.Yes) { Application.Exit(); }
+            var dr = MessageBox.Show("Are you sure you want to exit Setup?", "", MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+            if (dr == DialogResult.Yes) Application.Exit();
         }
     }
 }

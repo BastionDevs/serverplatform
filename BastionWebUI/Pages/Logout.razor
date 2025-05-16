@@ -7,6 +7,7 @@
 <h3>Logging out...</h3>
 
 @code {
+
     protected override async Task OnInitializedAsync()
     {
         // Retrieve JWT token from localStorage
@@ -44,4 +45,5 @@
             Navigation.NavigateTo("/error");
         }
     }
+
 }

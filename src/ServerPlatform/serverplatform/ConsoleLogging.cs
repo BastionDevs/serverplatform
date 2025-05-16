@@ -5,20 +5,30 @@ namespace serverplatform
 {
     internal class ConsoleLogging
     {
-        static string logDir = Path.Combine(Environment.CurrentDirectory, "logs");
-        static string logFile = Path.Combine(logDir, $"{DateTime.Now:yyyy-dd-MMM-hh-mm-tt}".ToLower() + ".log");
+        private static readonly string logDir = Path.Combine(Environment.CurrentDirectory, "logs");
+
+        private static readonly string logFile =
+            Path.Combine(logDir, $"{DateTime.Now:yyyy-dd-MMM-hh-mm-tt}".ToLower() + ".log");
 
         public static void LogError(string message, string component = null)
-            => WriteLog(message, component, "ERROR", ConsoleColor.Red);
+        {
+            WriteLog(message, component, "ERROR", ConsoleColor.Red);
+        }
 
         public static void LogWarning(string message, string component = null)
-            => WriteLog(message, component, "WARN", ConsoleColor.Yellow);
+        {
+            WriteLog(message, component, "WARN", ConsoleColor.Yellow);
+        }
 
         public static void LogSuccess(string message, string component = null)
-            => WriteLog(message, component, "SUCCESS", ConsoleColor.Green);
+        {
+            WriteLog(message, component, "SUCCESS", ConsoleColor.Green);
+        }
 
         public static void LogMessage(string message, string component = null)
-            => WriteLog(message, component, null, Console.ForegroundColor);
+        {
+            WriteLog(message, component, null, Console.ForegroundColor);
+        }
 
         public static void ClearLogFolder(bool confirm)
         {
@@ -37,14 +47,14 @@ namespace serverplatform
         private static void WriteLog(string message, string component, string level, ConsoleColor color)
         {
             LogDirCheck();
-            string timestamp = $"[{DateTime.Now:HH:mm:ss}]";
-            string prefix = level != null
+            var timestamp = $"[{DateTime.Now:HH:mm:ss}]";
+            var prefix = level != null
                 ? $"[{(component != null ? $"{component} - " : "")}{level}]"
                 : component != null
                     ? $"[{component}]"
                     : "";
 
-            string fullMessage = $"{timestamp} {prefix} {message}".Trim();
+            var fullMessage = $"{timestamp} {prefix} {message}".Trim();
 
             using (var sw = new StreamWriter(logFile, true))
             {

@@ -10,36 +10,37 @@
 
    set value
    config.set("com_port", com_port.Text);
-   
+
    save
    config.Save()
 
 */
 
 using System.Collections.Generic;
-using System;
+using System.IO;
 using System.Linq;
 
 public class Properties
 {
-    private Dictionary<String, String> list;
-    private String filename;
+    private string filename;
+    private Dictionary<string, string> list;
 
-    public Properties(String file)
+    public Properties(string file)
     {
         reload(file);
     }
 
-    public String get(String field, String defValue)
+    public string get(string field, string defValue)
     {
-        return (get(field) == null) ? (defValue) : (get(field));
-    }
-    public String get(String field)
-    {
-        return (list.ContainsKey(field)) ? (list[field]) : (null);
+        return get(field) == null ? defValue : get(field);
     }
 
-    public void set(String field, Object value)
+    public string get(string field)
+    {
+        return list.ContainsKey(field) ? list[field] : null;
+    }
+
+    public void set(string field, object value)
     {
         if (!list.ContainsKey(field))
             list.Add(field, value.ToString());
@@ -49,20 +50,20 @@ public class Properties
 
     public void Save()
     {
-        Save(this.filename);
+        Save(filename);
     }
 
-    public void Save(String filename)
+    public void Save(string filename)
     {
         this.filename = filename;
 
-        if (!System.IO.File.Exists(filename))
-            System.IO.File.Create(filename).Close();
+        if (!File.Exists(filename))
+            File.Create(filename).Close();
 
-        System.IO.StreamWriter file = new System.IO.StreamWriter(filename);
+        var file = new StreamWriter(filename);
 
-        foreach (String prop in list.Keys.ToArray())
-            if (!String.IsNullOrWhiteSpace(list[prop]))
+        foreach (var prop in list.Keys.ToArray())
+            if (!string.IsNullOrWhiteSpace(list[prop]))
                 file.WriteLine(prop + "=" + list[prop]);
 
         file.Close();
@@ -70,49 +71,45 @@ public class Properties
 
     public void reload()
     {
-        reload(this.filename);
+        reload(filename);
     }
 
-    public void reload(String filename)
+    public void reload(string filename)
     {
         this.filename = filename;
-        list = new Dictionary<String, String>();
+        list = new Dictionary<string, string>();
 
-        if (System.IO.File.Exists(filename))
+        if (File.Exists(filename))
             loadFromFile(filename);
         else
-            System.IO.File.Create(filename).Close();
+            File.Create(filename).Close();
     }
 
-    private void loadFromFile(String file)
+    private void loadFromFile(string file)
     {
-        foreach (String line in System.IO.File.ReadAllLines(file))
-        {
-            if ((!String.IsNullOrEmpty(line)) &&
-                (!line.StartsWith(";")) &&
-                (!line.StartsWith("#")) &&
-                (!line.StartsWith("'")) &&
-                (line.Contains('=')))
+        foreach (var line in File.ReadAllLines(file))
+            if (!string.IsNullOrEmpty(line) &&
+                !line.StartsWith(";") &&
+                !line.StartsWith("#") &&
+                !line.StartsWith("'") &&
+                line.Contains('='))
             {
-                int index = line.IndexOf('=');
-                String key = line.Substring(0, index).Trim();
-                String value = line.Substring(index + 1).Trim();
+                var index = line.IndexOf('=');
+                var key = line.Substring(0, index).Trim();
+                var value = line.Substring(index + 1).Trim();
 
                 if ((value.StartsWith("\"") && value.EndsWith("\"")) ||
                     (value.StartsWith("'") && value.EndsWith("'")))
-                {
                     value = value.Substring(1, value.Length - 2);
-                }
 
                 try
                 {
                     //ignore dublicates
                     list.Add(key, value);
                 }
-                catch { }
+                catch
+                {
+                }
             }
-        }
     }
-
-
 }

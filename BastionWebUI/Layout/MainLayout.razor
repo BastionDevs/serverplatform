@@ -1,22 +1,26 @@
 ﻿@inherits LayoutComponentBase
 
-<MudThemeProvider Theme="@Potatoes" />
-<MudPopoverProvider />
-<MudDialogProvider />
-<MudSnackbarProvider />
+<MudThemeProvider Theme="@Potatoes"/>
+<MudPopoverProvider/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
 
 <MudLayout>
     <!-- App Bar -->
     <MudAppBar Color="Color.Primary" Fixed="true" Dense="@_dense" Elevation="@_elevation">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start"
+                       OnClick="@ToggleDrawer"/>
         <MudText Typo="Typo.h5" Class="ml-3">Bastion Web UI</MudText>
-        <MudSpacer />
+        <MudSpacer/>
 
-        <!-- Login Button (Replaces GitHub Icon) -->
-        <MudIconButton Icon="@Icons.Material.Filled.Login" Color="Color.Inherit" Href="/login" />
 
-        <!-- Logout Button (Hardcoded for now) -->
-        <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" Href="/logout" />
+        <MudMenu Icon="@Icons.Material.Filled.AccountCircle"
+                 Color="Color.Default"
+                 AriaLabel="Open user menu">
+            <MudMenuItem Label="My account" />
+            <MudMenuItem Label="Logout" Href="/logout" />
+            <MudMenuItem Label="Support"/> 
+        </MudMenu>
     </MudAppBar>
 
     <!-- Drawer -->
@@ -37,23 +41,24 @@
 </MudLayout>
 
 @code {
-    private bool _drawerOpen = false;
-    private bool _dense = false;
-    private int _elevation = 4;
+    private bool _drawerOpen;
+    private readonly bool _dense = false;
+    private readonly int _elevation = 4;
 
     private void ToggleDrawer()
     {
         _drawerOpen = !_drawerOpen;
     }
 
-    private MudTheme Potatoes = new MudTheme()
+    private readonly MudTheme Potatoes = new()
+    {
+        Typography = new Typography
         {
-            Typography = new Typography()
+            Default = new DefaultTypography
             {
-                Default = new DefaultTypography()
-                {
-                    FontFamily = new[] { "Space Grotesk", "Helvetica", "Arial", "sans-serif" }
-                }
+                FontFamily = new[] { "Space Grotesk", "Helvetica", "Arial", "sans-serif" }
             }
-        };
+        }
+    };
+
 }
