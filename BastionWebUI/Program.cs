@@ -13,6 +13,9 @@ builder.Services.AddScoped<StorageService>();
 // Add MudBlazor services to DI container
 builder.Services.AddMudServices();
 
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:1234/") });
+builder.Services.AddScoped(sp => new HttpClient
+{
+    BaseAddress = new Uri("http://localhost:1234/")
+});
 
 await builder.Build().RunAsync();

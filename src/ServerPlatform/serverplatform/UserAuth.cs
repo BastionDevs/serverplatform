@@ -13,17 +13,17 @@ namespace serverplatform
 {
     internal class UserAuth
     {
-        // Lazy-loaded JWT secret
+        private const string UsersFilePath = "users.json";
+        private const string AppSettingsPath = "appsettings.json";
         private static string _jwtSecret;
-
-        // In-memory blacklist for invalidated tokens
-        private static readonly HashSet<string> _blacklistedTokens = new HashSet<string>();
+        private static readonly HashSet<string> BlocklistedTokens = new HashSet<string>();
 
         private static string JwtSecret
         {
             get
             {
-                if (_jwtSecret == null) _jwtSecret = LoadJwtSecret();
+                if (_jwtSecret == null)
+                    _jwtSecret = LoadJwtSecret();
                 return _jwtSecret;
             }
         }
@@ -32,44 +32,44 @@ namespace serverplatform
         {
             try
             {
-                var jsonContent = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "appsettings.json"));
+                var jsonContent = File.ReadAllText(AppSettingsPath);
                 var config = JObject.Parse(jsonContent);
 
                 var secret = config["Jwt"]?["Secret"]?.ToString();
-
                 if (string.IsNullOrEmpty(secret)) throw new Exception("JWT Secret is missing in appsettings.json");
 
                 return secret;
             }
             catch (Exception ex)
             {
-                ConsoleLogging.LogError($"Error loading JWT Secret: {ex.Message}");
+                ConsoleLogging.LogError($"Error loading JWT Secret: {ex.Message}", "SETUP");
                 throw;
             }
         }
 
         public static void CreateDefaultUsers()
         {
-            if (File.Exists("users.json") || File.Exists("appsettings.json"))
+            if (File.Exists(UsersFilePath) || File.Exists(AppSettingsPath))
             {
-                ConsoleLogging.LogWarning("First run has already been completed. Aborting setup.", "SETUP");
+                ConsoleLogging.LogWarning("First run already completed. Setup aborted.", "SETUP");
                 return;
             }
 
-            var sw = new StreamWriter("users.json", false);
-            sw.WriteLine(
-                "[\r\n    {\r\n        \"Username\": \"admin\",\r\n        \"PasswordHash\": \"240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9\"\r\n    }\r\n]");
-            sw.Close();
+            var defaultUser = new List<User>
+            {
+                new User
+                {
+                    Username = "admin", PasswordHash = Sha256Hash("admin")
+                }
+            };
 
-            var swappsettings = new StreamWriter("appsettings.json", false);
-            swappsettings.WriteLine(
-                "{\r\n  \"Jwt\": {\r\n    \"Secret\": \"&&Z8dAl0!1$jxBIJMv1cUy7iaAsa#Vat\"\r\n  }\r\n}");
-            swappsettings.Close();
+            File.WriteAllText(UsersFilePath, JsonConvert.SerializeObject(defaultUser, Formatting.Indented));
+            File.WriteAllText(AppSettingsPath, "{ \"Jwt\": { \"Secret\": \"&&Z8dAl0!1$jxBIJMv1cUy7iaAsa#Vat\" } }");
 
-            ConsoleLogging.LogSuccess("First run completed: Default user and appsettings.json created.");
+            ConsoleLogging.LogSuccess("Default user and appsettings.json created.", "SETUP");
         }
 
-        public static string SHA256Hash(string password)
+        private static string Sha256Hash(string password)
         {
             using (var sha = SHA256.Create())
             {
@@ -81,107 +81,108 @@ namespace serverplatform
 
         public static JObject AuthenticateUser(string username, string password)
         {
-            if (!File.Exists("users.json"))
+            if (!File.Exists(UsersFilePath))
             {
-                ConsoleLogging.LogError("users.json not found.");
-                return JObject.FromObject(new { success = false, error = "serverError" });
-            }
-
-            var json = File.ReadAllText("users.json");
-
-            if (string.IsNullOrWhiteSpace(json))
-            {
-                ConsoleLogging.LogError("users.json is empty.");
-                return JObject.FromObject(new { success = false, error = "serverError" });
-            }
-
-            var users = JsonConvert.DeserializeObject<List<User>>(json);
-            if (users == null)
-            {
-                ConsoleLogging.LogWarning("Deserialization returned null. Check JSON format.", "AUTH");
-                return JObject.FromObject(new { success = false, error = "serverError" });
-            }
-
-            foreach (var user in users)
-                if (user.Username == username)
+                ConsoleLogging.LogError("users.json not found.", "AUTH");
+                return JObject.FromObject(new
                 {
-                    if (user.PasswordHash == SHA256Hash(password))
-                    {
-                        var token = GenerateJwtToken(username);
-                        return JObject.FromObject(new { success = true, token });
-                    }
+                    success = false, error = "serverError"
+                });
+            }
 
-                    ConsoleLogging.LogWarning($"User {username} failed to authenticate: Incorrect password", "AUTH");
-                    return JObject.FromObject(new { success = false, error = "wrongPassword" });
+            try
+            {
+                var json = File.ReadAllText(UsersFilePath);
+                var users = JsonConvert.DeserializeObject<List<User>>(json);
+
+                var user = users?.Find(u => u.Username.Equals(username, StringComparison.OrdinalIgnoreCase));
+                if (user == null)
+                {
+                    ConsoleLogging.LogWarning($"User not found: {username}", "AUTH");
+                    return JObject.FromObject(new
+                    {
+                        success = false, error = "userNotFound"
+                    });
                 }
 
-            ConsoleLogging.LogWarning($"User {username} not found", "AUTH");
-            return JObject.FromObject(new { success = false, error = "userNotFound" });
+                if (user.PasswordHash != Sha256Hash(password))
+                {
+                    ConsoleLogging.LogWarning($"Incorrect password for user '{username}'", "AUTH");
+                    return JObject.FromObject(new
+                    {
+                        success = false, error = "wrongPassword"
+                    });
+                }
+
+                var token = GenerateJwtToken(username);
+                ConsoleLogging.LogSuccess($"User {username} authenticated.", "AUTH");
+                return JObject.FromObject(new
+                {
+                    success = true, token
+                });
+            }
+            catch (Exception ex)
+            {
+                ConsoleLogging.LogError($"Authentication failed: {ex.Message}", "AUTH");
+                return JObject.FromObject(new
+                {
+                    success = false, error = "serverError"
+                });
+            }
         }
 
         public static JObject RegisterUser(string username, string password)
         {
-            // Input validation
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
-                return JObject.FromObject(new { success = false, error = "missingFields" });
-
-            var usersFilePath = "users.json";
-
-            List<User> users;
-
-            // If the file exists, read existing users
-            if (File.Exists(usersFilePath))
             {
-                var json = File.ReadAllText(usersFilePath);
-
-                try
+                ConsoleLogging.LogWarning("Username or password is missing.", "AUTH");
+                return JObject.FromObject(new
                 {
-                    users = JsonConvert.DeserializeObject<List<User>>(json) ?? new List<User>();
-                }
-                catch (Exception ex)
-                {
-                    ConsoleLogging.LogError($"Failed to parse users.json: {ex.Message}");
-                    return JObject.FromObject(new { success = false, error = "serverError" });
-                }
+                    success = false, error = "missingFields"
+                });
             }
-            else
-            {
-                users = new List<User>();
-            }
-
-            // Check for duplicate username
-            if (users.Exists(u => u.Username.Equals(username, StringComparison.OrdinalIgnoreCase)))
-            {
-                ConsoleLogging.LogWarning($"Attempt to register existing username: {username}", "AUTH");
-                return JObject.FromObject(new { success = false, error = "userExists" });
-            }
-
-            // Add new user
-            var newUser = new User
-            {
-                Username = username,
-                PasswordHash = SHA256Hash(password)
-            };
-            users.Add(newUser);
 
             try
             {
-                File.WriteAllText(usersFilePath, JsonConvert.SerializeObject(users, Formatting.Indented));
-                ConsoleLogging.LogSuccess($"New user registered: {username}", "AUTH");
-                return JObject.FromObject(new { success = true, message = "User registered successfully" });
+                var users = File.Exists(UsersFilePath)
+                    ? JsonConvert.DeserializeObject<List<User>>(File.ReadAllText(UsersFilePath)) ?? new List<User>()
+                    : new List<User>();
+
+                if (users.Exists(u => u.Username.Equals(username, StringComparison.OrdinalIgnoreCase)))
+                {
+                    ConsoleLogging.LogWarning($"Username already exists: {username}", "AUTH");
+                    return JObject.FromObject(new
+                    {
+                        success = false, error = "userExists"
+                    });
+                }
+
+                users.Add(new User
+                {
+                    Username = username, PasswordHash = Sha256Hash(password)
+                });
+                File.WriteAllText(UsersFilePath, JsonConvert.SerializeObject(users, Formatting.Indented));
+
+                ConsoleLogging.LogSuccess($"User registered: {username}", "AUTH");
+                return JObject.FromObject(new
+                {
+                    success = true, message = "User registered successfully"
+                });
             }
             catch (Exception ex)
             {
-                ConsoleLogging.LogError($"Failed to write to users.json: {ex.Message}");
-                return JObject.FromObject(new { success = false, error = "serverError" });
+                ConsoleLogging.LogError($"Failed to register user: {ex.Message}", "AUTH");
+                return JObject.FromObject(new
+                {
+                    success = false, error = "serverError"
+                });
             }
         }
 
-        
         private static string GenerateJwtToken(string username)
         {
-            var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(JwtSecret);
+            var tokenHandler = new JwtSecurityTokenHandler();
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
@@ -190,54 +191,81 @@ namespace serverplatform
                     new Claim(ClaimTypes.Name, username)
                 }),
                 Expires = DateTime.UtcNow.AddHours(1),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key),
-                    SecurityAlgorithms.HmacSha256Signature)
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
-            return tokenHandler.WriteToken(token);
+            var tokenString = tokenHandler.WriteToken(token);
+
+            ConsoleLogging.LogMessage($"JWT issued for user: {username} [Token length: {tokenString.Length}]", "JWT");
+            return tokenString;
         }
 
         public static ClaimsPrincipal ValidateJwtToken(string token)
         {
-            if (_blacklistedTokens.Contains(token))
-                // Token is blacklisted, invalidating the request
-                return null;
-
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(JwtSecret);
-
-            var validationParams = new TokenValidationParameters
+            if (BlocklistedTokens.Contains(token))
             {
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(key),
-                ValidateIssuer = false,
-                ValidateAudience = false,
-                ClockSkew = TimeSpan.Zero
-            };
+                ConsoleLogging.LogWarning("Rejected token: Blocklisted", "JWT");
+                return null;
+            }
 
             try
             {
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var key = Encoding.ASCII.GetBytes(JwtSecret);
+
+                var validationParams = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ClockSkew = TimeSpan.Zero
+                };
+
                 var principal = tokenHandler.ValidateToken(token, validationParams, out var validatedToken);
+
+                if (validatedToken is JwtSecurityToken jwtToken)
+                    ConsoleLogging.LogMessage(
+                    $"JWT validated: User = {principal.Identity?.Name}, Expires = {jwtToken.ValidTo:u}", "JWT");
+
                 return principal;
             }
-            catch
+            catch (Exception ex)
             {
+                ConsoleLogging.LogError($"Invalid JWT: {ex.Message}", "JWT");
                 return null;
             }
         }
 
         public static JObject LogoutUser(string token)
         {
-            // Add the token to the blacklist to invalidate it
             if (string.IsNullOrWhiteSpace(token))
-                return JObject.FromObject(new { success = false, error = "Token is required" });
+            {
+                ConsoleLogging.LogWarning("Logout failed: Token is missing.", "AUTH");
+                return JObject.FromObject(new
+                {
+                    success = false, error = "Token is required"
+                });
+            }
 
-            if (_blacklistedTokens.Contains(token))
-                return JObject.FromObject(new { success = true, message = "User already logged out" });
+            var added = BlocklistedTokens.Add(token);
+            var logContext = "AUTH";
 
-            _blacklistedTokens.Add(token); // Invalidate the token
-            return JObject.FromObject(new { success = true, message = "User logged out successfully" });
+            if (added)
+            {
+                ConsoleLogging.LogSuccess("Token blocklisted on logout.", logContext);
+                return JObject.FromObject(new
+                {
+                    success = true, message = "User logged out successfully"
+                });
+            }
+
+            ConsoleLogging.LogMessage("Logout token already blocklisted.", logContext);
+            return JObject.FromObject(new
+            {
+                success = true, message = "User already logged out"
+            });
         }
 
         private class User

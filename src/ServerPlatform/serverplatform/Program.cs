@@ -44,8 +44,7 @@ namespace serverplatform
                 }
             }
 
-            Console.CancelKeyPress += (sender, eventArgs) =>
-            {
+            Console.CancelKeyPress += (sender, eventArgs) => {
                 ConsoleLogging.LogMessage("Stopping server...");
                 _cts.Cancel();
                 eventArgs.Cancel = true;
@@ -95,7 +94,7 @@ namespace serverplatform
             ConsoleLogging.LogMessage("💣 Devastating Fact:");
             Console.ForegroundColor = ConsoleColor.Gray;
             ConsoleLogging.LogMessage(
-                "Israel has been occupying Palestinian land illegally longer than CubeNotFound has lived.");
+            "Israel has been occupying Palestinian land illegally longer than CubeNotFound has lived.");
             Console.WriteLine();
 
 

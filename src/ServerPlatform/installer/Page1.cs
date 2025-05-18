@@ -20,7 +20,7 @@ namespace installer
         private void button2_Click(object sender, EventArgs e)
         {
             var dr = MessageBox.Show("Are you sure you want to exit Setup?", "", MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+            MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
             if (dr == DialogResult.Yes) Application.Exit();
         }
     }
