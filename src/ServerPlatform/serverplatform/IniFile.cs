@@ -60,9 +60,6 @@ namespace TinyINIController
             Write(null, null, section ?? exe);
         }
 
-        public bool KeyExists(string key, string section = null)
-        {
-            return Read(key, section).Length > 0;
-        }
+        public bool KeyExists(string key, string section = null) => Read(key, section).Length > 0;
     }
 }

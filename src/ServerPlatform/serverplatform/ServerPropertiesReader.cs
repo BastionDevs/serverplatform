@@ -30,15 +30,9 @@ public class Properties
         reload(file);
     }
 
-    public string get(string field, string defValue)
-    {
-        return get(field) == null ? defValue : get(field);
-    }
+    public string get(string field, string defValue) => get(field) == null ? defValue : get(field);
 
-    public string get(string field)
-    {
-        return list.ContainsKey(field) ? list[field] : null;
-    }
+    public string get(string field) => list.ContainsKey(field) ? list[field] : null;
 
     public void set(string field, object value)
     {
@@ -107,9 +101,7 @@ public class Properties
                     //ignore dublicates
                     list.Add(key, value);
                 }
-                catch
-                {
-                }
+                catch {}
             }
     }
 }

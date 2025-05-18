@@ -18,7 +18,7 @@ namespace serverplatform
             try
             {
                 listener.Start();
-                ConsoleLogging.LogSuccess($"Backend API started and listening on port {port}.", "HttpListener");
+                ConsoleLogging.LogSuccess($"Backend API started and listening on port {port}.", "Listener");
 
                 while (!token.IsCancellationRequested)
                 {
@@ -34,11 +34,11 @@ namespace serverplatform
             }
             catch (OperationCanceledException)
             {
-                // Normal shutdown
+                ConsoleLogging.LogMessage("Cancellation requested. Shutting down API listener...", "Listener");
             }
             catch (HttpListenerException ex)
             {
-                ConsoleLogging.LogError($"Listener exception: {ex.Message}", "HttpListener");
+                ConsoleLogging.LogError($"HttpListener exception: {ex.Message}", "Listener");
             }
             finally
             {
@@ -48,7 +48,7 @@ namespace serverplatform
                     listener.Close();
                 }
 
-                ConsoleLogging.LogMessage("Listener closed.", "HttpListener");
+                ConsoleLogging.LogMessage("API listener stopped and cleaned up.", "Listener");
             }
         }
 
@@ -56,25 +56,21 @@ namespace serverplatform
         {
             try
             {
-                // Handle CORS preflight request
                 if (context.Request.HttpMethod == "OPTIONS")
                 {
                     AddCORSHeaders(context.Response);
                     context.Response.StatusCode = 204;
                     context.Response.Close();
+                    ConsoleLogging.LogMessage($"Handled CORS preflight request for {context.Request.Url.AbsolutePath}", "API");
                     return;
                 }
 
-                ConsoleLogging.LogMessage(
-                    $"Incoming {context.Request.HttpMethod} request for {context.Request.Url.AbsolutePath}",
-                    "API");
+                ConsoleLogging.LogMessage($"Incoming {context.Request.HttpMethod} request for {context.Request.Url.AbsolutePath}", "API");
 
-                // Handle modular /auth endpoints
                 if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath.StartsWith("/auth"))
                 {
                     var pathParts = context.Request.Url.AbsolutePath.Split('/');
 
-                    // Check the subpath after '/auth'
                     if (pathParts.Length == 3 && pathParts[2] == "login")
                     {
                         HandleLogin(context);
@@ -90,36 +86,43 @@ namespace serverplatform
                     else
                     {
                         context.Response.StatusCode = 404;
-                        ConsoleLogging.LogWarning($"404 - Endpoint not found: {context.Request.Url.AbsolutePath}",
-                            "API");
-                        RespondJson(context, JObject.FromObject(new { error = "Not Found" }).ToString());
+                        ConsoleLogging.LogWarning($"404 Not Found: {context.Request.Url.AbsolutePath}", "API");
+                        RespondJson(context, JObject.FromObject(new
+                        {
+                            error = "Not Found"
+                        }).ToString());
                     }
                 }
                 else
                 {
                     context.Response.StatusCode = 404;
-                    ConsoleLogging.LogWarning($"404 - Endpoint not found: {context.Request.Url.AbsolutePath}", "API");
-                    RespondJson(context, JObject.FromObject(new { error = "Not Found" }).ToString());
+                    ConsoleLogging.LogWarning($"404 Not Found: {context.Request.Url.AbsolutePath}", "API");
+                    RespondJson(context, JObject.FromObject(new
+                    {
+                        error = "Not Found"
+                    }).ToString());
                 }
             }
             catch (Exception ex)
             {
-                ConsoleLogging.LogError($"Internal server error: {ex.Message}", "API");
+                ConsoleLogging.LogError($"Unhandled exception: {ex.Message}", "API");
                 context.Response.StatusCode = 500;
-                RespondJson(context, JObject.FromObject(new { error = "Internal Server Error" }).ToString());
+                RespondJson(context, JObject.FromObject(new
+                {
+                    error = "Internal Server Error"
+                }).ToString());
             }
         }
 
         private static void HandleLogin(HttpListenerContext context)
         {
-            var requestBody =
-                new StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
+            var requestBody = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
             var body = JObject.Parse(requestBody);
 
             var username = body["username"]?.ToString();
             var password = body["password"]?.ToString();
 
-            ConsoleLogging.LogMessage($"User {username} attempting to authenticate...", "AUTH");
+            ConsoleLogging.LogMessage($"User {username} is attempting to log in.", "AUTH");
 
             try
             {
@@ -127,35 +130,39 @@ namespace serverplatform
 
                 if (result["success"]?.Value<bool>() == true)
                 {
-                    ConsoleLogging.LogSuccess($"User {username} successfully authenticated.", "AUTH");
+                    ConsoleLogging.LogSuccess($"User {username} authenticated successfully.", "AUTH");
                     RespondJson(context, result.ToString());
                 }
                 else
                 {
                     var backendError = result["error"]?.ToString();
-                    ConsoleLogging.LogWarning($"User {username} failed to authenticate: {backendError}", "AUTH");
+                    ConsoleLogging.LogWarning($"Authentication failed for {username}: {backendError}", "AUTH");
 
-                    // Send only a generic error to the client
                     result["error"] = "incorrectusrorpwd";
                     RespondJson(context, result.ToString());
                 }
             }
             catch (Exception ex)
             {
-                ConsoleLogging.LogError($"Authentication error: {ex.Message}", "AUTH");
-                RespondJson(context, JObject.FromObject(new { success = false, error = "internalError" }).ToString());
+                ConsoleLogging.LogError($"Login exception for {username}: {ex.Message}", "AUTH");
+                RespondJson(context, JObject.FromObject(new
+                {
+                    success = false, error = "internalError"
+                }).ToString());
             }
         }
 
         private static void HandleLogout(HttpListenerContext context)
         {
-            // Implement logout functionality (e.g., invalidate JWT token, etc.)
             var authHeader = context.Request.Headers["Authorization"];
             if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
             {
+                ConsoleLogging.LogWarning("Missing or invalid Authorization header in logout attempt.", "AUTH");
                 context.Response.StatusCode = 401;
-                RespondJson(context,
-                    JObject.FromObject(new { error = "Missing or invalid Authorization header" }).ToString());
+                RespondJson(context, JObject.FromObject(new
+                {
+                    error = "Missing or invalid Authorization header"
+                }).ToString());
                 return;
             }
 
@@ -163,55 +170,57 @@ namespace serverplatform
             var principal = UserAuth.ValidateJwtToken(token);
             if (principal == null)
             {
+                ConsoleLogging.LogWarning("Invalid or expired JWT token on logout.", "AUTH");
                 context.Response.StatusCode = 401;
-                RespondJson(context, JObject.FromObject(new { error = "Invalid or expired token" }).ToString());
+                RespondJson(context, JObject.FromObject(new
+                {
+                    error = "Invalid or expired token"
+                }).ToString());
                 return;
             }
 
-            // Invalidate the token (this depends on your JWT strategy, e.g., token blacklisting)
-            // For simplicity, you may just log it for now or set an expiration.
-
-            ConsoleLogging.LogSuccess("User successfully logged out", "AUTH");
-
-            RespondJson(context,
-                JObject.FromObject(new { success = true, message = "Successfully logged out" }).ToString());
+            ConsoleLogging.LogSuccess("User successfully logged out.", "AUTH");
+            RespondJson(context, JObject.FromObject(new
+            {
+                success = true, message = "Successfully logged out"
+            }).ToString());
         }
 
         private static void HandleRegister(HttpListenerContext context)
         {
-            // Implement registration functionality (e.g., create a new user)
-            string requestBody = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
-            JObject body = JObject.Parse(requestBody);
-        
-            string username = body["username"]?.ToString();
-            string password = body["password"]?.ToString();
-        
-            ConsoleLogging.LogMessage($"Attempting to register user {username}...", "AUTH");
-        
+            var requestBody = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
+            var body = JObject.Parse(requestBody);
+
+            var username = body["username"]?.ToString();
+            var password = body["password"]?.ToString();
+
+            ConsoleLogging.LogMessage($"Attempting registration for user {username}.", "AUTH");
+
             try
             {
-                // Registration logic (e.g., validate, hash password, create user)
                 var result = UserAuth.RegisterUser(username, password);
-        
+
                 if (result["success"]?.Value<bool>() == true)
                 {
-                    ConsoleLogging.LogSuccess($"User {username} successfully registered.", "AUTH");
+                    ConsoleLogging.LogSuccess($"User {username} registered successfully.", "AUTH");
                     RespondJson(context, result.ToString());
                 }
                 else
                 {
-                    string backendError = result["error"]?.ToString();
-                    ConsoleLogging.LogWarning($"User {username} failed to register: {backendError}", "AUTH");
-        
-                    // Send only a generic error to the client
+                    var backendError = result["error"]?.ToString();
+                    ConsoleLogging.LogWarning($"Registration failed for {username}: {backendError}", "AUTH");
+
                     result["error"] = "registrationfailed";
                     RespondJson(context, result.ToString());
                 }
             }
             catch (Exception ex)
             {
-                ConsoleLogging.LogError($"Registration error: {ex.Message}", "AUTH");
-                RespondJson(context, JObject.FromObject(new { success = false, error = "internalError" }).ToString());
+                ConsoleLogging.LogError($"Registration exception for {username}: {ex.Message}", "AUTH");
+                RespondJson(context, JObject.FromObject(new
+                {
+                    success = false, error = "internalError"
+                }).ToString());
             }
         }
 

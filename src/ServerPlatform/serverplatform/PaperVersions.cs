@@ -35,7 +35,7 @@ namespace serverplatform
         {
             var buildJson =
                 new WebClient().DownloadString(
-                    $"https://api.papermc.io/v2/projects/paper/versions/{version}/builds/{build}");
+                $"https://api.papermc.io/v2/projects/paper/versions/{version}/builds/{build}");
             var buildObj = JObject.Parse(buildJson);
             return buildObj["downloads"]["application"]["sha256"]?.ToString();
         }

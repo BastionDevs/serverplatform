@@ -9,8 +9,7 @@ namespace installer
     {
         private readonly Image[] images =
         {
-            Resources.bastion_original_on_white,
-            Resources.CubeNotFound_250
+            Resources.bastion_original_on_white, Resources.CubeNotFound_250
         };
 
         private int imageIndex;
@@ -63,7 +62,7 @@ namespace installer
         private void button3_Click(object sender, EventArgs e)
         {
             var dr = MessageBox.Show("Are you sure you want to exit Setup?", "", MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+            MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
             if (dr == DialogResult.Yes) Application.Exit();
         }
     }

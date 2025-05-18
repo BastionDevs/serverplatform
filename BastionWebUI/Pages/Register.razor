@@ -19,7 +19,7 @@
                                   Variant="Variant.Filled"
                                   FullWidth="true"
                                   Required="true"
-                                  For="@(() => username)" />
+                                  For="@(() => username)"/>
                 </MudItem>
 
                 <MudItem md="12">
@@ -29,7 +29,7 @@
                                   FullWidth="true"
                                   InputType="InputType.Password"
                                   Required="true"
-                                  For="@(() => password)" />
+                                  For="@(() => password)"/>
                 </MudItem>
 
                 <MudItem md="12">
@@ -39,7 +39,7 @@
                                   FullWidth="true"
                                   InputType="InputType.Password"
                                   Required="true"
-                                  For="@(() => confirmPassword)" />
+                                  For="@(() => confirmPassword)"/>
                 </MudItem>
 
                 <MudItem md="12">
@@ -63,7 +63,6 @@
 
     <MudItem md="6">
         <MudText Typo="Typo.body1" GutterBottom="true">Or use another service to register.</MudText>
-        <ExternalLoginPicker />
     </MudItem>
 </MudGrid>
 
@@ -72,13 +71,12 @@
     private string username = string.Empty;
     private string password = string.Empty;
     private string confirmPassword = string.Empty;
-    private bool isLoading = false;
+    private bool isLoading;
 
     private async Task HandleRegister()
     {
-        
         Console.WriteLine("task called!"); // Debug, Can remove once no longer needed 
-        
+
         if (form is null)
         {
             Snackbar.Add("Form is not initialized.", Severity.Error);
@@ -105,8 +103,7 @@
 
             var registerData = new
             {
-                username,
-                password
+                username, password
             };
 
             var response = await Http.PostAsJsonAsync("http://localhost:1234/auth/register", registerData);
@@ -149,8 +146,7 @@
 
     private RenderFragment RegisterButtonContent()
     {
-        return __builder =>
-        {
+        return __builder => {
             if (isLoading)
             {
                 __builder.OpenComponent<MudProgressCircular>(0);
@@ -175,6 +171,5 @@
             Snackbar.Add("You are already logged in!", Severity.Error);
             NavigationManager.NavigateTo("/dashboard");
         }
-    
     }
 }
