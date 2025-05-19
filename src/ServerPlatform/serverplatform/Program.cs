@@ -103,7 +103,7 @@ namespace serverplatform
 
             int backendPort;
             if (devMode)
-                backendPort = 1234;
+                backendPort = 5678;
             else
                 backendPort = int.Parse(Config.GetConfig("port", "backend"));
 

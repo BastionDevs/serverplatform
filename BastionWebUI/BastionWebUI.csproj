@@ -16,4 +16,8 @@
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.9.0"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="Pages\Dialogs\LogoutDialog.razor" />
+    </ItemGroup>
+
 </Project>
