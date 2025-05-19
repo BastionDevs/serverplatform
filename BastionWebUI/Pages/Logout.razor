@@ -3,6 +3,9 @@
 @inject IJSRuntime JS
 @inject HttpClient Http
 @inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@layout MainLayout
+
 
 <h3>Logging out...</h3>
 
@@ -21,7 +24,7 @@
         }
 
         // Prepare the HTTP request
-        var requestMessage = new HttpRequestMessage(HttpMethod.Post, "http://localhost:1234/auth/logout");
+        var requestMessage = new HttpRequestMessage(HttpMethod.Post, "/auth/logout");
         requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Send the request to log out
@@ -34,14 +37,21 @@
 
             // Redirect the user to the login page or another page
             Navigation.NavigateTo("/login");
+            
+            Snackbar.Add("Logout Successful!", Severity.Info);
         }
         else
         {
             // Handle logout failure
             var errorResponse = await response.Content.ReadAsStringAsync();
             Console.WriteLine($"Logout failed: {errorResponse}");
+            
+            // Delete JWT Token Anyway incase backend fails lol
+            await JS.InvokeVoidAsync("localStorage.removeItem", "jwtToken");
+            Navigation.NavigateTo("/login");
 
-            // Optionally, redirect to an error page or show a message
+            Snackbar.Add("Token Deleted, but there is a bug! Inform Dev!", Severity.Warning);
+            
             Navigation.NavigateTo("/error");
         }
     }

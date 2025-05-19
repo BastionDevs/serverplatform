@@ -106,7 +106,7 @@
                 username, password
             };
 
-            var response = await Http.PostAsJsonAsync("http://localhost:1234/auth/register", registerData);
+            var response = await Http.PostAsJsonAsync("/auth/register", registerData);
             var jsonString = await response.Content.ReadAsStringAsync();
             var json = JsonSerializer.Deserialize<JsonElement>(jsonString);
 

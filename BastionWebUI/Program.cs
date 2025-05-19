@@ -15,7 +15,7 @@ builder.Services.AddMudServices();
 
 builder.Services.AddScoped(sp => new HttpClient
 {
-    BaseAddress = new Uri("http://localhost:1234/")
+    BaseAddress = new Uri("http://localhost:5678/")
 });
 
 await builder.Build().RunAsync();

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace serverplatform
 {
@@ -13,10 +14,11 @@ namespace serverplatform
         public static async Task StartServer(CancellationToken token, int port)
         {
             var listener = new HttpListener();
-            listener.Prefixes.Add($"http://*:{port}/");
+            listener.Prefixes.Add($"http://localhost:{port}/");
 
             try
             {
+                Console.WriteLine("Calling listener.Start()...");
                 listener.Start();
                 ConsoleLogging.LogSuccess($"Backend API started and listening on port {port}.", "Listener");
 
@@ -28,7 +30,7 @@ namespace serverplatform
                     if (completedTask == contextTask)
                     {
                         var context = contextTask.Result;
-                        _ = Task.Run(() => HandleRequest(context));
+                        _ = Task.Run(() => HandleRequest(context), token);
                     }
                 }
             }
@@ -52,7 +54,7 @@ namespace serverplatform
             }
         }
 
-        public static void HandleRequest(HttpListenerContext context)
+        private static void HandleRequest(HttpListenerContext context)
         {
             try
             {
@@ -165,25 +167,23 @@ namespace serverplatform
                 }).ToString());
                 return;
             }
-
-            var token = authHeader.Substring("Bearer ".Length);
-            var principal = UserAuth.ValidateJwtToken(token);
-            if (principal == null)
+            var token = authHeader.Substring("Bearer ".Length).Trim();
+            
+            var handler = new JwtSecurityTokenHandler();
+            if (!handler.CanReadToken(token))
             {
-                ConsoleLogging.LogWarning("Invalid or expired JWT token on logout.", "AUTH");
-                context.Response.StatusCode = 401;
+                context.Response.StatusCode = 400;
                 RespondJson(context, JObject.FromObject(new
                 {
-                    error = "Invalid or expired token"
+                    error = "Hacker Hacker on the Wall!"
                 }).ToString());
                 return;
             }
+            
+            JObject result = UserAuth.LogoutUser(token);
 
-            ConsoleLogging.LogSuccess("User successfully logged out.", "AUTH");
-            RespondJson(context, JObject.FromObject(new
-            {
-                success = true, message = "Successfully logged out"
-            }).ToString());
+            context.Response.StatusCode = 200;
+            RespondJson(context, result.ToString());
         }
 
         private static void HandleRegister(HttpListenerContext context)
@@ -224,14 +224,14 @@ namespace serverplatform
             }
         }
 
-        public static void AddCORSHeaders(HttpListenerResponse response)
+        private static void AddCORSHeaders(HttpListenerResponse response)
         {
             response.AddHeader("Access-Control-Allow-Origin", "*");
             response.AddHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
             response.AddHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
         }
 
-        public static void RespondJson(HttpListenerContext context, string json)
+        private static void RespondJson(HttpListenerContext context, string json)
         {
             AddCORSHeaders(context.Response);
             var buffer = Encoding.UTF8.GetBytes(json);
