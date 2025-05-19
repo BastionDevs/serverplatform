@@ -46,7 +46,8 @@ Thank you for your interest in contributing to the Bastion Server Platform! Whet
 
 - Install [Microsoft Visual Studio 2022](https://visualstudio.microsoft.com/) (recommended) with:
   - .NET Framework 4.7.2 targeting pack  
-  - C# Windows Desktop (WinForms) development workload  
+  - .NET desktop development workload (backend)
+  - ASP.NET and web development workload (frontend)  
 
 ---
 
