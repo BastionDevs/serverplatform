@@ -1,0 +1,79 @@
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.h6">Create a New Server</MudText>
+
+            <MudTextField @bind-Value="ServerName" Label="Server Name" Variant="Variant.Filled" Required="true" />
+
+            <MudSelect T="string" Label="Server Software" @bind-Value="SelectedSoftware" Variant="Variant.Filled" Required="true">
+                @foreach (var software in ServerSoftwareOptions)
+                {
+                    <MudSelectItem Value="software">@software</MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudSelect T="string" Label="Server Version" @bind-Value="SelectedVersion" Variant="Variant.Filled" Required="true">
+                @foreach (var version in ServerVersionOptions)
+                {
+                    <MudSelectItem Value="version">@version</MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudTextField @bind-Value="MinRam" Label="Minimum RAM (e.g., 1024 MB)" Variant="Variant.Filled" Required="true" />
+            <MudTextField @bind-Value="MaxRam" Label="Maximum RAM (e.g., 4096 MB)" Variant="Variant.Filled" Required="true" />
+        </MudStack>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Color="Color.Secondary" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Create" Disabled="@IsCreateDisabled">Create</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; }
+
+    private string ServerName;
+    private string SelectedSoftware;
+    private string SelectedVersion;
+    private string MinRam;
+    private string MaxRam;
+
+    private readonly string[] ServerSoftwareOptions = { "Paper", "Spigot", "Vanilla", "Fabric" };
+    private readonly string[] ServerVersionOptions = { "1.20.4", "1.20.1", "1.19.4", "1.18.2" };
+
+    private bool IsCreateDisabled =>
+        string.IsNullOrWhiteSpace(ServerName) ||
+        string.IsNullOrWhiteSpace(SelectedSoftware) ||
+        string.IsNullOrWhiteSpace(SelectedVersion) ||
+        string.IsNullOrWhiteSpace(MinRam) ||
+        string.IsNullOrWhiteSpace(MaxRam);
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private void Create()
+    {
+        var result = new ServerCreationParams
+        {
+            Name = ServerName,
+            Software = SelectedSoftware,
+            Version = SelectedVersion,
+            MinRam = MinRam,
+            MaxRam = MaxRam
+        };
+
+        MudDialog.Close(DialogResult.Ok(result));
+    }
+
+    public class ServerCreationParams
+    {
+        public string Name { get; set; }
+        public string Software { get; set; }
+        public string Version { get; set; }
+        public string MinRam { get; set; }
+        public string MaxRam { get; set; }
+    }
+}

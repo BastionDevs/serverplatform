@@ -1,4 +1,5 @@
-﻿@page "/dashboard"
+﻿@inject IDialogService DialogService
+@page "/dashboard"
 
 <MudText Typo="Typo.h1">DashBoard</MudText>
 
@@ -44,7 +45,11 @@
 
     <MudGrid Spacing="3">
         <MudItem xs="12" sm="6" md="4">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" FullWidth="true">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="OpenCreateServerDialog"
+                       FullWidth="true">
                 Create Server
             </MudButton>
         </MudItem>
@@ -96,7 +101,7 @@
 
 @code {
     private bool AreServersOnline = true;
-    private bool IsToggling = false;
+    private bool IsToggling;
 
     private async Task ToggleAllServers()
     {
@@ -126,4 +131,19 @@
     {
         public string Name { get; set; } = "";
     }
+    
+    private async Task OpenCreateServerDialog()
+    {
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = DialogService.Show<ServerCreationDialog>("Create New Server", options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is ServerCreationDialog.ServerCreationParams serverData)
+        {
+            // Add server to list (you can replace with API call later)
+            Servers.Add(new ServerEntry { Name = serverData.Name });
+            StateHasChanged(); // Update UI
+        }
+    }
+
 }
