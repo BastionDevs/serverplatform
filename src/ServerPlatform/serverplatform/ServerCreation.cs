@@ -6,21 +6,41 @@ namespace serverplatform
 {
     internal class ServerCreation
     {
-        public static string CalculateSHA256Hash(string filePath)
-        {
-            using (var sha256 = SHA256.Create()) // Use SHA256 hashing algorithm
-            using (var fileStream = File.OpenRead(filePath))
-            {
-                var hashBytes = sha256.ComputeHash(fileStream);
-                return BitConverter.ToString(hashBytes).Replace("-", "").ToLower(); // Convert to a lowercase hex string
-            }
-        }
-
-        public static void CreateServer(string name, string description)
+        public static void CreateServer(string name, string description, string[] version)
         {
             var serversFolder = Config.GetConfig("ServersDir", "main");
 
-            if (Directory.Exists($@"{serversFolder}\\{name}")) throw new Exception("Folder already exists.");
+            if (Directory.Exists($@"{serversFolder}\\{name}"))
+            {
+                throw new Exception("Folder already exists.");
+            } else
+            {
+                if (version[0] == "paper")
+                {
+                    if (version.Length == 3)
+                    {
+                        /* 1st: paper
+                         * 2nd: mc version
+                         * 3rd: build num
+                         */
+                    } else
+                    {
+                        throw new Exception("Wrong arguments passed.");
+                    }
+                } else if (version[0] == "spigot")
+                {
+
+                } else if (version[0] == "bukkit")
+                {
+
+                } else if (version[0] == "vanilla")
+                {
+
+                } else
+                {
+                    throw new Exception("Software not supported.");
+                }
+            }
         }
     }
 }
