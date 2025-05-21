@@ -36,7 +36,7 @@ namespace serverplatform
             }
             catch (OperationCanceledException)
             {
-                ConsoleLogging.LogMessage("Cancellation requested. Shutting down API listener...", "Listener");
+                ConsoleLogging.LogMessage("Ctrl+C intercepted. Shutting down API listener...", "Listener");
             }
             catch (HttpListenerException ex)
             {
@@ -50,7 +50,7 @@ namespace serverplatform
                     listener.Close();
                 }
 
-                ConsoleLogging.LogMessage("API listener stopped and cleaned up.", "Listener");
+                ConsoleLogging.LogMessage("API listener stopped.", "Listener");
             }
         }
 
@@ -127,7 +127,7 @@ namespace serverplatform
             var username = body["username"]?.ToString();
             var password = body["password"]?.ToString();
 
-            ConsoleLogging.LogMessage($"User {username} is attempting to log in.", "AUTH");
+            ConsoleLogging.LogMessage($"User {username} is attempting to authenticate.", "AUTH");
 
             try
             {
@@ -141,7 +141,7 @@ namespace serverplatform
                 else
                 {
                     var backendError = result["error"]?.ToString();
-                    ConsoleLogging.LogWarning($"Authentication failed for {username}: {backendError}", "AUTH");
+                    ConsoleLogging.LogWarning($"User {username} failed to authenticate: {backendError}", "AUTH");
 
                     result["error"] = "incorrectusrorpwd";
                     RespondJson(context, result.ToString());
@@ -149,7 +149,7 @@ namespace serverplatform
             }
             catch (Exception ex)
             {
-                ConsoleLogging.LogError($"Login exception for {username}: {ex.Message}", "AUTH");
+                ConsoleLogging.LogError($"Exception occured while trying to authenticate {username}: {ex.Message}", "AUTH");
                 RespondJson(context, JObject.FromObject(new
                 {
                     success = false, error = "internalError"
@@ -199,7 +199,7 @@ namespace serverplatform
             var username = body["username"]?.ToString();
             var password = body["password"]?.ToString();
 
-            ConsoleLogging.LogMessage($"Attempting registration for user {username}.", "AUTH");
+            ConsoleLogging.LogMessage($"Received request to register user {username}.", "AUTH");
 
             try
             {
