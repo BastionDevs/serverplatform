@@ -7,7 +7,7 @@ namespace serverplatform
 {
     internal class Program
     {
-        private static readonly CancellationTokenSource _cts = new CancellationTokenSource();
+        private static readonly CancellationTokenSource Cts = new CancellationTokenSource();
 
         private static void Main(string[] args)
         {
@@ -44,9 +44,10 @@ namespace serverplatform
                 }
             }
 
-            Console.CancelKeyPress += (sender, eventArgs) => {
+            Console.CancelKeyPress += (sender, eventArgs) =>
+            {
                 ConsoleLogging.LogMessage("Stopping server...");
-                _cts.Cancel();
+                Cts.Cancel();
                 eventArgs.Cancel = true;
             };
 
@@ -94,7 +95,7 @@ namespace serverplatform
             ConsoleLogging.LogMessage("💣 Devastating Fact:");
             Console.ForegroundColor = ConsoleColor.Gray;
             ConsoleLogging.LogMessage(
-            "Israel has been occupying Palestinian land illegally longer than CubeNotFound has lived.");
+                "Israel has been occupying Palestinian land illegally longer than CubeNotFound has lived.");
             Console.WriteLine();
 
 
@@ -109,7 +110,7 @@ namespace serverplatform
 
             // Start server
             ConsoleLogging.LogSuccess("Server is now online and listening.");
-            APIHandler.StartServer(_cts.Token, backendPort).GetAwaiter().GetResult();
+            ApiHandler.StartServer(Cts.Token, backendPort).GetAwaiter().GetResult();
 
             // Server stopping
             ConsoleLogging.LogSuccess("Server has stopped cleanly.");

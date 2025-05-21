@@ -10,28 +10,32 @@
     <MudGrid Spacing="3">
         <MudItem xs="12" sm="6" md="3">
             <!-- INNER PAPER: Flat, outlined -->
-            <MudPaper Elevation="0" Outlined="true" Height="140px" Class="pa-4 d-flex flex-column justify-center align-center w-100">
+            <MudPaper Elevation="0" Outlined="true" Height="140px"
+                      Class="pa-4 d-flex flex-column justify-center align-center w-100">
                 <MudText Typo="Typo.subtitle1" Align="Align.Center">Online Servers</MudText>
                 <MudText Typo="Typo.h5" Align="Align.Center" Color="Color.Success">3</MudText>
             </MudPaper>
         </MudItem>
 
         <MudItem xs="12" sm="6" md="3">
-            <MudPaper Elevation="0" Outlined="true" Height="140px" Class="pa-4 d-flex flex-column justify-center align-center w-100">
+            <MudPaper Elevation="0" Outlined="true" Height="140px"
+                      Class="pa-4 d-flex flex-column justify-center align-center w-100">
                 <MudText Typo="Typo.subtitle1" Align="Align.Center">Total Servers</MudText>
                 <MudText Typo="Typo.h5" Align="Align.Center">5</MudText>
             </MudPaper>
         </MudItem>
 
         <MudItem xs="12" sm="6" md="3">
-            <MudPaper Elevation="0" Outlined="true" Height="140px" Class="pa-4 d-flex flex-column justify-center align-center w-100">
+            <MudPaper Elevation="0" Outlined="true" Height="140px"
+                      Class="pa-4 d-flex flex-column justify-center align-center w-100">
                 <MudText Typo="Typo.subtitle1" Align="Align.Center">CPU Usage</MudText>
                 <MudText Typo="Typo.h5" Align="Align.Center" Color="Color.Warning">62%</MudText>
             </MudPaper>
         </MudItem>
 
         <MudItem xs="12" sm="6" md="3">
-            <MudPaper Elevation="0" Outlined="true" Height="140px" Class="pa-4 d-flex flex-column justify-center align-center w-100">
+            <MudPaper Elevation="0" Outlined="true" Height="140px"
+                      Class="pa-4 d-flex flex-column justify-center align-center w-100">
                 <MudText Typo="Typo.subtitle1" Align="Align.Center">RAM Usage</MudText>
                 <MudText Typo="Typo.h5" Align="Align.Center" Color="Color.Error">3.2 GB</MudText>
             </MudPaper>
@@ -55,24 +59,26 @@
         </MudItem>
 
         <MudItem xs="12" sm="6" md="4">
-            <MudButton 
-                Variant="Variant.Outlined" 
-                Color="@((AreServersOnline ? Color.Error : Color.Success))"
-                StartIcon="@(AreServersOnline ? Icons.Material.Filled.Stop : Icons.Material.Filled.PlayArrow)" 
+            <MudButton
+                Variant="Variant.Outlined"
+                Color="@(_areServersOnline ? Color.Error : Color.Success)"
+                StartIcon="@(_areServersOnline ? Icons.Material.Filled.Stop : Icons.Material.Filled.PlayArrow)"
                 OnClick="@ToggleAllServers"
                 FullWidth="true">
-                @(AreServersOnline ? "Stop All Servers" : "Start All Servers")
+                @(_areServersOnline ? "Stop All Servers" : "Start All Servers")
             </MudButton>
         </MudItem>
 
         <MudItem xs="12" sm="6" md="4">
-            <MudButton Variant="Variant.Text" Color="Color.Info" StartIcon="@Icons.Material.Filled.Terminal" FullWidth="true">
+            <MudButton Variant="Variant.Text" Color="Color.Info" StartIcon="@Icons.Material.Filled.Terminal"
+                       FullWidth="true">
                 Open Console
             </MudButton>
         </MudItem>
 
         <MudItem xs="12" sm="6" md="4">
-            <MudButton Variant="Variant.Text" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.FolderOpen" FullWidth="true">
+            <MudButton Variant="Variant.Text" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.FolderOpen"
+                       FullWidth="true">
                 File Manager
             </MudButton>
         </MudItem>
@@ -83,7 +89,7 @@
     <MudText Typo="Typo.h6" Class="mb-4">Your Servers</MudText>
 
     <MudGrid Spacing="3">
-        @foreach (var server in Servers)
+        @foreach (var server in _servers)
         {
             <MudItem xs="12" sm="6" md="4" lg="3">
                 <MudPaper Elevation="1" Class="pa-4 d-flex flex-column justify-between h-100">
@@ -100,38 +106,38 @@
 
 
 @code {
-    private bool AreServersOnline = true;
-    private bool IsToggling;
+    private bool _areServersOnline = true;
+    private bool _isToggling;
 
     private async Task ToggleAllServers()
     {
-        if (IsToggling) return;
+        if (_isToggling) return;
 
-        IsToggling = true;
+        _isToggling = true;
 
         // Simulate delay for UI safety
         await Task.Delay(200); // Prevent multiple triggers
 
-        AreServersOnline = !AreServersOnline;
+        _areServersOnline = !_areServersOnline;
 
-        IsToggling = false;
+        _isToggling = false;
 
         // Optionally call StateHasChanged() here, but it's usually automatic after await
     }
 
-    private List<ServerEntry> Servers = new()
+    private readonly List<ServerEntry> _servers = new()
     {
         new ServerEntry { Name = "SMP #1" },
         new ServerEntry { Name = "Modded" },
-        new ServerEntry { Name = "Skyblock" },
+        new ServerEntry { Name = "Skyblock" }
         // Add more here
     };
 
     private class ServerEntry
     {
-        public string Name { get; set; } = "";
+        public string? Name { get; set; } = "";
     }
-    
+
     private async Task OpenCreateServerDialog()
     {
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
@@ -141,7 +147,7 @@
         if (!result.Canceled && result.Data is ServerCreationDialog.ServerCreationParams serverData)
         {
             // Add server to list (you can replace with API call later)
-            Servers.Add(new ServerEntry { Name = serverData.Name });
+            _servers.Add(new ServerEntry { Name = serverData.Name });
             StateHasChanged(); // Update UI
         }
     }

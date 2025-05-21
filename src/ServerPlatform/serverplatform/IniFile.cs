@@ -11,55 +11,58 @@ namespace TinyINIController
 {
     internal class IniFile
     {
-        private readonly string exe = Assembly.GetExecutingAssembly().GetName().Name;
+        private readonly string _exe = Assembly.GetExecutingAssembly().GetName().Name;
 
-        private readonly FileAccess fileAccess;
+        private readonly FileAccess _fileAccess;
 
-        private readonly FileInfo FileInfo;
+        private readonly FileInfo _fileInfo;
 
         public IniFile(string path = null, FileAccess access = FileAccess.ReadWrite)
         {
-            fileAccess = access;
-            FileInfo = new FileInfo(path ?? exe);
+            _fileAccess = access;
+            _fileInfo = new FileInfo(path ?? _exe);
         }
 
         [DllImport("kernel32", CharSet = CharSet.Unicode)]
-        private static extern long WritePrivateProfileString(string section, string key, string value, string FilePath);
+        private static extern long WritePrivateProfileString(string section, string key, string value, string filePath);
 
         [DllImport("kernel32", CharSet = CharSet.Unicode)]
-        private static extern int GetPrivateProfileString(string section, string key, string Default,
-            StringBuilder RetVal, int Size, string FilePath);
+        private static extern int GetPrivateProfileString(string section, string key, string @default,
+            StringBuilder retVal, int size, string filePath);
 
         public string Read(string key, string section = null)
         {
-            var RetVal = new StringBuilder(65025);
+            var retVal = new StringBuilder(65025);
 
-            if (fileAccess != FileAccess.Write)
-                GetPrivateProfileString(section ?? exe, key, "", RetVal, 65025, FileInfo.FullName);
+            if (_fileAccess != FileAccess.Write)
+                GetPrivateProfileString(section ?? _exe, key, "", retVal, 65025, _fileInfo.FullName);
             else
                 throw new Exception("Can`t read file! No access!");
 
-            return RetVal.ToString();
+            return retVal.ToString();
         }
 
         public void Write(string key, string value, string section = null)
         {
-            if (fileAccess != FileAccess.Read)
-                WritePrivateProfileString(section ?? exe, key, value, FileInfo.FullName);
+            if (_fileAccess != FileAccess.Read)
+                WritePrivateProfileString(section ?? _exe, key, value, _fileInfo.FullName);
             else
                 throw new Exception("Can`t write to file! No access!");
         }
 
         public void DeleteKey(string key, string section = null)
         {
-            Write(key, null, section ?? exe);
+            Write(key, null, section ?? _exe);
         }
 
         public void DeleteSection(string section = null)
         {
-            Write(null, null, section ?? exe);
+            Write(null, null, section ?? _exe);
         }
 
-        public bool KeyExists(string key, string section = null) => Read(key, section).Length > 0;
+        public bool KeyExists(string key, string section = null)
+        {
+            return Read(key, section).Length > 0;
+        }
     }
 }

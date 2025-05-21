@@ -7,14 +7,14 @@ namespace installer
 {
     public partial class Page2 : UserControl
     {
-        private readonly Image[] images =
+        private readonly Image[] _images =
         {
             Resources.bastion_original_on_white, Resources.CubeNotFound_250
         };
 
-        private int imageIndex;
+        private int _imageIndex;
 
-        private Timer timer1;
+        private Timer _timer1;
 
         public Page2()
         {
@@ -26,17 +26,17 @@ namespace installer
 
         private void InitializeTimer()
         {
-            timer1 = new Timer();
-            timer1.Interval = 1500;
-            timer1.Tick += timer1_Tick;
-            timer1.Start();
+            _timer1 = new Timer();
+            _timer1.Interval = 1500;
+            _timer1.Tick += timer1_Tick;
+            _timer1.Start();
         }
 
         private void timer1_Tick(object sender, EventArgs e)
         {
             // Change to the next image
-            imageIndex = (imageIndex + 1) % images.Length;
-            pictureBox1.Image = images[imageIndex];
+            _imageIndex = (_imageIndex + 1) % _images.Length;
+            pictureBox1.Image = _images[_imageIndex];
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -62,7 +62,7 @@ namespace installer
         private void button3_Click(object sender, EventArgs e)
         {
             var dr = MessageBox.Show("Are you sure you want to exit Setup?", "", MessageBoxButtons.YesNo,
-            MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+                MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
             if (dr == DialogResult.Yes) Application.Exit();
         }
     }
