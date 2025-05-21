@@ -96,6 +96,9 @@ namespace serverplatform
                             error = "Not Found"
                         }).ToString());
                     }
+                } else if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/servers/create")
+                {
+                    ServerCreation.HandleCreationRequest(context);
                 }
                 else
                 {

@@ -1,11 +1,27 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.IO;
+using System.Net;
 
 namespace serverplatform
 {
     internal class ServerCreation
     {
-        public static void CreateServer(string name, string description, string[] version)
+        public static void HandleCreationRequest(HttpListenerContext context)
+        {
+            var requestBody =
+                new StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
+            var body = JObject.Parse(requestBody);
+
+            string auth = body["auth"]?.ToString();
+            string name = body["serverName"]?.ToString();
+            string software = body["software"]?.ToString();
+            string version = body["version"]?.ToString();
+            string minRam = body["minRam"]?.ToString();
+            string maxRam = body["maxRam"]?.ToString();
+        }
+
+        public static void CreateServer(string name, string description, string[] version, string[] ramAmounts)
         {
             var serversFolder = Config.GetConfig("ServersDir", "main");
 
