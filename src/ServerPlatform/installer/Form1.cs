@@ -5,7 +5,7 @@ namespace installer
 {
     public partial class Form1 : Form
     {
-        private readonly Dictionary<string, UserControl> forms = new Dictionary<string, UserControl>();
+        private readonly Dictionary<string, UserControl> _forms = new Dictionary<string, UserControl>();
 
         public Form1()
         {
@@ -22,9 +22,9 @@ namespace installer
             var form3 = new Page3();
 
             // Add to dictionary
-            forms["Form1"] = form1;
-            forms["Form2"] = form2;
-            forms["Form3"] = form3;
+            _forms["Form1"] = form1;
+            _forms["Form2"] = form2;
+            _forms["Form3"] = form3;
 
             // Subscribe to SwitchForm events
             form1.SwitchForm += LoadForm;
@@ -34,10 +34,10 @@ namespace installer
 
         private void LoadForm(string formName)
         {
-            if (forms.ContainsKey(formName))
+            if (_forms.ContainsKey(formName))
             {
                 panelContainer.Controls.Clear();
-                panelContainer.Controls.Add(forms[formName]);
+                panelContainer.Controls.Add(_forms[formName]);
             }
         }
     }

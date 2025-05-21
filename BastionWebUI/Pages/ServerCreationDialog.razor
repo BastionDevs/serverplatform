@@ -1,79 +1,127 @@
 <MudDialog>
     <DialogContent>
         <MudStack Spacing="2">
-            <MudText Typo="Typo.h6">Create a New Server</MudText>
 
-            <MudTextField @bind-Value="ServerName" Label="Server Name" Variant="Variant.Filled" Required="true" />
-
-            <MudSelect T="string" Label="Server Software" @bind-Value="SelectedSoftware" Variant="Variant.Filled" Required="true">
-                @foreach (var software in ServerSoftwareOptions)
-                {
-                    <MudSelectItem Value="software">@software</MudSelectItem>
-                }
-            </MudSelect>
-
-            <MudSelect T="string" Label="Server Version" @bind-Value="SelectedVersion" Variant="Variant.Filled" Required="true">
-                @foreach (var version in ServerVersionOptions)
-                {
-                    <MudSelectItem Value="version">@version</MudSelectItem>
-                }
-            </MudSelect>
-
-            <MudTextField @bind-Value="MinRam" Label="Minimum RAM (e.g., 1024 MB)" Variant="Variant.Filled" Required="true" />
-            <MudTextField @bind-Value="MaxRam" Label="Maximum RAM (e.g., 4096 MB)" Variant="Variant.Filled" Required="true" />
+            @if (_currentStep == 0)
+            {
+                <MudText Typo="Typo.h6">1. Select a Server Software</MudText>
+                <MudSelect T="string" Label="Select Server Software" @bind-Value="_selectedSoftware"
+                           Variant="Variant.Filled" Required="true">
+                    @foreach (var software in _serverSoftwareOptions)
+                    {
+                        <MudSelectItem Value="@software">@software</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+            else if (_currentStep == 1)
+            {
+                <MudText Typo="Typo.h6">Select a Server Version</MudText>
+                <MudSelect T="string" Label="Select Server Version" @bind-Value="_selectedVersion"
+                           Variant="Variant.Filled" Required="true">
+                    @foreach (var version in _serverVersionOptions)
+                    {
+                        <MudSelectItem Value="@version">@version</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+            else if (_currentStep == 2)
+            {
+                <MudText Typo="Typo.h6">Additional details</MudText>
+                <MudTextField @bind-Value="_serverName" Label="Server Name" Variant="Variant.Filled" Required="true"/>
+                <MudTextField @bind-Value="_minRam" Label="Minimum RAM (e.g., 1024 MB)" Variant="Variant.Filled"
+                              Required="true"/>
+                <MudTextField @bind-Value="_maxRam" Label="Maximum RAM (e.g., 4096 MB)" Variant="Variant.Filled"
+                              Required="true"/>
+            }
+            else if (_currentStep == 3)
+            {
+                <MudText Typo="Typo.subtitle1">Please confirm the details:</MudText>
+                <MudText><b>Software:</b> @_selectedSoftware</MudText>
+                <MudText><b>Version:</b> @_selectedVersion</MudText>
+                <MudText><b>Name:</b> @_serverName</MudText>
+                <MudText><b>Min RAM:</b> @_minRam MB</MudText>
+                <MudText><b>Max RAM:</b> @_maxRam MB</MudText>
+            }
         </MudStack>
     </DialogContent>
 
     <DialogActions>
-        <MudButton Color="Color.Secondary" OnClick="Cancel">Cancel</MudButton>
-        <MudButton Color="Color.Primary" OnClick="Create" Disabled="@IsCreateDisabled">Create</MudButton>
+        @if (_currentStep > 0)
+        {
+            <MudButton OnClick="Back" Color="Color.Secondary">Back</MudButton>
+        }
+
+        @if (_currentStep < 3)
+        {
+            <MudButton OnClick="Next" Disabled="@IsCurrentStepInvalid" Color="Color.Primary">Next</MudButton>
+        }
+        else
+        {
+            <MudButton OnClick="Create" Disabled="@IsCreateDisabled" Color="Color.Primary">Create</MudButton>
+        }
     </DialogActions>
 </MudDialog>
 
+
 @code {
-    [CascadingParameter] IMudDialogInstance MudDialog { get; set; }
+    [CascadingParameter] IMudDialogInstance? MudDialog { get; set; }
 
-    private string ServerName;
-    private string SelectedSoftware;
-    private string SelectedVersion;
-    private string MinRam;
-    private string MaxRam;
+    private int _currentStep;
 
-    private readonly string[] ServerSoftwareOptions = { "Paper", "Spigot", "Vanilla", "Fabric" };
-    private readonly string[] ServerVersionOptions = { "1.20.4", "1.20.1", "1.19.4", "1.18.2" };
+    private string? _serverName;
+    private string? _selectedSoftware;
+    private string? _selectedVersion;
+    private string? _minRam;
+    private string? _maxRam;
+
+    private readonly string[] _serverSoftwareOptions = { "Paper", "Spigot", "Vanilla", "Fabric" };
+    private readonly string[] _serverVersionOptions = { "1.20.4", "1.20.1", "1.19.4", "1.18.2" };
 
     private bool IsCreateDisabled =>
-        string.IsNullOrWhiteSpace(ServerName) ||
-        string.IsNullOrWhiteSpace(SelectedSoftware) ||
-        string.IsNullOrWhiteSpace(SelectedVersion) ||
-        string.IsNullOrWhiteSpace(MinRam) ||
-        string.IsNullOrWhiteSpace(MaxRam);
+        string.IsNullOrWhiteSpace(_serverName) ||
+        string.IsNullOrWhiteSpace(_selectedSoftware) ||
+        string.IsNullOrWhiteSpace(_selectedVersion) ||
+        string.IsNullOrWhiteSpace(_minRam) ||
+        string.IsNullOrWhiteSpace(_maxRam);
 
-    private void Cancel()
+    private bool IsCurrentStepInvalid =>
+        (_currentStep == 0 && string.IsNullOrWhiteSpace(_selectedSoftware)) ||
+        (_currentStep == 1 && string.IsNullOrWhiteSpace(_selectedVersion)) ||
+        (_currentStep == 2 && (string.IsNullOrWhiteSpace(_serverName) || string.IsNullOrWhiteSpace(_minRam) || string.IsNullOrWhiteSpace(_maxRam)));
+
+    private void Next()
     {
-        MudDialog.Cancel();
+        if (_currentStep < 3)
+            _currentStep++;
+    }
+
+    private void Back()
+    {
+        if (_currentStep > 0)
+            _currentStep--;
     }
 
     private void Create()
     {
         var result = new ServerCreationParams
         {
-            Name = ServerName,
-            Software = SelectedSoftware,
-            Version = SelectedVersion,
-            MinRam = MinRam,
-            MaxRam = MaxRam
+            Name = _serverName,
+            Software = _selectedSoftware,
+            Version = _selectedVersion,
+            MinRam = _minRam,
+            MaxRam = _maxRam
         };
 
-        MudDialog.Close(DialogResult.Ok(result));
+        MudDialog?.Close(DialogResult.Ok(result));
     }
 
     public class ServerCreationParams
     {
-        public string Name { get; set; }
-        public string Software { get; set; }
-        public string Version { get; set; }
-        public string MinRam { get; set; }
-        public string MaxRam { get; set; }
+        public string? Name { get; set; }
+        public string? Software { get; set; }
+        public string? Version { get; set; }
+        public string? MinRam { get; set; }
+        public string? MaxRam { get; set; }
     }
+
 }

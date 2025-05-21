@@ -191,7 +191,8 @@ namespace serverplatform
                     new Claim(ClaimTypes.Name, username)
                 }),
                 Expires = DateTime.UtcNow.AddHours(1),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key),
+                    SecurityAlgorithms.HmacSha256Signature)
             };
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
@@ -227,7 +228,7 @@ namespace serverplatform
 
                 if (validatedToken is JwtSecurityToken jwtToken)
                     ConsoleLogging.LogMessage(
-                    $"JWT validated: User = {principal.Identity?.Name}, Expires = {jwtToken.ValidTo:u}", "JWT");
+                        $"JWT validated: User = {principal.Identity?.Name}, Expires = {jwtToken.ValidTo:u}", "JWT");
 
                 return principal;
             }

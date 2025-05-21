@@ -17,7 +17,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <_ContentIncludedByDefault Remove="Pages\Dialogs\LogoutDialog.razor" />
+        <_ContentIncludedByDefault Remove="Pages\Dialogs\LogoutDialog.razor"/>
     </ItemGroup>
 
 </Project>

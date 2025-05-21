@@ -1,15 +1,15 @@
 ﻿using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
-using System.IdentityModel.Tokens.Jwt;
 
 namespace serverplatform
 {
-    internal class APIHandler
+    internal class ApiHandler
     {
         public static async Task StartServer(CancellationToken token, int port)
         {
@@ -60,14 +60,16 @@ namespace serverplatform
             {
                 if (context.Request.HttpMethod == "OPTIONS")
                 {
-                    AddCORSHeaders(context.Response);
+                    AddCorsHeaders(context.Response);
                     context.Response.StatusCode = 204;
                     context.Response.Close();
-                    ConsoleLogging.LogMessage($"Handled CORS preflight request for {context.Request.Url.AbsolutePath}", "API");
+                    ConsoleLogging.LogMessage($"Handled CORS preflight request for {context.Request.Url.AbsolutePath}",
+                        "API");
                     return;
                 }
 
-                ConsoleLogging.LogMessage($"Incoming {context.Request.HttpMethod} request for {context.Request.Url.AbsolutePath}", "API");
+                ConsoleLogging.LogMessage(
+                    $"Incoming {context.Request.HttpMethod} request for {context.Request.Url.AbsolutePath}", "API");
 
                 if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath.StartsWith("/auth"))
                 {
@@ -118,7 +120,8 @@ namespace serverplatform
 
         private static void HandleLogin(HttpListenerContext context)
         {
-            var requestBody = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
+            var requestBody =
+                new StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
             var body = JObject.Parse(requestBody);
 
             var username = body["username"]?.ToString();
@@ -167,8 +170,9 @@ namespace serverplatform
                 }).ToString());
                 return;
             }
+
             var token = authHeader.Substring("Bearer ".Length).Trim();
-            
+
             var handler = new JwtSecurityTokenHandler();
             if (!handler.CanReadToken(token))
             {
@@ -179,8 +183,8 @@ namespace serverplatform
                 }).ToString());
                 return;
             }
-            
-            JObject result = UserAuth.LogoutUser(token);
+
+            var result = UserAuth.LogoutUser(token);
 
             context.Response.StatusCode = 200;
             RespondJson(context, result.ToString());
@@ -188,7 +192,8 @@ namespace serverplatform
 
         private static void HandleRegister(HttpListenerContext context)
         {
-            var requestBody = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
+            var requestBody =
+                new StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
             var body = JObject.Parse(requestBody);
 
             var username = body["username"]?.ToString();
@@ -224,7 +229,7 @@ namespace serverplatform
             }
         }
 
-        private static void AddCORSHeaders(HttpListenerResponse response)
+        private static void AddCorsHeaders(HttpListenerResponse response)
         {
             response.AddHeader("Access-Control-Allow-Origin", "*");
             response.AddHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -233,7 +238,7 @@ namespace serverplatform
 
         private static void RespondJson(HttpListenerContext context, string json)
         {
-            AddCORSHeaders(context.Response);
+            AddCorsHeaders(context.Response);
             var buffer = Encoding.UTF8.GetBytes(json);
             context.Response.ContentType = "application/json";
             context.Response.ContentLength64 = buffer.Length;
@@ -244,7 +249,7 @@ namespace serverplatform
 
         public static void RespondText(HttpListenerContext context, string text)
         {
-            AddCORSHeaders(context.Response);
+            AddCorsHeaders(context.Response);
             var buffer = Encoding.UTF8.GetBytes(text);
             context.Response.ContentType = "text/plain";
             context.Response.ContentLength64 = buffer.Length;
@@ -253,9 +258,9 @@ namespace serverplatform
             context.Response.Close();
         }
 
-        public static void RespondHTML(HttpListenerContext context, string html)
+        public static void RespondHtml(HttpListenerContext context, string html)
         {
-            AddCORSHeaders(context.Response);
+            AddCorsHeaders(context.Response);
             context.Response.StatusCode = 200;
             var buffer = Encoding.UTF8.GetBytes(html);
             context.Response.ContentType = "text/html";

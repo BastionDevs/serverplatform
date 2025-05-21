@@ -5,10 +5,10 @@ namespace serverplatform
 {
     internal class ConsoleLogging
     {
-        private static readonly string logDir = Path.Combine(Environment.CurrentDirectory, "logs");
+        private static readonly string LogDir = Path.Combine(Environment.CurrentDirectory, "logs");
 
-        private static readonly string logFile =
-            Path.Combine(logDir, $"{DateTime.Now:yyyy-dd-MMM-hh-mm-tt}".ToLower() + ".log");
+        private static readonly string LogFile =
+            Path.Combine(LogDir, $"{DateTime.Now:yyyy-dd-MMM-hh-mm-tt}".ToLower() + ".log");
 
         public static void LogError(string message, string component = null)
         {
@@ -34,8 +34,8 @@ namespace serverplatform
         {
             if (confirm)
             {
-                if (Directory.Exists(logDir))
-                    Directory.Delete(logDir, true);
+                if (Directory.Exists(LogDir))
+                    Directory.Delete(LogDir, true);
             }
             else
             {
@@ -56,7 +56,7 @@ namespace serverplatform
 
             var fullMessage = $"{timestamp} {prefix} {message}".Trim();
 
-            using (var sw = new StreamWriter(logFile, true))
+            using (var sw = new StreamWriter(LogFile, true))
             {
                 Console.ForegroundColor = color;
                 sw.WriteLine(fullMessage);
@@ -67,8 +67,8 @@ namespace serverplatform
 
         private static void LogDirCheck()
         {
-            if (!Directory.Exists(logDir))
-                Directory.CreateDirectory(logDir);
+            if (!Directory.Exists(LogDir))
+                Directory.CreateDirectory(LogDir);
         }
     }
 }

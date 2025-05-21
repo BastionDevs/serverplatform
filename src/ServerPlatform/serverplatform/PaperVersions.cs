@@ -6,7 +6,7 @@ namespace serverplatform
 {
     internal class PaperVersions
     {
-        public static List<string> paperVersionsList()
+        public static List<string> PaperVersionsList()
         {
             var paperRootJson = new WebClient().DownloadString("https://api.papermc.io/v2/projects/paper");
             var versionsObj = JObject.Parse(paperRootJson);
@@ -14,7 +14,7 @@ namespace serverplatform
             return versionsArray.ToObject<List<string>>();
         }
 
-        public static List<string> paperBuildsList(string version)
+        public static List<string> PaperBuildsList(string version)
         {
             var versionJson =
                 new WebClient().DownloadString("https://api.papermc.io/v2/projects/paper/versions/" + version);
@@ -23,7 +23,7 @@ namespace serverplatform
             return buildsArray.ToObject<List<string>>();
         }
 
-        public static string getPaperJarURL(string version, string build)
+        public static string GetPaperJarUrl(string version, string build)
         {
             var rootUrl = $"https://api.papermc.io/v2/projects/paper/versions/{version}/builds/{build}";
             var buildJson = new WebClient().DownloadString(rootUrl);
@@ -31,11 +31,11 @@ namespace serverplatform
             return $"{rootUrl}/downloads/{buildObj["downloads"]["application"]["name"]}";
         }
 
-        public static string getPaperJarHash(string version, string build)
+        public static string GetPaperJarHash(string version, string build)
         {
             var buildJson =
                 new WebClient().DownloadString(
-                $"https://api.papermc.io/v2/projects/paper/versions/{version}/builds/{build}");
+                    $"https://api.papermc.io/v2/projects/paper/versions/{version}/builds/{build}");
             var buildObj = JObject.Parse(buildJson);
             return buildObj["downloads"]["application"]["sha256"]?.ToString();
         }

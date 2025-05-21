@@ -1,6 +1,6 @@
 ﻿@inherits LayoutComponentBase
 
-<MudThemeProvider Theme="@Potatoes"/>
+<MudThemeProvider Theme="@_potatoes"/>
 <MudPopoverProvider/>
 <MudDialogProvider/>
 <MudSnackbarProvider/>
@@ -50,7 +50,7 @@
         _drawerOpen = !_drawerOpen;
     }
 
-    private readonly MudTheme Potatoes = new()
+    private readonly MudTheme _potatoes = new()
     {
         Typography = new Typography
         {

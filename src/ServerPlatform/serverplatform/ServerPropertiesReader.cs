@@ -22,64 +22,70 @@ using System.Linq;
 
 public class Properties
 {
-    private string filename;
-    private Dictionary<string, string> list;
+    private string _filename;
+    private Dictionary<string, string> _list;
 
     public Properties(string file)
     {
-        reload(file);
+        Reload(file);
     }
 
-    public string get(string field, string defValue) => get(field) == null ? defValue : get(field);
-
-    public string get(string field) => list.ContainsKey(field) ? list[field] : null;
-
-    public void set(string field, object value)
+    public string Get(string field, string defValue)
     {
-        if (!list.ContainsKey(field))
-            list.Add(field, value.ToString());
+        return Get(field) == null ? defValue : Get(field);
+    }
+
+    public string Get(string field)
+    {
+        return _list.ContainsKey(field) ? _list[field] : null;
+    }
+
+    public void Set(string field, object value)
+    {
+        if (!_list.ContainsKey(field))
+            _list.Add(field, value.ToString());
         else
-            list[field] = value.ToString();
+            _list[field] = value.ToString();
     }
 
     public void Save()
     {
-        Save(filename);
+        Save(_filename);
     }
 
     public void Save(string filename)
     {
-        this.filename = filename;
+        this._filename = filename;
 
         if (!File.Exists(filename))
             File.Create(filename).Close();
 
         var file = new StreamWriter(filename);
 
-        foreach (var prop in list.Keys.ToArray())
-            if (!string.IsNullOrWhiteSpace(list[prop]))
-                file.WriteLine(prop + "=" + list[prop]);
+        foreach (var prop in _list.Keys.ToArray())
+            if (!string.IsNullOrWhiteSpace(_list[prop]))
+                file.WriteLine(prop + "=" + _list[prop]);
 
         file.Close();
     }
 
-    public void reload()
+    public void Reload()
     {
-        reload(filename);
+        Reload(_filename);
     }
 
-    public void reload(string filename)
+    public void Reload(string filename)
     {
-        this.filename = filename;
-        list = new Dictionary<string, string>();
+        this._filename = filename;
+        _list = new Dictionary<string, string>();
 
         if (File.Exists(filename))
-            loadFromFile(filename);
+            LoadFromFile(filename);
         else
             File.Create(filename).Close();
     }
 
-    private void loadFromFile(string file)
+    private void LoadFromFile(string file)
     {
         foreach (var line in File.ReadAllLines(file))
             if (!string.IsNullOrEmpty(line) &&
@@ -99,9 +105,11 @@ public class Properties
                 try
                 {
                     //ignore dublicates
-                    list.Add(key, value);
+                    _list.Add(key, value);
                 }
-                catch {}
+                catch
+                {
+                }
             }
     }
 }
