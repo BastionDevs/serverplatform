@@ -149,7 +149,7 @@ namespace serverplatform
             }
             catch (Exception ex)
             {
-                ConsoleLogging.LogError($"Exception occured while trying to authenticate {username}: {ex.Message}", "AUTH");
+                ConsoleLogging.LogError($"Exception occured while trying to authenticate user {username}: {ex.Message}", "AUTH");
                 RespondJson(context, JObject.FromObject(new
                 {
                     success = false, error = "internalError"
@@ -162,7 +162,7 @@ namespace serverplatform
             var authHeader = context.Request.Headers["Authorization"];
             if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
             {
-                ConsoleLogging.LogWarning("Missing or invalid Authorization header in logout attempt.", "AUTH");
+                ConsoleLogging.LogWarning("Missing or invalid Authorization header in logout request.", "AUTH");
                 context.Response.StatusCode = 401;
                 RespondJson(context, JObject.FromObject(new
                 {
@@ -199,7 +199,7 @@ namespace serverplatform
             var username = body["username"]?.ToString();
             var password = body["password"]?.ToString();
 
-            ConsoleLogging.LogMessage($"Received request to register user {username}.", "AUTH");
+            ConsoleLogging.LogMessage($"User is attempting to register with username {username}.", "AUTH");
 
             try
             {
@@ -213,7 +213,7 @@ namespace serverplatform
                 else
                 {
                     var backendError = result["error"]?.ToString();
-                    ConsoleLogging.LogWarning($"Registration failed for {username}: {backendError}", "AUTH");
+                    ConsoleLogging.LogWarning($"User {username} failed to register: {backendError}", "AUTH");
 
                     result["error"] = "registrationfailed";
                     RespondJson(context, result.ToString());
@@ -221,7 +221,7 @@ namespace serverplatform
             }
             catch (Exception ex)
             {
-                ConsoleLogging.LogError($"Registration exception for {username}: {ex.Message}", "AUTH");
+                ConsoleLogging.LogError($"Exception occured while trying to register user {username}: {ex.Message}", "AUTH");
                 RespondJson(context, JObject.FromObject(new
                 {
                     success = false, error = "internalError"
