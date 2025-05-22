@@ -239,7 +239,7 @@ namespace serverplatform
             response.AddHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
         }
 
-        private static void RespondJson(HttpListenerContext context, string json)
+        public static void RespondJson(HttpListenerContext context, string json)
         {
             AddCorsHeaders(context.Response);
             var buffer = Encoding.UTF8.GetBytes(json);
