@@ -28,7 +28,23 @@ namespace serverplatform
 
             string[] ramAmmounts = { minRam, maxRam };
 
-            CreateServer(name, desc, fullVersionArray, ramAmmounts);
+            ConsoleLogging.LogMessage($"User is attempting to create a server with name {name}.", "ServerCreation");
+
+            try
+            {
+                CreateServer(name, desc, fullVersionArray, ramAmmounts);
+            } catch (Exception ex)
+            {
+                ConsoleLogging.LogError($"Exception occured while trying to create server {name}: {ex.Message}", "ServerCreation");
+                ApiHandler.RespondJson(context, JObject.FromObject(new
+                {
+                    success = false,
+                    error = "internalError"
+                }).ToString());
+            } finally
+            {
+
+            }
         }
 
         public static void CreateServer(string name, string description, string[] version, string[] ramAmounts)
