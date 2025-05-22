@@ -15,10 +15,20 @@ namespace serverplatform
 
             string auth = body["auth"]?.ToString();
             string name = body["serverName"]?.ToString();
+            string desc= body["serverDesc"]?.ToString();
             string software = body["software"]?.ToString();
-            string version = body["version"]?.ToString();
+            string versionString = body["version"]?.ToString();
             string minRam = body["minRam"]?.ToString();
             string maxRam = body["maxRam"]?.ToString();
+
+            string[] versionStringSplit = versionString.Split('/');
+            string[] newArray = new string[versionStringSplit.Length + 1];
+            newArray[0] = software;
+            Array.Copy(versionStringSplit, 0, newArray, 1, versionStringSplit.Length);
+
+            string[] ramAmmounts = { minRam, maxRam };
+
+            CreateServer(name, desc, newArray, ramAmmounts);
         }
 
         public static void CreateServer(string name, string description, string[] version, string[] ramAmounts)
