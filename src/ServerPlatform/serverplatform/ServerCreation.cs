@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Net;
+using System.Security.Policy;
 
 namespace serverplatform
 {
@@ -12,6 +13,8 @@ namespace serverplatform
             var requestBody =
                 new StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
             var body = JObject.Parse(requestBody);
+
+            ConsoleLogging.LogMessage($"User is attempting to create a server with name {body["serverName"]?.ToString()}.", "ServerCreation");
 
             string auth = body["auth"]?.ToString();
             string name = body["serverName"]?.ToString();
@@ -28,8 +31,6 @@ namespace serverplatform
 
             string[] ramAmmounts = { minRam, maxRam };
 
-            ConsoleLogging.LogMessage($"User is attempting to create a server with name {name}.", "ServerCreation");
-
             try
             {
                 CreateServer(name, desc, fullVersionArray, ramAmmounts);
@@ -41,9 +42,6 @@ namespace serverplatform
                     success = false,
                     error = "internalError"
                 }).ToString());
-            } finally
-            {
-
             }
         }
 
@@ -53,6 +51,8 @@ namespace serverplatform
 
             if (Directory.Exists($@"{serversFolder}\\{name}")) throw new Exception("Folder already exists.");
 
+            string serverDirectory = $@"{serversFolder}\\{name}";
+
             if (version[0] == "paper")
             {
                 if (version.Length == 3)
@@ -61,6 +61,12 @@ namespace serverplatform
                      * 2nd: mc version
                      * 3rd: build num
                      */
+
+                    string serverJarUrl = PaperVersions.GetPaperJarUrl(version[1], version[2]);
+                    string jarFileName = Path.GetFileName(new Uri(serverJarUrl).AbsolutePath);
+                    new WebClient().DownloadFile(serverJarUrl, $@"{serverDirectory}\\{jarFileName}");
+
+                    File.WriteAllText($@"{serverDirectory}\paper.sh", $"@echo off\r\njava -Xms{ramAmounts[0]}M -Xmx{ramAmounts[1]}M -XX:+AlwaysPreTouch -XX:+DisableExplicitGC -XX:+ParallelRefProcEnabled -XX:+PerfDisableSharedMem -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1HeapRegionSize=8M -XX:G1HeapWastePercent=5 -XX:G1MaxNewSizePercent=40 -XX:G1MixedGCCountTarget=4 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1NewSizePercent=30 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:G1ReservePercent=20 -XX:InitiatingHeapOccupancyPercent=15 -XX:MaxGCPauseMillis=200 -XX:MaxTenuringThreshold=1 -XX:SurvivorRatio=32 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -jar {jarFileName} nogui\r\npause");
                 }
                 else
                 {
