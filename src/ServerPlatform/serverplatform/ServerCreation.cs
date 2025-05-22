@@ -22,13 +22,13 @@ namespace serverplatform
             string maxRam = body["maxRam"]?.ToString();
 
             string[] versionStringSplit = versionString.Split('/');
-            string[] newArray = new string[versionStringSplit.Length + 1];
-            newArray[0] = software;
-            Array.Copy(versionStringSplit, 0, newArray, 1, versionStringSplit.Length);
+            string[] fullVersionArray = new string[versionStringSplit.Length + 1];
+            fullVersionArray[0] = software;
+            Array.Copy(versionStringSplit, 0, fullVersionArray, 1, versionStringSplit.Length);
 
             string[] ramAmmounts = { minRam, maxRam };
 
-            CreateServer(name, desc, newArray, ramAmmounts);
+            CreateServer(name, desc, fullVersionArray, ramAmmounts);
         }
 
         public static void CreateServer(string name, string description, string[] version, string[] ramAmounts)
