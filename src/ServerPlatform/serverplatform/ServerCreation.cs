@@ -73,6 +73,9 @@ namespace serverplatform
                     throw new Exception("Wrong arguments passed.");
                 }
             }
+            else if (version[0] == "purpur")
+            {
+            }
             else if (version[0] == "spigot")
             {
             }
@@ -80,6 +83,12 @@ namespace serverplatform
             {
             }
             else if (version[0] == "vanilla")
+            {
+            }
+            else if (version[0] == "velocity")
+            {
+            }
+            else if (version[0] == "bungeecord")
             {
             }
             else
