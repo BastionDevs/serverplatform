@@ -87,6 +87,23 @@ namespace serverplatform
             }
             else if (version[0] == "velocity")
             {
+                if (version.Length == 3)
+                {
+                    /* 1st: velocity
+                     * 2nd: velocity version
+                     * 3rd: build num
+                     */
+
+                    string serverJarUrl = PaperVersions.GetPaperJarUrl(version[1], version[2]);
+                    string jarFileName = Path.GetFileName(new Uri(serverJarUrl).AbsolutePath);
+                    new WebClient().DownloadFile(serverJarUrl, $@"{serverDirectory}\\{jarFileName}");
+
+                    File.WriteAllText($@"{serverDirectory}\velo.sh", $"@echo off\r\njava -Xms{ramAmounts[0]}M -Xmx{ramAmounts[1]}M -XX:+AlwaysPreTouch -XX:+ParallelRefProcEnabled -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1HeapRegionSize=4M -XX:MaxInlineLevel=15 -jar {jarFileName}");
+                }
+                else
+                {
+                    throw new Exception("Wrong arguments passed.");
+                }
             }
             else if (version[0] == "bungeecord")
             {
