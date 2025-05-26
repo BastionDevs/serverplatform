@@ -124,6 +124,7 @@
     <Compile Include="ServerControls.cs" />
     <Compile Include="ServerCreation.cs" />
     <Compile Include="ServerPropertiesReader.cs" />
+    <Compile Include="SpigotStor.cs" />
     <Compile Include="UserAuth.cs" />
     <Compile Include="VanillaVersions.cs" />
   </ItemGroup>
