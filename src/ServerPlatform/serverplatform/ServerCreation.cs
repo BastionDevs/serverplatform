@@ -84,6 +84,22 @@ namespace serverplatform
             }
             else if (version[0] == "vanilla")
             {
+                if (version.Length == 2)
+                {
+                    /* 1st: velocity
+                     * 2nd: version
+                     */
+
+                    string serverJarUrl = VanillaVersions.GetVanillaJarUrl(version[1]);
+                    string jarFileName = Path.GetFileName(new Uri(serverJarUrl).AbsolutePath);
+                    new WebClient().DownloadFile(serverJarUrl, $@"{serverDirectory}\\{jarFileName}");
+
+                    File.WriteAllText($@"{serverDirectory}\vanilla.bat", $"@echo off\r\njava -Xms{ramAmounts[0]}M -Xmx{ramAmounts[1]}M -jar {jarFileName}");
+                }
+                else
+                {
+                    throw new Exception("Wrong arguments passed.");
+                }
             }
             else if (version[0] == "velocity")
             {
