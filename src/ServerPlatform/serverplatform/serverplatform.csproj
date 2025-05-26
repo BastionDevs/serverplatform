@@ -125,6 +125,7 @@
     <Compile Include="ServerCreation.cs" />
     <Compile Include="ServerPropertiesReader.cs" />
     <Compile Include="UserAuth.cs" />
+    <Compile Include="VanillaVersions.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
