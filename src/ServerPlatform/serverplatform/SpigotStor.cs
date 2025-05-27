@@ -7,6 +7,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using Newtonsoft.Json;
+using System.Security.Cryptography;
+using Newtonsoft.Json.Linq;
 
 namespace serverplatform
 {
@@ -18,7 +20,7 @@ namespace serverplatform
         private readonly string repoJsonPath;
         private readonly string repoPath;
 
-        private Dictionary<string, Dictionary<string, bool>> repoData;
+        private Dictionary<string, Dictionary<string, JObject>> repoData;
 
         public SpigotStor()
         {
@@ -33,44 +35,11 @@ namespace serverplatform
             LoadRepoJson();
         }
 
-        private void LoadRepoJson()
-        {
-            if (File.Exists(repoJsonPath))
-            {
-                repoData = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, bool>>>(
-                    File.ReadAllText(repoJsonPath));
-            }
-            else
-            {
-                repoData = new Dictionary<string, Dictionary<string, bool>>
-                {
-                    { "Spigot", new Dictionary<string, bool>() },
-                    { "CraftBukkit", new Dictionary<string, bool>() }
-                };
-            }
-        }
-
-        private void SaveRepoJson()
-        {
-            File.WriteAllText(repoJsonPath, JsonConvert.SerializeObject(repoData, Formatting.Indented));
-        }
-
         public void StoreSpigot(string version, bool compileBukkit)
         {
-            // Skip if already available
-            if (repoData["Spigot"].ContainsKey(version) && repoData["Spigot"][version])
-            {
-                Console.WriteLine($"Spigot {version} is already compiled and stored.");
-                return;
-            }
+            string workingDir = Path.Combine(Path.GetTempPath(), $"BuildTools_{version}_{Guid.NewGuid()}");
+            Directory.CreateDirectory(workingDir);
 
-            if (compileBukkit && repoData["CraftBukkit"].ContainsKey(version) && repoData["CraftBukkit"][version])
-            {
-                Console.WriteLine($"CraftBukkit {version} is already compiled and stored.");
-                return;
-            }
-
-            // Download BuildTools if not present
             if (!File.Exists(buildToolsPath))
             {
                 Console.WriteLine("Downloading BuildTools...");
@@ -80,28 +49,24 @@ namespace serverplatform
                 }
             }
 
-            // Setup working directory
-            string workingDir = Path.Combine(Path.GetTempPath(), $"BuildTools_{version}_{Guid.NewGuid()}");
-            Directory.CreateDirectory(workingDir);
             File.Copy(buildToolsPath, Path.Combine(workingDir, "BuildTools.jar"), true);
 
-            // Setup build args
-            string args = compileBukkit
+            Console.WriteLine("Running BuildTools...");
+            var arguments = compileBukkit
                 ? $"-jar BuildTools.jar --rev {version} --compile craftbukkit"
                 : $"-jar BuildTools.jar --rev {version}";
 
-            Console.WriteLine("Running BuildTools...");
             var process = new Process
             {
                 StartInfo = new ProcessStartInfo
                 {
                     FileName = "java",
-                    Arguments = args,
+                    Arguments = arguments,
                     WorkingDirectory = workingDir,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
-                    CreateNoWindow = true,
+                    CreateNoWindow = true
                 }
             };
 
@@ -113,56 +78,133 @@ namespace serverplatform
             process.BeginErrorReadLine();
             process.WaitForExit();
 
-            // Copy Spigot
-            string spigotJarName = $"spigot-{version}.jar";
-            string spigotJarPath = Path.Combine(workingDir, spigotJarName);
-            string spigotDestPath = Path.Combine(repoPath, "Spigot", spigotJarName);
+            if (!TryReadRemoteBuild(version, out int buildNumber)) buildNumber = -1;
 
-            if (File.Exists(spigotJarPath))
+            if (!compileBukkit)
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(spigotDestPath));
-                File.Copy(spigotJarPath, spigotDestPath, true);
-                Console.WriteLine($"Stored Spigot {version} at {spigotDestPath}");
-
-                repoData["Spigot"][version] = true;
-            }
-
-            // Copy CraftBukkit if requested
-            if (compileBukkit)
-            {
-                string cbJarName = $"craftbukkit-{version}.jar";
-                string cbJarPath = Path.Combine(workingDir, cbJarName);
-                string cbDestPath = Path.Combine(repoPath, "CraftBukkit", cbJarName);
-
-                if (File.Exists(cbJarPath))
+                string spigotJar = Path.Combine(workingDir, $"spigot-{version}.jar");
+                if (File.Exists(spigotJar))
                 {
-                    Directory.CreateDirectory(Path.GetDirectoryName(cbDestPath));
-                    File.Copy(cbJarPath, cbDestPath, true);
-                    Console.WriteLine($"Stored CraftBukkit {version} at {cbDestPath}");
+                    string destDir = Path.Combine(repoPath, "Spigot");
+                    Directory.CreateDirectory(destDir);
+                    string dest = Path.Combine(destDir, $"spigot-{version}.jar");
+                    File.Copy(spigotJar, dest, true);
 
-                    repoData["CraftBukkit"][version] = true;
+                    SaveToRepoJson("Spigot", version, true, buildNumber);
+                    Console.WriteLine($"Spigot {version} stored at {dest}");
+                }
+            }
+            else
+            {
+                string craftJar = Path.Combine(workingDir, $"craftbukkit-{version}.jar");
+                if (File.Exists(craftJar))
+                {
+                    string destDir = Path.Combine(repoPath, "CraftBukkit");
+                    Directory.CreateDirectory(destDir);
+                    string dest = Path.Combine(destDir, $"craftbukkit-{version}.jar");
+                    File.Copy(craftJar, dest, true);
+
+                    SaveToRepoJson("CraftBukkit", version, true, buildNumber);
+                    Console.WriteLine($"CraftBukkit {version} stored at {dest}");
                 }
             }
 
-            SaveRepoJson();
             Directory.Delete(workingDir, true);
+            SaveRepoJson();
+        }
+
+        public void CheckForUpdates(string version)
+        {
+            if (!TryReadRemoteBuild(version, out int remoteBuild))
+            {
+                Console.WriteLine($"Failed to fetch remote build info for {version}.");
+                return;
+            }
+
+            bool updated = false;
+            foreach (var type in new[] { "Spigot", "CraftBukkit" })
+            {
+                if (repoData.ContainsKey(type) && repoData[type].ContainsKey(version))
+                {
+                    int localBuild = repoData[type][version]["build"]?.ToObject<int>() ?? -1;
+                    if (remoteBuild > localBuild)
+                    {
+                        Console.WriteLine($"{type} {version} has a new build! Remote: {remoteBuild}, Local: {localBuild}");
+                        updated = true;
+                    }
+                }
+            }
+
+            if (!updated)
+            {
+                Console.WriteLine($"{version} is up to date.");
+            }
         }
 
         public void ListAvailableVersions()
         {
-            Console.WriteLine("Available Spigot versions:");
-            foreach (var kv in repoData["Spigot"])
+            foreach (var type in repoData.Keys)
             {
-                if (kv.Value)
-                    Console.WriteLine($"- Spigot {kv.Key}");
+                Console.WriteLine($"{type} Versions:");
+                foreach (var kvp in repoData[type])
+                {
+                    Console.WriteLine($"- {kvp.Key} (build {kvp.Value["build"]})");
+                }
+                Console.WriteLine();
             }
+        }
 
-            Console.WriteLine("\nAvailable CraftBukkit versions:");
-            foreach (var kv in repoData["CraftBukkit"])
+        private bool TryReadRemoteBuild(string version, out int buildNumber)
+        {
+            buildNumber = -1;
+            string url = $"https://hub.spigotmc.org/versions/{version}.json";
+            try
             {
-                if (kv.Value)
-                    Console.WriteLine($"- CraftBukkit {kv.Key}");
+                using (var client = new WebClient())
+                {
+                    string json = client.DownloadString(url);
+                    var obj = JsonConvert.DeserializeObject<JObject>(json);
+                    buildNumber = int.Parse((string)obj["name"]);
+                    return true;
+                }
             }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private void SaveToRepoJson(string type, string version, bool available, int build)
+        {
+            if (!repoData.ContainsKey(type))
+                repoData[type] = new Dictionary<string, JObject>();
+
+            var meta = new JObject
+            {
+                ["available"] = available,
+                ["build"] = build
+            };
+
+            repoData[type][version] = meta;
+        }
+
+        private void LoadRepoJson()
+        {
+            if (File.Exists(repoJsonPath))
+            {
+                string json = File.ReadAllText(repoJsonPath);
+                repoData = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, JObject>>>(json);
+            }
+            else
+            {
+                repoData = new Dictionary<string, Dictionary<string, JObject>>();
+            }
+        }
+
+        private void SaveRepoJson()
+        {
+            string json = JsonConvert.SerializeObject(repoData, Formatting.Indented);
+            File.WriteAllText(repoJsonPath, json);
         }
     }
 }
