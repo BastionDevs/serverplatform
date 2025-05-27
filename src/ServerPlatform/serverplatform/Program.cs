@@ -16,7 +16,7 @@ namespace serverplatform
             {
                 if (args[0] == "--firstrun")
                 {
-                    if (File.Exists("users.json") || File.Exists("appsettings.json"))
+                    if (File.Exists("users.json") && File.Exists("appsettings.json"))
                     {
                         ConsoleLogging.LogWarning("First run has already been completed. Aborting setup.");
                         Environment.Exit(1);
