@@ -14,6 +14,11 @@ namespace serverplatform
         private readonly string buildToolsUrl = "https://hub.spigotmc.org/jenkins/job/BuildTools/lastSuccessfulBuild/artifact/target/BuildTools.jar";
         private readonly string localRepoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "LocalRepo", "Spigot");
 
+        public static void CreateConfig()
+        {
+
+        }
+
         public void StoreSpigot(string version, bool compileBukkit)
         {
             string workingDir = Path.Combine(Path.GetTempPath(), $"BuildTools_{version}_{Guid.NewGuid()}");
