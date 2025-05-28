@@ -118,6 +118,7 @@
     <Compile Include="ConsoleLogging.cs" />
     <Compile Include="Cryptography.cs" />
     <Compile Include="IniFile.cs" />
+    <Compile Include="NetConnectivity.cs" />
     <Compile Include="PaperVersions.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
