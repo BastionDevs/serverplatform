@@ -44,6 +44,27 @@ namespace serverplatform
                 }
             }
 
+            bool sitesReachable = true;
+
+            //Network check
+            if (!NetConnectivity.CanConnectHttp("https://api.papermc.io/v2/projects/paper"))
+            {
+                sitesReachable = false;
+                ConsoleLogging.LogWarning("Cannot reach PaperMC API!", "Network Connectivity");
+            }
+
+            if (!NetConnectivity.CanConnectHttp("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"))
+            {
+                sitesReachable = false;
+                ConsoleLogging.LogWarning("Cannot reach Mojang API!", "Network Connectivity");
+            }
+
+            if (!NetConnectivity.CanConnectHttp("https://hub.spigotmc.org/versions/"))
+            {
+                sitesReachable = false;
+                ConsoleLogging.LogWarning("Cannot reach Spigot API!", "Network Connectivity");
+            }
+
             Console.CancelKeyPress += (sender, eventArgs) =>
             {
                 ConsoleLogging.LogMessage("Stopping server...");
