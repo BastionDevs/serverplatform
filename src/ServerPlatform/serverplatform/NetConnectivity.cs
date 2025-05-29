@@ -15,7 +15,8 @@ namespace serverplatform
             {
                 using (WebClient client = new WebClient())
                 {
-                    client.Headers.Add("User-Agent", "Mozilla/5.0"); // Some servers require this
+                    ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+                    client.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"); // Some servers require this
                     using (client.OpenRead(url))
                     {
                         return true; // Connection succeeded
