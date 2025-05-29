@@ -65,6 +65,16 @@ namespace serverplatform
                 ConsoleLogging.LogWarning("Cannot reach Spigot API!", "Network Connectivity");
             }
 
+            if (!sitesReachable)
+            {
+                Console.WriteLine("One or more servers unreachable. Start Server Platform anyways? [True/False]");
+                if (!bool.Parse(Console.ReadLine()))
+                {
+                    Environment.Exit(1);
+                }
+                Console.Clear();
+            }
+
             Console.CancelKeyPress += (sender, eventArgs) =>
             {
                 ConsoleLogging.LogMessage("Stopping server...");
