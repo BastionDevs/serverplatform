@@ -44,37 +44,6 @@ namespace serverplatform
                 }
             }
 
-            bool sitesReachable = true;
-
-            //Network check
-            if (!NetConnectivity.CanConnectHttp("https://api.papermc.io/v2/projects/paper"))
-            {
-                sitesReachable = false;
-                ConsoleLogging.LogWarning("Cannot reach PaperMC API!", "Network Connectivity");
-            }
-
-            if (!NetConnectivity.CanConnectHttp("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"))
-            {
-                sitesReachable = false;
-                ConsoleLogging.LogWarning("Cannot reach Mojang API!", "Network Connectivity");
-            }
-
-            if (!NetConnectivity.CanConnectHttp("https://hub.spigotmc.org/versions/"))
-            {
-                sitesReachable = false;
-                ConsoleLogging.LogWarning("Cannot reach Spigot API!", "Network Connectivity");
-            }
-
-            if (!sitesReachable)
-            {
-                Console.WriteLine("One or more servers unreachable. Start Server Platform anyways? [True/False]");
-                if (!bool.Parse(Console.ReadLine()))
-                {
-                    Environment.Exit(1);
-                }
-                Console.Clear();
-            }
-
             Console.CancelKeyPress += (sender, eventArgs) =>
             {
                 ConsoleLogging.LogMessage("Stopping server...");
@@ -129,6 +98,36 @@ namespace serverplatform
                 "Israel has been occupying Palestinian land illegally longer than CubeNotFound has lived.");
             Console.WriteLine();
 
+            bool sitesReachable = true;
+
+            //Network check
+            if (!NetConnectivity.CanConnectHttp("https://api.papermc.io/v2/projects/paper"))
+            {
+                sitesReachable = false;
+                ConsoleLogging.LogWarning("Cannot reach PaperMC API!", "Network Connectivity");
+            }
+
+            if (!NetConnectivity.CanConnectHttp("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"))
+            {
+                sitesReachable = false;
+                ConsoleLogging.LogWarning("Cannot reach Mojang API!", "Network Connectivity");
+            }
+
+            if (!NetConnectivity.CanConnectHttp("https://hub.spigotmc.org/versions/"))
+            {
+                sitesReachable = false;
+                ConsoleLogging.LogWarning("Cannot reach Spigot API!", "Network Connectivity");
+            }
+
+            if (!sitesReachable)
+            {
+                Console.WriteLine("One or more servers unreachable. Start Server Platform anyways? [True/False]");
+                if (!bool.Parse(Console.ReadLine()))
+                {
+                    Environment.Exit(1);
+                }
+                Console.WriteLine();
+            }
 
             Console.WriteLine("Development use? [True/False]");
             var devMode = bool.Parse(Console.ReadLine());
