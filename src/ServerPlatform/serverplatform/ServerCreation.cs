@@ -66,7 +66,7 @@ namespace serverplatform
                     string jarFileName = Path.GetFileName(new Uri(serverJarUrl).AbsolutePath);
                     new WebClient().DownloadFile(serverJarUrl, $@"{serverDirectory}\\{jarFileName}");
 
-                    File.WriteAllText($@"{serverDirectory}\paper.launch", $"-Xms{ramAmounts[0]}M -Xmx{ramAmounts[1]}M -XX:+AlwaysPreTouch -XX:+DisableExplicitGC -XX:+ParallelRefProcEnabled -XX:+PerfDisableSharedMem -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1HeapRegionSize=8M -XX:G1HeapWastePercent=5 -XX:G1MaxNewSizePercent=40 -XX:G1MixedGCCountTarget=4 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1NewSizePercent=30 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:G1ReservePercent=20 -XX:InitiatingHeapOccupancyPercent=15 -XX:MaxGCPauseMillis=200 -XX:MaxTenuringThreshold=1 -XX:SurvivorRatio=32 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -jar {jarFileName} nogui\r\npause");
+                    File.WriteAllText($@"{serverDirectory}\minecraft.launch", $"-Xms{ramAmounts[0]}M -Xmx{ramAmounts[1]}M -XX:+AlwaysPreTouch -XX:+DisableExplicitGC -XX:+ParallelRefProcEnabled -XX:+PerfDisableSharedMem -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1HeapRegionSize=8M -XX:G1HeapWastePercent=5 -XX:G1MaxNewSizePercent=40 -XX:G1MixedGCCountTarget=4 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1NewSizePercent=30 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:G1ReservePercent=20 -XX:InitiatingHeapOccupancyPercent=15 -XX:MaxGCPauseMillis=200 -XX:MaxTenuringThreshold=1 -XX:SurvivorRatio=32 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -jar {jarFileName} nogui\r\npause");
                 }
                 else
                 {
@@ -79,12 +79,12 @@ namespace serverplatform
             else if (version[0] == "spigot")
             {
                 File.Copy(SpigotStor.JARPath("spigot", version[1]), $@"{serverDirectory}\\spigot-{version[1]}.jar");
-                File.WriteAllText($@"{serverDirectory}\spigot.launch", $"-Xms{ramAmounts[0]}M -Xmx{ramAmounts[1]}M -jar spigot-{version[1]}.jar");
+                File.WriteAllText($@"{serverDirectory}\minecraft.launch", $"-Xms{ramAmounts[0]}M -Xmx{ramAmounts[1]}M -jar spigot-{version[1]}.jar");
             }
             else if (version[0] == "bukkit")
             {
                 File.Copy(SpigotStor.JARPath("bukkit", version[1]), $@"{serverDirectory}\\bukkit-{version[1]}.jar");
-                File.WriteAllText($@"{serverDirectory}\bukkit.launch", $"-Xms{ramAmounts[0]}M -Xmx{ramAmounts[1]}M -jar bukkit-{version[1]}.jar");
+                File.WriteAllText($@"{serverDirectory}\minecraft.launch", $"-Xms{ramAmounts[0]}M -Xmx{ramAmounts[1]}M -jar bukkit-{version[1]}.jar");
             }
             else if (version[0] == "vanilla")
             {
@@ -98,7 +98,7 @@ namespace serverplatform
                     string jarFileName = Path.GetFileName(new Uri(serverJarUrl).AbsolutePath);
                     new WebClient().DownloadFile(serverJarUrl, $@"{serverDirectory}\\{jarFileName}");
 
-                    File.WriteAllText($@"{serverDirectory}\vanilla.launch", $"-Xms{ramAmounts[0]}M -Xmx{ramAmounts[1]}M -jar {jarFileName}");
+                    File.WriteAllText($@"{serverDirectory}\minecraft.launch", $"-Xms{ramAmounts[0]}M -Xmx{ramAmounts[1]}M -jar {jarFileName}");
                 }
                 else
                 {
@@ -118,7 +118,7 @@ namespace serverplatform
                     string jarFileName = Path.GetFileName(new Uri(serverJarUrl).AbsolutePath);
                     new WebClient().DownloadFile(serverJarUrl, $@"{serverDirectory}\\{jarFileName}");
 
-                    File.WriteAllText($@"{serverDirectory}\velo.launch", $"-Xms{ramAmounts[0]}M -Xmx{ramAmounts[1]}M -XX:+AlwaysPreTouch -XX:+ParallelRefProcEnabled -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1HeapRegionSize=4M -XX:MaxInlineLevel=15 -jar {jarFileName}");
+                    File.WriteAllText($@"{serverDirectory}\minecraft.launch", $"-Xms{ramAmounts[0]}M -Xmx{ramAmounts[1]}M -XX:+AlwaysPreTouch -XX:+ParallelRefProcEnabled -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1HeapRegionSize=4M -XX:MaxInlineLevel=15 -jar {jarFileName}");
                 }
                 else
                 {
