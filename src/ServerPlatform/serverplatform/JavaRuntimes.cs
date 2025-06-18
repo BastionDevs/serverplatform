@@ -1,10 +1,12 @@
 ﻿using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using TinyINIController;
 
 namespace serverplatform
 {
@@ -16,6 +18,14 @@ namespace serverplatform
             Zulu,
             Liberica,
             Corretto
+        }
+
+        public static readonly string runtimesdir = $@"{Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)}\JavaRuntimes";
+        IniFile runtimes = new IniFile($@"{runtimesdir}\runtimes.ini");
+
+        public static void DownloadRuntime()
+        {
+
         }
     }
 
@@ -59,6 +69,25 @@ namespace serverplatform
             string url = (string)latest["download_url"];
 
             return (name, version, url);
+        }
+
+        public static string ZuluDownloadUrl(string pkgsresp)
+        {
+            if (string.IsNullOrWhiteSpace(pkgsresp))
+                throw new ArgumentException("JSON response is empty.");
+
+            var packages = JArray.Parse(pkgsresp);
+
+            if (!packages.Any())
+                throw new InvalidOperationException("No packages found in response.");
+
+            var latest = packages
+                .OrderByDescending(p => (int)p["java_version"][0]) // major
+                .ThenByDescending(p => (int)p["java_version"][1])  // minor
+                .ThenByDescending(p => (int)p["java_version"][2])  // patch
+                .First();
+
+            return (string)latest["download_url"];
         }
     }
 
