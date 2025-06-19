@@ -23,7 +23,7 @@ namespace serverplatform
         public static readonly string runtimesdir = $@"{Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)}\JavaRuntimes";
         IniFile runtimes = new IniFile($@"{runtimesdir}\runtimes.ini");
 
-        public static void DownloadRuntime()
+        public static void DownloadRuntime(JDKDist dist, string javaver)
         {
 
         }
@@ -37,6 +37,22 @@ namespace serverplatform
             string RequestUri = $"{APIBaseUri}/assets/latest/{javaver}/hotspot?architecture={arch}&image_type={javatype}&os={os}&vendor=eclipse";
             return new WebClient().DownloadString(RequestUri);
         }
+
+        public static string ParseDownloadUrl(string assetsresponse)
+        {
+            var assetsarray = JArray.Parse(assetsresponse);
+            var assetitself = assetsarray[0];
+
+            return assetitself["binary"]?["package"]?["link"]?.ToString();
+        }
+
+        public static string ParseVersion(string assetsresponse)
+        {
+            var assetsarray = JArray.Parse(assetsresponse);
+            var assetitself = assetsarray[0];
+
+            return assetitself["release_name"]?.ToString();
+        }
     }
 
     class AzulMetadataAPI
@@ -48,7 +64,7 @@ namespace serverplatform
             return new WebClient().DownloadString(RequestUri);
         }
 
-        public static (string name, string version, string url) ParseLatestPackage(string pkgsresp)
+        public static string ParseDownloadUrl(string pkgsresp)
         {
             if (string.IsNullOrWhiteSpace(pkgsresp))
                 throw new ArgumentException("JSON response is empty.");
@@ -64,14 +80,12 @@ namespace serverplatform
                 .ThenByDescending(p => (int)p["java_version"][2])  // patch
                 .First();
 
-            string name = (string)latest["name"];
-            string version = string.Join(".", latest["java_version"].Select(v => (int)v));
             string url = (string)latest["download_url"];
 
-            return (name, version, url);
+            return url;
         }
 
-        public static string ZuluDownloadUrl(string pkgsresp)
+        public static string ParseVersion(string pkgsresp)
         {
             if (string.IsNullOrWhiteSpace(pkgsresp))
                 throw new ArgumentException("JSON response is empty.");
@@ -87,17 +101,36 @@ namespace serverplatform
                 .ThenByDescending(p => (int)p["java_version"][2])  // patch
                 .First();
 
-            return (string)latest["download_url"];
+            string version = string.Join(".", latest["java_version"].Select(v => (int)v));
+
+            return version;
         }
     }
 
     class BellSoftOpenJDKProdDiscoveryAPI
     {
         readonly static string APIBaseUri = "https://api.bell-sw.com/v1";
+        
         public static string LibericaRelease(string javaver, string os, string bitness, string arch, string packaging, string javatype, bool jfx, bool latestrel, string distver)
         {
             string RequestUri = $"{APIBaseUri}/liberica/releases?version-feature={javaver}&version-modifier=latest&bitness={bitness}&fx={jfx}&os={os}&arch={arch}&installation-type=archive&package-type={packaging}&bundle-type={javatype}&output=json&fields=downloadUrl,version";
             return new WebClient().DownloadString(RequestUri);
+        }
+
+        public static string ParseDownloadUrl(string assetsresponse)
+        {
+            var assetsarray = JArray.Parse(assetsresponse);
+            var assetitself = assetsarray[0];
+
+            return assetitself["downloadUrl"]?.ToString();
+        }
+
+        public static string ParseVersion(string assetsresponse)
+        {
+            var assetsarray = JArray.Parse(assetsresponse);
+            var assetitself = assetsarray[0];
+
+            return assetitself["version"]?.ToString();
         }
     }
 
