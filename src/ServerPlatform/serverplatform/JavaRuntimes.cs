@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO.Compression;
 using TinyINIController;
 
 namespace serverplatform
@@ -20,12 +21,59 @@ namespace serverplatform
             Corretto
         }
 
+        public static void ExtractJavaZip(string zipPath, string targetDir)
+        {
+            string tempExtractDir = Path.Combine(Path.GetTempPath(), "spjava");
+
+            // Extract to temp folder
+            ZipFile.ExtractToDirectory(zipPath, tempExtractDir);
+
+            // Find the first directory inside the extracted temp dir
+            string[] topLevelEntries = Directory.GetDirectories(tempExtractDir);
+            if (topLevelEntries.Length == 0)
+                throw new Exception("No directories found in ZIP archive.");
+
+            string actualJavaFolder = topLevelEntries[0];
+
+            // Create target if not exists
+            Directory.CreateDirectory(targetDir);
+
+            // Move contents from actualJavaFolder to targetDir
+            foreach (string dirPath in Directory.GetDirectories(actualJavaFolder, "*", SearchOption.AllDirectories))
+            {
+                Directory.CreateDirectory(dirPath.Replace(actualJavaFolder, targetDir));
+            }
+
+            foreach (string newPath in Directory.GetFiles(actualJavaFolder, "*.*", SearchOption.AllDirectories))
+            {
+                File.Copy(newPath, newPath.Replace(actualJavaFolder, targetDir), true);
+            }
+
+            // Clean up
+            Directory.Delete(tempExtractDir, true);
+        }
+
         public static readonly string runtimesdir = $@"{Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)}\JavaRuntimes";
         IniFile runtimes = new IniFile($@"{runtimesdir}\runtimes.ini");
 
-        public static void DownloadRuntime(JDKDist dist, string javaver)
+        public static void DownloadRuntime(JDKDist dist, string javaver, string javatype)
         {
+            string downloadurl;
 
+            string os = "windows";
+
+            string apiresp = "";
+
+            switch (dist)
+            {
+                case JDKDist.Temurin:
+                    apiresp = AdoptiumAPI.TemurinAssets(javaver, os, "x64", javatype);
+                    downloadurl = AdoptiumAPI.ParseDownloadUrl(apiresp);
+                    break;
+                default:
+                    break;
+            }
+            
         }
     }
 
