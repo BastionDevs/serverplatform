@@ -2,11 +2,12 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using System.IO.Compression;
 using TinyINIController;
 
 namespace serverplatform
@@ -56,56 +57,60 @@ namespace serverplatform
         public static readonly string runtimesdir = $@"{Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)}\JavaRuntimes";
         static IniFile runtimes = new IniFile($@"{runtimesdir}\runtimes.ini");
 
-        public static void DownloadRuntime(JDKDist dist, string javaver, string javatype)
+        public static async Task DownloadRuntimeAsync(JDKDist dist, string javaver, string javatype)
         {
             string downloadurl = "";
-
             string os = "windows";
-
             string apiresp = "";
-
             string version = "";
 
             switch (dist)
             {
                 case JDKDist.Temurin:
-                    apiresp = AdoptiumAPI.TemurinAssets(javaver, os, "x64", javatype);
+                    apiresp = await AdoptiumAPI.TemurinAssetsAsync(javaver, os, "x64", javatype);
                     downloadurl = AdoptiumAPI.ParseDownloadUrl(apiresp);
                     version = AdoptiumAPI.ParseVersion(apiresp);
                     break;
 
                 case JDKDist.Zulu:
-                    apiresp = AzulMetadataAPI.ZuluPkg(javaver, os, "x64", "zip", javatype, false, true, javaver);
+                    apiresp = await AzulMetadataAPI.ZuluPkgAsync(javaver, os, "x64", "zip", javatype, false, true, javaver);
                     downloadurl = AzulMetadataAPI.ParseDownloadUrl(apiresp);
                     version = AzulMetadataAPI.ParseVersion(apiresp);
                     break;
 
                 case JDKDist.Liberica:
-                    apiresp = BellSoftOpenJDKProdDiscoveryAPI.LibericaRelease(javaver, os, "64", "x86", "zip", javatype, false, true, "8");
+                    apiresp = await BellSoftOpenJDKProdDiscoveryAPI.LibericaReleaseAsync(javaver, os, "64", "x86", "zip", javatype, false, true, "8");
                     downloadurl = BellSoftOpenJDKProdDiscoveryAPI.ParseDownloadUrl(apiresp);
                     version = BellSoftOpenJDKProdDiscoveryAPI.ParseVersion(apiresp);
                     break;
-
-                default:
-                    break;
             }
 
-            string zipdlpath = $@"{runtimesdir}\download\{dist.ToString()}{javatype}{javaver}.zip";
-            new WebClient().DownloadFile(downloadurl, zipdlpath);
+            string zipdlpath = Path.Combine(runtimesdir, "download", $"{dist}{javatype}{javaver}.zip");
 
-            ExtractJavaZip(zipdlpath, $@"{runtimesdir}\{dist.ToString()}{javatype}{javaver}");
+            using (var httpClient = new HttpClient())
+            using (var stream = await httpClient.GetStreamAsync(downloadurl))
+            using (var fileStream = File.Create(zipdlpath))
+            {
+                await stream.CopyToAsync(fileStream);
+            }
 
-            runtimes.Write("version", version, $"{dist.ToString()}{javaver}");
+            await Task.Run(() => ExtractJavaZip(zipdlpath, Path.Combine(runtimesdir, $"{dist}{javatype}{javaver}")));
+
+            runtimes.Write("version", version, $"{dist}{javaver}");
         }
+
     }
 
     class AdoptiumAPI
     {
         readonly static string APIBaseUri = "https://api.adoptium.net/v3";
-        public static string TemurinAssets(string javaver, string os, string arch, string javatype)
+        public static async Task<string> TemurinAssetsAsync(string javaver, string os, string arch, string javatype)
         {
             string RequestUri = $"{APIBaseUri}/assets/latest/{javaver}/hotspot?architecture={arch}&image_type={javatype}&os={os}&vendor=eclipse";
-            return new WebClient().DownloadString(RequestUri);
+            using (var client = new HttpClient())
+            {
+                return await client.GetStringAsync(RequestUri);
+            }
         }
 
         public static string ParseDownloadUrl(string assetsresponse)
@@ -128,10 +133,13 @@ namespace serverplatform
     class AzulMetadataAPI
     {
         readonly static string APIBaseUri = "https://api.azul.com/metadata/v1";
-        public static string ZuluPkg(string javaver, string os, string arch, string packaging, string javatype, bool jfx, bool latestrel, string distver)
+        public static async Task<string> ZuluPkgAsync(string javaver, string os, string arch, string packaging, string javatype, bool jfx, bool latestrel, string distver)
         {
             string RequestUri = $"{APIBaseUri}/zulu/packages/?java_version={javaver}&os={os}&arch={arch}&archive_type={packaging}&java_package_type={javatype}&javafx_bundled={jfx}&latest={latestrel}&distro_version={distver}";
-            return new WebClient().DownloadString(RequestUri);
+            using (var client = new HttpClient())
+            {
+                return await client.GetStringAsync(RequestUri);
+            }
         }
 
         public static string ParseDownloadUrl(string pkgsresp)
@@ -181,10 +189,13 @@ namespace serverplatform
     {
         readonly static string APIBaseUri = "https://api.bell-sw.com/v1";
         
-        public static string LibericaRelease(string javaver, string os, string bitness, string arch, string packaging, string javatype, bool jfx, bool latestrel, string distver)
+        public static async Task<string> LibericaReleaseAsync(string javaver, string os, string bitness, string arch, string packaging, string javatype, bool jfx, bool latestrel, string distver)
         {
             string RequestUri = $"{APIBaseUri}/liberica/releases?version-feature={javaver}&version-modifier=latest&bitness={bitness}&fx={jfx}&os={os}&arch={arch}&installation-type=archive&package-type={packaging}&bundle-type={javatype}&output=json&fields=downloadUrl,version";
-            return new WebClient().DownloadString(RequestUri);
+            using (var client = new HttpClient())
+            {
+                return await client.GetStringAsync(RequestUri);
+            }
         }
 
         public static string ParseDownloadUrl(string assetsresponse)
