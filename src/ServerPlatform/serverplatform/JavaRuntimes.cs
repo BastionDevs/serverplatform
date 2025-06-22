@@ -23,7 +23,7 @@ namespace serverplatform
 
         public static void ExtractJavaZip(string zipPath, string targetDir)
         {
-            string tempExtractDir = Path.Combine(Path.GetTempPath(), "spjava");
+            string tempExtractDir = Path.Combine(Path.GetTempPath(), "spjava", Path.GetFileName(zipPath).Replace(".zip", ""));
 
             // Extract to temp folder
             ZipFile.ExtractToDirectory(zipPath, tempExtractDir);
@@ -54,26 +54,48 @@ namespace serverplatform
         }
 
         public static readonly string runtimesdir = $@"{Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)}\JavaRuntimes";
-        IniFile runtimes = new IniFile($@"{runtimesdir}\runtimes.ini");
+        static IniFile runtimes = new IniFile($@"{runtimesdir}\runtimes.ini");
 
         public static void DownloadRuntime(JDKDist dist, string javaver, string javatype)
         {
-            string downloadurl;
+            string downloadurl = "";
 
             string os = "windows";
 
             string apiresp = "";
+
+            string version = "";
 
             switch (dist)
             {
                 case JDKDist.Temurin:
                     apiresp = AdoptiumAPI.TemurinAssets(javaver, os, "x64", javatype);
                     downloadurl = AdoptiumAPI.ParseDownloadUrl(apiresp);
+                    version = AdoptiumAPI.ParseVersion(apiresp);
                     break;
+
+                case JDKDist.Zulu:
+                    apiresp = AzulMetadataAPI.ZuluPkg(javaver, os, "x64", "zip", javatype, false, true, javaver);
+                    downloadurl = AzulMetadataAPI.ParseDownloadUrl(apiresp);
+                    version = AzulMetadataAPI.ParseVersion(apiresp);
+                    break;
+
+                case JDKDist.Liberica:
+                    apiresp = BellSoftOpenJDKProdDiscoveryAPI.LibericaRelease(javaver, os, "64", "x86", "zip", javatype, false, true, "8");
+                    downloadurl = BellSoftOpenJDKProdDiscoveryAPI.ParseDownloadUrl(apiresp);
+                    version = BellSoftOpenJDKProdDiscoveryAPI.ParseVersion(apiresp);
+                    break;
+
                 default:
                     break;
             }
-            
+
+            string zipdlpath = $@"{runtimesdir}\download\{dist.ToString()}{javatype}{javaver}.zip";
+            new WebClient().DownloadFile(downloadurl, zipdlpath);
+
+            ExtractJavaZip(zipdlpath, $@"{runtimesdir}\{dist.ToString()}{javatype}{javaver}");
+
+            runtimes.Write("version", version, $"{dist.ToString()}{javaver}");
         }
     }
 
