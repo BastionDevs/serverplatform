@@ -2,7 +2,10 @@
 using System;
 using System.IO;
 using System.Net;
+using System.Security.Cryptography;
 using System.Security.Policy;
+using System.Text;
+using TinyINIController;
 
 namespace serverplatform
 {
@@ -23,6 +26,7 @@ namespace serverplatform
             string versionString = body["version"]?.ToString();
             string minRam = body["minRam"]?.ToString();
             string maxRam = body["maxRam"]?.ToString();
+            string javaRuntime = body["javaVer"]?.ToString();
 
             string[] versionStringSplit = versionString.Split('/');
             string[] fullVersionArray = new string[versionStringSplit.Length + 1];
@@ -33,7 +37,7 @@ namespace serverplatform
 
             try
             {
-                CreateServer(name, desc, fullVersionArray, ramAmmounts);
+                CreateServer(name, desc, fullVersionArray, ramAmmounts, javaRuntime);
             } catch (Exception ex)
             {
                 ConsoleLogging.LogError($"Exception occured while trying to create server {name}: {ex.Message}", "ServerCreation");
@@ -45,13 +49,31 @@ namespace serverplatform
             }
         }
 
-        public static void CreateServer(string name, string description, string[] version, string[] ramAmounts)
+        public static string GenerateServerId()
+        {
+            // Use a cryptographically strong random number generator
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                byte[] bytes = new byte[16]; // 128-bit ID
+                rng.GetBytes(bytes);
+
+                // Convert to Base32 or Hex string for readability (Hex here)
+                StringBuilder sb = new StringBuilder(32);
+                foreach (var b in bytes)
+                    sb.Append(b.ToString("x2")); // two-digit hex
+
+                return sb.ToString(); // e.g., "d13f04a2b56c8e3e5f0a9b7cd19c234f"
+            }
+        }
+
+        public static void CreateServer(string name, string description, string[] version, string[] ramAmounts, string jdk)
         {
             var serversFolder = Config.GetConfig("ServersDir", "main");
 
             if (Directory.Exists($@"{serversFolder}\\{name}")) throw new Exception("Folder already exists.");
 
             string serverDirectory = $@"{serversFolder}\\{name}";
+            Directory.CreateDirectory($@"{serverDirectory}\\files");
 
             if (version[0] == "paper")
             {
@@ -64,9 +86,16 @@ namespace serverplatform
 
                     string serverJarUrl = PaperVersions.GetPaperJarUrl(version[1], version[2]);
                     string jarFileName = Path.GetFileName(new Uri(serverJarUrl).AbsolutePath);
-                    new WebClient().DownloadFile(serverJarUrl, $@"{serverDirectory}\\{jarFileName}");
+                    new WebClient().DownloadFile(serverJarUrl, $@"{serverDirectory}\\files\\{jarFileName}");
 
                     File.WriteAllText($@"{serverDirectory}\minecraft.launch", $"-Xms{ramAmounts[0]}M -Xmx{ramAmounts[1]}M -XX:+AlwaysPreTouch -XX:+DisableExplicitGC -XX:+ParallelRefProcEnabled -XX:+PerfDisableSharedMem -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1HeapRegionSize=8M -XX:G1HeapWastePercent=5 -XX:G1MaxNewSizePercent=40 -XX:G1MixedGCCountTarget=4 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1NewSizePercent=30 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:G1ReservePercent=20 -XX:InitiatingHeapOccupancyPercent=15 -XX:MaxGCPauseMillis=200 -XX:MaxTenuringThreshold=1 -XX:SurvivorRatio=32 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -jar {jarFileName} nogui\r\npause");
+
+                    IniFile srvConfig = new IniFile($@"{serverDirectory}\srvconfig.ini");
+                    
+                    srvConfig.Write("id", GenerateServerId(), "config");
+                    srvConfig.Write("name", name, "config");
+                    srvConfig.Write("desc", description, "config");
+                    srvConfig.Write("javaver", jdk, "config");
                 }
                 else
                 {
