@@ -92,10 +92,15 @@ namespace serverplatform
 
                     IniFile srvConfig = new IniFile($@"{serverDirectory}\srvconfig.ini");
                     
-                    srvConfig.Write("id", GenerateServerId(), "config");
-                    srvConfig.Write("name", name, "config");
-                    srvConfig.Write("desc", description, "config");
+                    srvConfig.Write("id", GenerateServerId(), "info");
+                    srvConfig.Write("name", name, "info");
+                    srvConfig.Write("desc", description, "info");
+
                     srvConfig.Write("javaver", jdk, "config");
+                    
+                    srvConfig.Write("software", "paper", "software");
+                    srvConfig.Write("mcversion", version[1], "software");
+                    srvConfig.Write("build", version[2], "software");
                 }
                 else
                 {
