@@ -27,6 +27,7 @@ namespace serverplatform
             string minRam = body["minRam"]?.ToString();
             string maxRam = body["maxRam"]?.ToString();
             string javaRuntime = body["javaVer"]?.ToString();
+            string javaVendor = body["javaVer"]?.ToString();
 
             string[] versionStringSplit = versionString.Split('/');
             string[] fullVersionArray = new string[versionStringSplit.Length + 1];
@@ -37,7 +38,7 @@ namespace serverplatform
 
             try
             {
-                CreateServer(name, desc, fullVersionArray, ramAmmounts, javaRuntime);
+                CreateServer(name, desc, fullVersionArray, ramAmmounts, new string[] { javaRuntime, javaVendor });
             } catch (Exception ex)
             {
                 ConsoleLogging.LogError($"Exception occured while trying to create server {name}: {ex.Message}", "ServerCreation");
@@ -66,7 +67,7 @@ namespace serverplatform
             }
         }
 
-        public static void CreateServer(string name, string description, string[] version, string[] ramAmounts, string jdk)
+        public static void CreateServer(string name, string description, string[] version, string[] ramAmounts, string[] jdk)
         {
             var serversFolder = Config.GetConfig("ServersDir", "main");
 
@@ -88,7 +89,7 @@ namespace serverplatform
                     string jarFileName = Path.GetFileName(new Uri(serverJarUrl).AbsolutePath);
                     new WebClient().DownloadFile(serverJarUrl, $@"{serverDirectory}\\files\\{jarFileName}");
 
-                    File.WriteAllText($@"{serverDirectory}\minecraft.launch", $"-Xms{ramAmounts[0]}M -Xmx{ramAmounts[1]}M -XX:+AlwaysPreTouch -XX:+DisableExplicitGC -XX:+ParallelRefProcEnabled -XX:+PerfDisableSharedMem -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1HeapRegionSize=8M -XX:G1HeapWastePercent=5 -XX:G1MaxNewSizePercent=40 -XX:G1MixedGCCountTarget=4 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1NewSizePercent=30 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:G1ReservePercent=20 -XX:InitiatingHeapOccupancyPercent=15 -XX:MaxGCPauseMillis=200 -XX:MaxTenuringThreshold=1 -XX:SurvivorRatio=32 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -jar {jarFileName} nogui\r\npause");
+                    File.WriteAllText($@"{serverDirectory}\minecraft.launch", $"-XX:+AlwaysPreTouch -XX:+DisableExplicitGC -XX:+ParallelRefProcEnabled -XX:+PerfDisableSharedMem -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1HeapRegionSize=8M -XX:G1HeapWastePercent=5 -XX:G1MaxNewSizePercent=40 -XX:G1MixedGCCountTarget=4 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1NewSizePercent=30 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:G1ReservePercent=20 -XX:InitiatingHeapOccupancyPercent=15 -XX:MaxGCPauseMillis=200 -XX:MaxTenuringThreshold=1 -XX:SurvivorRatio=32 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -jar {jarFileName} nogui");
 
                     IniFile srvConfig = new IniFile($@"{serverDirectory}\srvconfig.ini");
                     
@@ -96,8 +97,11 @@ namespace serverplatform
                     srvConfig.Write("name", name, "info");
                     srvConfig.Write("desc", description, "info");
 
-                    srvConfig.Write("javaver", jdk, "config");
-                    
+                    srvConfig.Write("vendor", jdk[0], "java");
+                    srvConfig.Write("ver", jdk[1], "java");
+                    srvConfig.Write("minRam", ramAmounts[0], "java");
+                    srvConfig.Write("maxRam", ramAmounts[1], "java");
+
                     srvConfig.Write("software", "paper", "software");
                     srvConfig.Write("mcversion", version[1], "software");
                     srvConfig.Write("build", version[2], "software");
@@ -112,27 +116,72 @@ namespace serverplatform
             }
             else if (version[0] == "spigot")
             {
-                File.Copy(SpigotStor.JARPath("spigot", version[1]), $@"{serverDirectory}\\spigot-{version[1]}.jar");
-                File.WriteAllText($@"{serverDirectory}\minecraft.launch", $"-Xms{ramAmounts[0]}M -Xmx{ramAmounts[1]}M -jar spigot-{version[1]}.jar");
+                File.Copy(SpigotStor.JARPath("spigot", version[1]), $@"{serverDirectory}\\files\\spigot-{version[1]}.jar");
+                File.WriteAllText($@"{serverDirectory}\minecraft.launch", $"-jar spigot-{version[1]}.jar");
+
+                IniFile srvConfig = new IniFile($@"{serverDirectory}\srvconfig.ini");
+
+                srvConfig.Write("id", GenerateServerId(), "info");
+                srvConfig.Write("name", name, "info");
+                srvConfig.Write("desc", description, "info");
+
+                srvConfig.Write("vendor", jdk[0], "java");
+                srvConfig.Write("ver", jdk[1], "java");
+                srvConfig.Write("minRam", ramAmounts[0], "java");
+                srvConfig.Write("maxRam", ramAmounts[1], "java");
+
+                srvConfig.Write("software", "spigot", "software");
+                srvConfig.Write("mcversion", version[1], "software");
+                srvConfig.Write("build", version[2], "software");
             }
             else if (version[0] == "bukkit")
             {
-                File.Copy(SpigotStor.JARPath("bukkit", version[1]), $@"{serverDirectory}\\bukkit-{version[1]}.jar");
-                File.WriteAllText($@"{serverDirectory}\minecraft.launch", $"-Xms{ramAmounts[0]}M -Xmx{ramAmounts[1]}M -jar bukkit-{version[1]}.jar");
+                File.Copy(SpigotStor.JARPath("bukkit", version[1]), $@"{serverDirectory}\\files\\bukkit-{version[1]}.jar");
+                File.WriteAllText($@"{serverDirectory}\minecraft.launch", $"-jar bukkit-{version[1]}.jar");
+
+                IniFile srvConfig = new IniFile($@"{serverDirectory}\srvconfig.ini");
+
+                srvConfig.Write("id", GenerateServerId(), "info");
+                srvConfig.Write("name", name, "info");
+                srvConfig.Write("desc", description, "info");
+
+                srvConfig.Write("vendor", jdk[0], "java");
+                srvConfig.Write("ver", jdk[1], "java");
+                srvConfig.Write("minRam", ramAmounts[0], "java");
+                srvConfig.Write("maxRam", ramAmounts[1], "java");
+
+                srvConfig.Write("software", "bukkit", "software");
+                srvConfig.Write("mcversion", version[1], "software");
+                srvConfig.Write("build", version[2], "software");
             }
             else if (version[0] == "vanilla")
             {
                 if (version.Length == 2)
                 {
-                    /* 1st: velocity
+                    /* 1st: vanilla
                      * 2nd: version
                      */
 
                     string serverJarUrl = VanillaVersions.GetVanillaJarUrl(version[1]);
                     string jarFileName = Path.GetFileName(new Uri(serverJarUrl).AbsolutePath);
-                    new WebClient().DownloadFile(serverJarUrl, $@"{serverDirectory}\\{jarFileName}");
+                    new WebClient().DownloadFile(serverJarUrl, $@"{serverDirectory}\\files\\{jarFileName}");
 
-                    File.WriteAllText($@"{serverDirectory}\minecraft.launch", $"-Xms{ramAmounts[0]}M -Xmx{ramAmounts[1]}M -jar {jarFileName}");
+                    File.WriteAllText($@"{serverDirectory}\minecraft.launch", $"-jar {jarFileName}");
+
+                    IniFile srvConfig = new IniFile($@"{serverDirectory}\srvconfig.ini");
+
+                    srvConfig.Write("id", GenerateServerId(), "info");
+                    srvConfig.Write("name", name, "info");
+                    srvConfig.Write("desc", description, "info");
+
+                    srvConfig.Write("vendor", jdk[0], "java");
+                    srvConfig.Write("ver", jdk[1], "java");
+                    srvConfig.Write("minRam", ramAmounts[0], "java");
+                    srvConfig.Write("maxRam", ramAmounts[1], "java");
+
+                    srvConfig.Write("software", "vanilla", "software");
+                    srvConfig.Write("mcversion", version[1], "software");
+                    srvConfig.Write("build", version[1], "software");
                 }
                 else
                 {
@@ -150,9 +199,24 @@ namespace serverplatform
 
                     string serverJarUrl = PaperVersions.GetPaperJarUrl(version[1], version[2]);
                     string jarFileName = Path.GetFileName(new Uri(serverJarUrl).AbsolutePath);
-                    new WebClient().DownloadFile(serverJarUrl, $@"{serverDirectory}\\{jarFileName}");
+                    new WebClient().DownloadFile(serverJarUrl, $@"{serverDirectory}\\files\\{jarFileName}");
 
-                    File.WriteAllText($@"{serverDirectory}\minecraft.launch", $"-Xms{ramAmounts[0]}M -Xmx{ramAmounts[1]}M -XX:+AlwaysPreTouch -XX:+ParallelRefProcEnabled -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1HeapRegionSize=4M -XX:MaxInlineLevel=15 -jar {jarFileName}");
+                    File.WriteAllText($@"{serverDirectory}\minecraft.launch", $"-XX:+AlwaysPreTouch -XX:+ParallelRefProcEnabled -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1HeapRegionSize=4M -XX:MaxInlineLevel=15 -jar {jarFileName}");
+
+                    IniFile srvConfig = new IniFile($@"{serverDirectory}\srvconfig.ini");
+
+                    srvConfig.Write("id", GenerateServerId(), "info");
+                    srvConfig.Write("name", name, "info");
+                    srvConfig.Write("desc", description, "info");
+
+                    srvConfig.Write("vendor", jdk[0], "java");
+                    srvConfig.Write("ver", jdk[1], "java");
+                    srvConfig.Write("minRam", ramAmounts[0], "java");
+                    srvConfig.Write("maxRam", ramAmounts[1], "java");
+
+                    srvConfig.Write("software", "velocity", "software");
+                    srvConfig.Write("mcversion", version[1], "software");
+                    srvConfig.Write("build", version[2], "software");
                 }
                 else
                 {
