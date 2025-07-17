@@ -27,7 +27,8 @@ namespace serverplatform
             string minRam = body["minRam"]?.ToString();
             string maxRam = body["maxRam"]?.ToString();
             string javaRuntime = body["javaVer"]?.ToString();
-            string javaVendor = body["javaVer"]?.ToString();
+            string javaVendor = body["javaVendor"]?.ToString();
+            string javaType = body["javaType"]?.ToString();
 
             string[] versionStringSplit = versionString.Split('/');
             string[] fullVersionArray = new string[versionStringSplit.Length + 1];
@@ -38,7 +39,7 @@ namespace serverplatform
 
             try
             {
-                CreateServer(GenerateServerId(), name, desc, fullVersionArray, ramAmmounts, new string[] { javaRuntime, javaVendor });
+                CreateServer(GenerateServerId(), name, desc, fullVersionArray, ramAmmounts, new string[] { javaType, javaRuntime, javaVendor });
             } catch (Exception ex)
             {
                 ConsoleLogging.LogError($"Exception occured while trying to create server {name}: {ex.Message}", "ServerCreation");
@@ -99,6 +100,7 @@ namespace serverplatform
 
                     srvConfig.Write("vendor", jdk[0], "java");
                     srvConfig.Write("ver", jdk[1], "java");
+                    srvConfig.Write("type", jdk[2], "java");
                     srvConfig.Write("minRam", ramAmounts[0], "java");
                     srvConfig.Write("maxRam", ramAmounts[1], "java");
 
@@ -127,6 +129,7 @@ namespace serverplatform
 
                 srvConfig.Write("vendor", jdk[0], "java");
                 srvConfig.Write("ver", jdk[1], "java");
+                srvConfig.Write("type", jdk[2], "java");
                 srvConfig.Write("minRam", ramAmounts[0], "java");
                 srvConfig.Write("maxRam", ramAmounts[1], "java");
 
@@ -147,6 +150,7 @@ namespace serverplatform
 
                 srvConfig.Write("vendor", jdk[0], "java");
                 srvConfig.Write("ver", jdk[1], "java");
+                srvConfig.Write("type", jdk[2], "java");
                 srvConfig.Write("minRam", ramAmounts[0], "java");
                 srvConfig.Write("maxRam", ramAmounts[1], "java");
 
@@ -176,6 +180,7 @@ namespace serverplatform
 
                     srvConfig.Write("vendor", jdk[0], "java");
                     srvConfig.Write("ver", jdk[1], "java");
+                    srvConfig.Write("type", jdk[2], "java");
                     srvConfig.Write("minRam", ramAmounts[0], "java");
                     srvConfig.Write("maxRam", ramAmounts[1], "java");
 
@@ -211,6 +216,7 @@ namespace serverplatform
 
                     srvConfig.Write("vendor", jdk[0], "java");
                     srvConfig.Write("ver", jdk[1], "java");
+                    srvConfig.Write("type", jdk[2], "java");
                     srvConfig.Write("minRam", ramAmounts[0], "java");
                     srvConfig.Write("maxRam", ramAmounts[1], "java");
 

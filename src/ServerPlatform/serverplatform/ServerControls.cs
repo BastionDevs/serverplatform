@@ -27,6 +27,7 @@ namespace serverplatform
 
             string javaVendor = srvConfig.Read("vendor", "java");
             string javaVer = srvConfig.Read("ver", "java");
+            string javaType = srvConfig.Read("type", "java");
 
             string minRam = srvConfig.Read("minRam", "java");
             string maxRam = srvConfig.Read("maxRam", "java");
@@ -36,7 +37,7 @@ namespace serverplatform
 
             ProcessStartInfo psi = new ProcessStartInfo
             {
-                FileName = $"{runtimesdir}\\{javaVendor}JDK{javaVer}\\bin\\java.exe",
+                FileName = $"{runtimesdir}\\{javaVendor}{javaType}{javaVer}\\bin\\java.exe",
                 Arguments = $"-Xms {minRam} -Xmx {maxRam}" + File.ReadAllText($"{serversDirectory}\\{id}\\minecraft.launch"),
                 WorkingDirectory = $"{serversDirectory}\\id\\files",
                 UseShellExecute = false,
