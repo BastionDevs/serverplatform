@@ -38,7 +38,7 @@ namespace serverplatform
 
             try
             {
-                CreateServer(name, desc, fullVersionArray, ramAmmounts, new string[] { javaRuntime, javaVendor });
+                CreateServer(GenerateServerId(), name, desc, fullVersionArray, ramAmmounts, new string[] { javaRuntime, javaVendor });
             } catch (Exception ex)
             {
                 ConsoleLogging.LogError($"Exception occured while trying to create server {name}: {ex.Message}", "ServerCreation");
@@ -67,13 +67,13 @@ namespace serverplatform
             }
         }
 
-        public static void CreateServer(string name, string description, string[] version, string[] ramAmounts, string[] jdk)
+        public static void CreateServer(string id, string name, string description, string[] version, string[] ramAmounts, string[] jdk)
         {
             var serversFolder = Config.GetConfig("ServersDir", "main");
 
-            if (Directory.Exists($@"{serversFolder}\\{name}")) throw new Exception("Folder already exists.");
+            if (Directory.Exists($@"{serversFolder}\\{id}")) throw new Exception("Folder already exists.");
 
-            string serverDirectory = $@"{serversFolder}\\{name}";
+            string serverDirectory = $@"{serversFolder}\\{id}";
             Directory.CreateDirectory($@"{serverDirectory}\\files");
 
             if (version[0] == "paper")
@@ -93,7 +93,7 @@ namespace serverplatform
 
                     IniFile srvConfig = new IniFile($@"{serverDirectory}\srvconfig.ini");
                     
-                    srvConfig.Write("id", GenerateServerId(), "info");
+                    srvConfig.Write("id", id, "info");
                     srvConfig.Write("name", name, "info");
                     srvConfig.Write("desc", description, "info");
 
@@ -121,7 +121,7 @@ namespace serverplatform
 
                 IniFile srvConfig = new IniFile($@"{serverDirectory}\srvconfig.ini");
 
-                srvConfig.Write("id", GenerateServerId(), "info");
+                srvConfig.Write("id", id, "info");
                 srvConfig.Write("name", name, "info");
                 srvConfig.Write("desc", description, "info");
 
@@ -141,7 +141,7 @@ namespace serverplatform
 
                 IniFile srvConfig = new IniFile($@"{serverDirectory}\srvconfig.ini");
 
-                srvConfig.Write("id", GenerateServerId(), "info");
+                srvConfig.Write("id", id, "info");
                 srvConfig.Write("name", name, "info");
                 srvConfig.Write("desc", description, "info");
 
@@ -170,7 +170,7 @@ namespace serverplatform
 
                     IniFile srvConfig = new IniFile($@"{serverDirectory}\srvconfig.ini");
 
-                    srvConfig.Write("id", GenerateServerId(), "info");
+                    srvConfig.Write("id", id, "info");
                     srvConfig.Write("name", name, "info");
                     srvConfig.Write("desc", description, "info");
 
@@ -205,7 +205,7 @@ namespace serverplatform
 
                     IniFile srvConfig = new IniFile($@"{serverDirectory}\srvconfig.ini");
 
-                    srvConfig.Write("id", GenerateServerId(), "info");
+                    srvConfig.Write("id", id, "info");
                     srvConfig.Write("name", name, "info");
                     srvConfig.Write("desc", description, "info");
 
