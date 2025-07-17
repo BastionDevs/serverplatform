@@ -111,6 +111,14 @@ namespace serverplatform
             }
         }
 
+        public static async Task RestartServer(string id)
+        {
+            if (servers.TryGetValue(id, out var process) && !process.HasExited)
+            {
+                await StopServer(id);
+                StartServer(id);
+            }
+        }
 
         public static void SendCommand(string id, string command)
         {
