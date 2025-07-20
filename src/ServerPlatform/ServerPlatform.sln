@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.13.35913.81
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "servermgr", "servermgr\servermgr.csproj", "{2B629DE3-5211-44C5-9BA9-AC41FE6FCB0D}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "serverplatform", "serverplatform\serverplatform.csproj", "{467EE3C6-2F32-4BD0-82E9-00ED62B0A11E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "installer", "installer\installer.csproj", "{7601C1EF-9438-4AF1-A5FF-4F22DC5FB13C}"
@@ -12,6 +10,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BastionWebUI", "..\..\BastionWebUI\BastionWebUI.csproj", "{9E8235AD-AA0B-43A2-96A3-8A38BA8DE71E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpigotStorMgr", "SpigotStorMgr\SpigotStorMgr.csproj", "{E8E1BEB2-E69F-40FA-A282-540BFEF06317}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "servermgr", "servermgr\servermgr.csproj", "{CCCD0EE4-A6B6-4387-9051-46814F19DF88}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,18 +23,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{2B629DE3-5211-44C5-9BA9-AC41FE6FCB0D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2B629DE3-5211-44C5-9BA9-AC41FE6FCB0D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2B629DE3-5211-44C5-9BA9-AC41FE6FCB0D}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{2B629DE3-5211-44C5-9BA9-AC41FE6FCB0D}.Debug|x64.Build.0 = Debug|Any CPU
-		{2B629DE3-5211-44C5-9BA9-AC41FE6FCB0D}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{2B629DE3-5211-44C5-9BA9-AC41FE6FCB0D}.Debug|x86.Build.0 = Debug|Any CPU
-		{2B629DE3-5211-44C5-9BA9-AC41FE6FCB0D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2B629DE3-5211-44C5-9BA9-AC41FE6FCB0D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2B629DE3-5211-44C5-9BA9-AC41FE6FCB0D}.Release|x64.ActiveCfg = Release|Any CPU
-		{2B629DE3-5211-44C5-9BA9-AC41FE6FCB0D}.Release|x64.Build.0 = Release|Any CPU
-		{2B629DE3-5211-44C5-9BA9-AC41FE6FCB0D}.Release|x86.ActiveCfg = Release|Any CPU
-		{2B629DE3-5211-44C5-9BA9-AC41FE6FCB0D}.Release|x86.Build.0 = Release|Any CPU
 		{467EE3C6-2F32-4BD0-82E9-00ED62B0A11E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{467EE3C6-2F32-4BD0-82E9-00ED62B0A11E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{467EE3C6-2F32-4BD0-82E9-00ED62B0A11E}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -83,6 +71,18 @@ Global
 		{E8E1BEB2-E69F-40FA-A282-540BFEF06317}.Release|x64.Build.0 = Release|Any CPU
 		{E8E1BEB2-E69F-40FA-A282-540BFEF06317}.Release|x86.ActiveCfg = Release|Any CPU
 		{E8E1BEB2-E69F-40FA-A282-540BFEF06317}.Release|x86.Build.0 = Release|Any CPU
+		{CCCD0EE4-A6B6-4387-9051-46814F19DF88}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CCCD0EE4-A6B6-4387-9051-46814F19DF88}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CCCD0EE4-A6B6-4387-9051-46814F19DF88}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{CCCD0EE4-A6B6-4387-9051-46814F19DF88}.Debug|x64.Build.0 = Debug|Any CPU
+		{CCCD0EE4-A6B6-4387-9051-46814F19DF88}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{CCCD0EE4-A6B6-4387-9051-46814F19DF88}.Debug|x86.Build.0 = Debug|Any CPU
+		{CCCD0EE4-A6B6-4387-9051-46814F19DF88}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CCCD0EE4-A6B6-4387-9051-46814F19DF88}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CCCD0EE4-A6B6-4387-9051-46814F19DF88}.Release|x64.ActiveCfg = Release|Any CPU
+		{CCCD0EE4-A6B6-4387-9051-46814F19DF88}.Release|x64.Build.0 = Release|Any CPU
+		{CCCD0EE4-A6B6-4387-9051-46814F19DF88}.Release|x86.ActiveCfg = Release|Any CPU
+		{CCCD0EE4-A6B6-4387-9051-46814F19DF88}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
