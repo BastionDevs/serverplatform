@@ -19,6 +19,8 @@ namespace servermgr
         private int resizeSteps = 10; // Number of steps for smooth resizing
         private int currentStep = 0;
 
+        private bool transitioningToForm2 = false;
+
         string email;
         string pwd;
 
@@ -50,7 +52,24 @@ namespace servermgr
                 resizeTimer.Stop();
                 this.Size = targetSize; // Ensure final size is set
                 this.CenterToScreen();
+
+                if (transitioningToForm2)
+                {
+                    transitioningToForm2 = false;
+                    OpenForm2();
+                }
             }
+        }
+
+        private void OpenForm2()
+        {
+            Form2 form2 = new Form2(); // Pass email/pwd here if needed
+            form2.StartPosition = FormStartPosition.Manual;
+            form2.Location = this.Location;
+            form2.Size = this.Size;
+            form2.Show();
+
+            this.Hide();
         }
 
         private void StartSmoothResize(Size newSize)
@@ -97,9 +116,23 @@ namespace servermgr
                 e.ReturnValue = false;
 
                 webBrowser1.Document.InvokeScript("redirLoad");
-
                 StartSmoothResize(new Size(720, 481));
+
+                if (BackendAuth.getAuthToken(email, pwd) == "ERROR-AuthFailure") 
+                {
+                    webBrowser1.Navigate(String.Format("file:///{0}/html/login.html", Directory.GetCurrentDirectory()));
+                    StartSmoothResize(new Size(978, 633));
+                } else
+                {
+                    transitioningToForm2 = true;
+                    StartSmoothResize(new Size(1068, 727));
+                }
             }
+        }
+
+        private void quitServerPlatformToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
         }
     }
 }
