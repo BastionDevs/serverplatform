@@ -119,5 +119,19 @@
             <p>JavaScript needs to be enabled in your browser to use Skype.</p>
         </div>
     </noscript>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const passwordInput = document.getElementById("unifiedPassword");
+        const signInButton = document.getElementById("unifiedSignIn");
+
+        passwordInput.addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                signInButton.click();
+            }
+        });
+    });
+    </script>
 </body>
 </html>
