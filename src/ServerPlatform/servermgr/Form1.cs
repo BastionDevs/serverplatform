@@ -121,11 +121,11 @@ namespace servermgr
                 if (BackendAuth.getAuthToken(email, pwd) == "ERROR-AuthFailure") 
                 {
                     webBrowser1.Navigate(String.Format("file:///{0}/html/login.html", Directory.GetCurrentDirectory()));
-                    StartSmoothResize(new Size(978, 633));
+                    StartSmoothResize(this.Size);
                 } else
                 {
                     transitioningToForm2 = true;
-                    StartSmoothResize(new Size(1068, 727));
+                    StartSmoothResize(new Form2().Size);
                 }
             }
         }
