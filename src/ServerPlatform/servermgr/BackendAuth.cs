@@ -13,7 +13,7 @@ namespace servermgr
         public static string getAuthToken(string user, string pass)
         {
             string serverAddr = user.Split('@')[1];
-            user = user.Split('@')[1];
+            user = user.Split('@')[0];
 
             if (!serverAddr.Contains(":"))
             {
