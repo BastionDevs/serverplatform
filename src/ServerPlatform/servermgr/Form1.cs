@@ -118,7 +118,7 @@ namespace servermgr
                 webBrowser1.Document.InvokeScript("redirLoad");
                 StartSmoothResize(new Size(720, 481));
 
-                if (BackendAuth.getAuthToken(email, pwd) == "ERROR-AuthFailure") 
+                if (BackendAuth.getAuthToken(email, pwd).StartsWith("ERROR-AuthFailure"))
                 {
                     webBrowser1.Navigate(String.Format("file:///{0}/html/login.html", Directory.GetCurrentDirectory()));
                     StartSmoothResize(this.Size);
