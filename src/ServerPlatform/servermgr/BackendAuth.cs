@@ -20,7 +20,7 @@ namespace servermgr
                 serverAddr += ":5678";
             }
 
-            string resp = APIUtil.PostJson($"http://{serverAddr}/", "{\"username\": \""+user+"\", \"password\": \""+pass+"\"}");
+            string resp = APIUtil.PostJson($"http://{serverAddr}/auth/login", "{\"username\": \""+user+"\", \"password\": \""+pass+"\"}");
 
             if (resp.StartsWith("Error:") || resp.StartsWith("Exception:"))
             {
