@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace serverplatform
@@ -96,9 +99,14 @@ namespace serverplatform
                             error = "Not Found"
                         }).ToString());
                     }
-                } else if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/servers/create")
+                }
+                else if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/servers/create")
                 {
                     ServerCreation.HandleCreationRequest(context);
+                }
+                else if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/profile/public")
+                {
+                    HandleProfile(context);
                 }
                 else
                 {
@@ -228,6 +236,54 @@ namespace serverplatform
                 RespondJson(context, JObject.FromObject(new
                 {
                     success = false, error = "internalError"
+                }).ToString());
+            }
+        }
+
+        private static void HandleProfile(HttpListenerContext context)
+        {
+            var requestBody =
+                new StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
+            var body = JObject.Parse(requestBody);
+
+            var username = body["username"]?.ToString();
+
+            if (File.ReadAllText("users.json").Contains(username))
+            {
+                var json = File.ReadAllText("users.json");
+                var usersArray = JArray.Parse(json);
+
+                var user = usersArray
+                    .FirstOrDefault(u =>
+                        string.Equals((string)u["Username"], username, StringComparison.OrdinalIgnoreCase));
+
+                if (user == null)
+                {
+                    ConsoleLogging.LogWarning($"User not found: {username}", "PROFILES");
+                    RespondJson(context, JObject.FromObject(new
+                    {
+                        success = false,
+                        error = "userNotFound"
+                    }).ToString());
+                }
+
+                var userProfile = (JObject)user.DeepClone();
+                userProfile.Remove("PasswordHash");
+
+                var profileObj = JObject.FromObject(new
+                {
+                    success = true,
+                    profile = userProfile
+                });
+
+                RespondJson(context, profileObj.ToString());
+            } else
+            {
+                ConsoleLogging.LogError($"User attempted to view non-existent profile.", "PROFILES");
+                RespondJson(context, JObject.FromObject(new
+                {
+                    success = false,
+                    error = "profileNotFound"
                 }).ToString());
             }
         }

@@ -49,5 +49,44 @@ namespace servermgr
             }
         }
 
+        public static string getProfile(string user)
+        {
+            string serverAddr = user.Split('@')[1];
+            user = user.Split('@')[0];
+
+            if (!serverAddr.Contains(":"))
+            {
+                serverAddr += ":5678";
+            }
+
+            string resp = APIUtil.PostJson($"http://{serverAddr}/profile/public", "{\"username\": \"" + user + "\"}");
+
+            if (resp.StartsWith("Error:") || resp.StartsWith("Exception:"))
+            {
+                return "ERROR-GetProfileFailure-" + resp;
+            }
+            else
+            {
+                try
+                {
+                    var json = JObject.Parse(resp);
+                    bool success = json.Value<bool>("success");
+
+                    if (success)
+                    {
+                        return resp;
+                    }
+                    else
+                    {
+                        return "ERROR-GetProfileFailure-UserNotFound";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return "ERROR-GetProfileFailure-" + ex.Message;
+                }
+            }
+        }
+
     }
 }
