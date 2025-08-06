@@ -59,7 +59,7 @@ namespace serverplatform
             {
                 new User
                 {
-                    Username = "admin", PasswordHash = Sha256Hash("admin")
+                    Username = "admin", DisplayName = "Administrator", Website = "https://github.com/BastionDevs/serverplatform", PasswordHash = Sha256Hash("admin")
                 }
             };
 
@@ -272,6 +272,8 @@ namespace serverplatform
         private class User
         {
             public string Username { get; set; }
+            public string DisplayName { get; set; }
+            public string Website { get; set; }
             public string PasswordHash { get; set; }
         }
     }
