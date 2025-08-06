@@ -48,7 +48,7 @@ Open-source, Windows-based server management system designed for Minecraft serve
 5. **Login with the default admin credentials:**
 
     - **Username:** `admin`  
-    - **Password:** `admin123` *(Change this immediately!)*
+    - **Password:** `admin` *(Change this immediately!)*
 
 ---
 
