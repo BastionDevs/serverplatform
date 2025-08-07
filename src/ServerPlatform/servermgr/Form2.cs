@@ -12,14 +12,17 @@ namespace servermgr
 {
     public partial class Form2 : Form
     {
+        Form1 form1;
+
         public Form2()
         {
             InitializeComponent();
         }
 
-        public Form2(string user, string token)
+        public Form2(string user, string token, Form1 form)
         {
             InitializeComponent();
+            form1 = form;
         }
 
         private void Form2_Load(object sender, EventArgs e)
@@ -33,6 +36,16 @@ namespace servermgr
             {
                 pictureBox2.ContextMenuStrip.Show(pictureBox2, new Point(e.X, e.Y));
             }
+        }
+
+        private void signOutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            form1.email = "";
+            form1.pwd = "";
+            form1.token = "";
+
+            form1.ShowLoginScreen();
+            this.Close();
         }
     }
 }

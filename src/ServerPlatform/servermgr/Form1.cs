@@ -21,10 +21,10 @@ namespace servermgr
 
         private bool transitioningToForm2 = false;
 
-        string email;
-        string pwd;
+        public string email;
+        public string pwd;
 
-        string token;
+        public string token;
 
         public Form1()
         {
@@ -63,9 +63,26 @@ namespace servermgr
             }
         }
 
+        public void ShowLoginScreen()
+        {
+            // Reset fields
+            email = null;
+            pwd = null;
+            token = null;
+
+            // Navigate back to login page
+            string curDir = Directory.GetCurrentDirectory();
+            webBrowser1.Navigate(String.Format("file:///{0}/html/login.html", curDir));
+
+            // Show and resize back if needed
+            StartSmoothResize(new Form1().Size);
+            this.CenterToScreen();
+            this.Show();
+        }
+
         private void OpenForm2()
         {
-            Form2 form2 = new Form2(email.Split('@')[0], token); // Pass email/pwd here if needed
+            Form2 form2 = new Form2(email.Split('@')[0], token, this); // Pass email/pwd here if needed
             form2.StartPosition = FormStartPosition.Manual;
             form2.Location = this.Location;
             form2.Size = this.Size;

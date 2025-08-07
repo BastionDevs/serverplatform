@@ -93,25 +93,26 @@
             this.accountToolStripMenuItem,
             this.signOutToolStripMenuItem});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(136, 76);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(211, 104);
             // 
             // myProfileToolStripMenuItem
             // 
             this.myProfileToolStripMenuItem.Name = "myProfileToolStripMenuItem";
-            this.myProfileToolStripMenuItem.Size = new System.Drawing.Size(135, 24);
+            this.myProfileToolStripMenuItem.Size = new System.Drawing.Size(210, 24);
             this.myProfileToolStripMenuItem.Text = "Profile";
             // 
             // accountToolStripMenuItem
             // 
             this.accountToolStripMenuItem.Name = "accountToolStripMenuItem";
-            this.accountToolStripMenuItem.Size = new System.Drawing.Size(135, 24);
+            this.accountToolStripMenuItem.Size = new System.Drawing.Size(210, 24);
             this.accountToolStripMenuItem.Text = "Account";
             // 
             // signOutToolStripMenuItem
             // 
             this.signOutToolStripMenuItem.Name = "signOutToolStripMenuItem";
-            this.signOutToolStripMenuItem.Size = new System.Drawing.Size(135, 24);
+            this.signOutToolStripMenuItem.Size = new System.Drawing.Size(210, 24);
             this.signOutToolStripMenuItem.Text = "Sign Out";
+            this.signOutToolStripMenuItem.Click += new System.EventHandler(this.signOutToolStripMenuItem_Click);
             // 
             // Form2
             // 
