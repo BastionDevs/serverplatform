@@ -134,6 +134,11 @@ namespace servermgr
 
                 e.ReturnValue = false;
 
+                if (!email.Contains("@"))
+                {
+                    email += "@localhost";
+                }
+
                 webBrowser1.Document.InvokeScript("redirLoad");
                 StartSmoothResize(new Size(720, 481));
 
