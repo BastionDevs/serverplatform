@@ -21,5 +21,18 @@ namespace servermgr
         {
             InitializeComponent();
         }
+
+        private void Form2_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void pictureBox2_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button is MouseButtons.Left)
+            {
+                pictureBox2.ContextMenuStrip.Show(pictureBox2, new Point(e.X, e.Y));
+            }
+        }
     }
 }
