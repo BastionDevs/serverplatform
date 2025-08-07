@@ -24,6 +24,8 @@ namespace servermgr
         string email;
         string pwd;
 
+        string token;
+
         public Form1()
         {
             InitializeComponent();
@@ -63,7 +65,7 @@ namespace servermgr
 
         private void OpenForm2()
         {
-            Form2 form2 = new Form2(); // Pass email/pwd here if needed
+            Form2 form2 = new Form2(email.Split('@')[0], token); // Pass email/pwd here if needed
             form2.StartPosition = FormStartPosition.Manual;
             form2.Location = this.Location;
             form2.Size = this.Size;
@@ -118,7 +120,8 @@ namespace servermgr
                 webBrowser1.Document.InvokeScript("redirLoad");
                 StartSmoothResize(new Size(720, 481));
 
-                if (BackendAuth.getAuthToken(email, pwd).StartsWith("ERROR-AuthFailure"))
+                token = BackendAuth.getAuthToken(email, pwd);
+                if (token.StartsWith("ERROR-AuthFailure"))
                 {
                     webBrowser1.Navigate(String.Format("file:///{0}/html/login.html", Directory.GetCurrentDirectory()));
                     StartSmoothResize(this.Size);

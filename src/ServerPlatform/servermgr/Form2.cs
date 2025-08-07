@@ -16,5 +16,10 @@ namespace servermgr
         {
             InitializeComponent();
         }
+
+        public Form2(string user, string token)
+        {
+            InitializeComponent();
+        }
     }
 }
