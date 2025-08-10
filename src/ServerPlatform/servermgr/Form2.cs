@@ -14,15 +14,20 @@ namespace servermgr
     {
         Form1 form1;
 
+        private string user;
+        private string token;
+
         public Form2()
         {
             InitializeComponent();
         }
 
-        public Form2(string user, string token, Form1 form)
+        public Form2(string userstring, string tokenstring, Form1 form)
         {
             InitializeComponent();
             form1 = form;
+            user = userstring;
+            token = tokenstring;
         }
 
         private void Form2_Load(object sender, EventArgs e)
@@ -40,6 +45,8 @@ namespace servermgr
 
         private void signOutToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            BackendAuth.signOut(user.Split('@')[1], token);
+
             form1.email = "";
             form1.pwd = "";
             form1.token = "";

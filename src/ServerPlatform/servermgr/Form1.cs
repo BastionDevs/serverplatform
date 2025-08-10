@@ -84,7 +84,7 @@ namespace servermgr
 
         private void OpenForm2()
         {
-            Form2 form2 = new Form2(email.Split('@')[0], token, this); // Pass email/pwd here if needed
+            Form2 form2 = new Form2(email, token, this); // Pass email/pwd here if needed
             form2.StartPosition = FormStartPosition.Manual;
             form2.Location = this.Location;
             form2.Size = this.Size;

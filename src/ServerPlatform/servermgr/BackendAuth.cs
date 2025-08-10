@@ -88,5 +88,14 @@ namespace servermgr
             }
         }
 
+        public static string signOut(string server, string token)
+        {
+            if (!server.Contains(":"))
+            {
+                server += ":5678";
+            }
+            return APIUtil.PostAuthenticated("http://" + server + "/auth/logout", token);
+        }
+
     }
 }
