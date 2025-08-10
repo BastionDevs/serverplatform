@@ -44,7 +44,7 @@ namespace servermgr
             form1.pwd = "";
             form1.token = "";
 
-            form1.ShowLoginScreen();
+            form1.ShowLoginScreen(form1);
             this.Close();
         }
     }

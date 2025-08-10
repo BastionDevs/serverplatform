@@ -21,6 +21,8 @@ namespace servermgr
 
         private bool transitioningToForm2 = false;
 
+        private Size originalFormSize;
+
         public string email;
         public string pwd;
 
@@ -63,7 +65,7 @@ namespace servermgr
             }
         }
 
-        public void ShowLoginScreen()
+        public void ShowLoginScreen(Form1 form1)
         {
             // Reset fields
             email = null;
@@ -75,9 +77,9 @@ namespace servermgr
             webBrowser1.Navigate(String.Format("file:///{0}/html/login.html", curDir));
 
             // Show and resize back if needed
-            StartSmoothResize(new Form1().Size);
-            this.CenterToScreen();
-            this.Show();
+            StartSmoothResize(form1.originalFormSize);
+            form1.CenterToScreen();
+            form1.Show();
         }
 
         private void OpenForm2()
@@ -101,6 +103,10 @@ namespace servermgr
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            if (originalFormSize != null)
+            {
+                originalFormSize = this.Size;
+            }
             string curDir = Directory.GetCurrentDirectory();
             webBrowser1.Navigate(String.Format("file:///{0}/html/login.html", curDir));
         }
