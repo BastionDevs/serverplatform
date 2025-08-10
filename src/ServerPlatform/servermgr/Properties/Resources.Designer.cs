@@ -69,5 +69,15 @@ namespace servermgr.Properties {
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Windows_10_Default_Profile_Picture_svg {
+            get {
+                object obj = ResourceManager.GetObject("Windows_10_Default_Profile_Picture.svg", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
     }
 }
