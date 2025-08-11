@@ -102,5 +102,8 @@
   <ItemGroup>
     <None Include="Resources\Windows_10_Default_Profile_Picture.svg.png" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\sp-logo-square.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
