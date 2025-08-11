@@ -1,9 +1,11 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -34,8 +36,45 @@ namespace servermgr
 
         private void Form2_Load(object sender, EventArgs e)
         {
+            string profileJson = BackendAuth.getProfile(user);
 
+            if (profileJson.StartsWith("ERROR-GetProfileFailure"))
+            {
+                label2.Text = "Failed to get profile";
+                return;
+            }
+
+            try
+            {
+                JObject json = JObject.Parse(profileJson);
+
+                // Use LINQ to JSON to find DisplayName
+                bool success = (bool)json["success"];
+
+                if (success)
+                {
+                    // LINQ querying inside the JObject
+                    string displayName = (from p in json["profile"]
+                                          where p.Path.EndsWith("DisplayName")
+                                          select (string)p).FirstOrDefault();
+
+                    // Fallback if somehow null
+                    if (string.IsNullOrEmpty(displayName))
+                        displayName = "No DisplayName";
+
+                    label2.Text = displayName;
+                }
+                else
+                {
+                    label2.Text = "User not found";
+                }
+            }
+            catch (Exception ex)
+            {
+                label2.Text = "Error parsing profile: " + ex.Message;
+            }
         }
+
 
         private void pictureBox2_MouseClick(object sender, MouseEventArgs e)
         {
