@@ -120,7 +120,7 @@ namespace servermgr
             }
         }
 
-        private void btnunifiedSignIn_Click(object sender, HtmlElementEventArgs e)
+        private async void btnunifiedSignIn_Click(object sender, HtmlElementEventArgs e)
         {
             if (!webBrowser1.Url.ToString().Contains("loginPwd.html"))
             {
@@ -146,20 +146,26 @@ namespace servermgr
                 }
 
                 webBrowser1.Document.InvokeScript("redirLoad");
+                this.Focus();
                 StartSmoothResize(new Size(720, 481));
 
-                token = BackendAuth.getAuthToken(email, pwd);
+                // Async call here
+                token = await BackendAuthAsync.getAuthTokenAsync(email, pwd);
+
                 if (token.StartsWith("ERROR-AuthFailure"))
                 {
-                    webBrowser1.Navigate(String.Format("file:///{0}/html/login.html", Directory.GetCurrentDirectory()));
-                    StartSmoothResize(this.Size);
-                } else
+                    webBrowser1.Navigate($"file:///{Directory.GetCurrentDirectory()}/html/login.html");
+                    this.Focus();
+                    StartSmoothResize(originalFormSize);
+                }
+                else
                 {
                     transitioningToForm2 = true;
                     StartSmoothResize(new Form2().Size);
                 }
             }
         }
+
 
         private void quitServerPlatformToolStripMenuItem_Click(object sender, EventArgs e)
         {

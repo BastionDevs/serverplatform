@@ -51,6 +51,7 @@
   <ItemGroup>
     <Compile Include="APIUtil.cs" />
     <Compile Include="BackendAuth.cs" />
+    <Compile Include="BackendAuthAsync.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
