@@ -62,7 +62,7 @@ namespace servermgr
                     if (string.IsNullOrEmpty(displayName))
                         displayName = "No DisplayName";
 
-                    label2.Text = displayName;
+                    label2.Text = "Welcome, " + displayName + "!";
                 }
                 else
                 {
