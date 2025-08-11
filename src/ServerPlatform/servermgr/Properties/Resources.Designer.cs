@@ -73,6 +73,16 @@ namespace servermgr.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap sp_logo_square {
+            get {
+                object obj = ResourceManager.GetObject("sp-logo-square", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Windows_10_Default_Profile_Picture_svg {
             get {
                 object obj = ResourceManager.GetObject("Windows_10_Default_Profile_Picture.svg", resourceCulture);
