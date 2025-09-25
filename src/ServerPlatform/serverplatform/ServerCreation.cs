@@ -11,6 +11,20 @@ namespace serverplatform
 {
     internal class ServerCreation
     {
+        public static void DownloadFileWithTimeout(string url, string destination, int timeoutMs = 30000)
+        {
+            var request = (HttpWebRequest)WebRequest.Create(url);
+            request.Timeout = timeoutMs;                // connection timeout
+            request.ReadWriteTimeout = timeoutMs;       // read timeout
+
+            using (var response = (HttpWebResponse)request.GetResponse())
+            using (var stream = response.GetResponseStream())
+            using (var fs = new FileStream(destination, FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                stream.CopyTo(fs);
+            }
+        }
+
         public static void HandleCreationRequest(HttpListenerContext context)
         {
             var requestBody =
@@ -174,7 +188,7 @@ namespace serverplatform
 
                         string serverJarUrl = VanillaVersions.GetVanillaJarUrl(version[1]);
                         string jarFileName = Path.GetFileName(new Uri(serverJarUrl).AbsolutePath);
-                        new WebClient().DownloadFile(serverJarUrl, $@"{serverDirectory}\\files\\{jarFileName}");
+                        DownloadFileWithTimeout(serverJarUrl, $@"{serverDirectory}\\files\\{jarFileName}");
 
                         File.WriteAllText($@"{serverDirectory}\minecraft.launch", $"-jar {jarFileName}");
 
