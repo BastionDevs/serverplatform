@@ -9,7 +9,7 @@ namespace installer
     {
         private readonly Image[] _images =
         {
-            Resources.bastion_original_on_white, Resources.CubeNotFound_250
+            Resources.bastion_original_on_white, Resources.CubeNotFound_250, Resources.thekiwiii_250
         };
 
         private int _imageIndex;
@@ -27,7 +27,7 @@ namespace installer
         private void InitializeTimer()
         {
             _timer1 = new Timer();
-            _timer1.Interval = 1500;
+            _timer1.Interval = 2000;
             _timer1.Tick += timer1_Tick;
             _timer1.Start();
         }
