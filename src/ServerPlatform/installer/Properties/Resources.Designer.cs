@@ -83,6 +83,16 @@ namespace installer.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap sp_logo_square {
+            get {
+                object obj = ResourceManager.GetObject("sp_logo_square", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap thekiwiii_250 {
             get {
                 object obj = ResourceManager.GetObject("thekiwiii_250", resourceCulture);

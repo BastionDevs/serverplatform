@@ -120,5 +120,8 @@
   <ItemGroup>
     <None Include="Resources\thekiwiii_250.png" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\sp-logo-square.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

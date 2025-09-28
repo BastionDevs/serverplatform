@@ -9,7 +9,7 @@ namespace installer
     {
         private readonly Image[] _images =
         {
-            Resources.bastion_original_on_white, Resources.CubeNotFound_250, Resources.thekiwiii_250
+            Resources.bastion_original_on_white, Resources.CubeNotFound_250, Resources.thekiwiii_250, Resources.sp_logo_square
         };
 
         private int _imageIndex;
