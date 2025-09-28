@@ -27,7 +27,7 @@ namespace installer
         private void InitializeTimer()
         {
             _timer1 = new Timer();
-            _timer1.Interval = 2000;
+            _timer1.Interval = 1750;
             _timer1.Tick += timer1_Tick;
             _timer1.Start();
         }
