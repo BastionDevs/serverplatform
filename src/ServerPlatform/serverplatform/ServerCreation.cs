@@ -118,9 +118,9 @@ namespace serverplatform
                         srvConfig.Write("name", name, "info");
                         srvConfig.Write("desc", description, "info");
 
-                        srvConfig.Write("vendor", jdk[0], "java");
+                        srvConfig.Write("type", jdk[0], "java");
                         srvConfig.Write("ver", jdk[1], "java");
-                        srvConfig.Write("type", jdk[2], "java");
+                        srvConfig.Write("vendor", jdk[2], "java");
                         srvConfig.Write("minRam", ramAmounts[0], "java");
                         srvConfig.Write("maxRam", ramAmounts[1], "java");
 
@@ -147,9 +147,9 @@ namespace serverplatform
                     srvConfig.Write("name", name, "info");
                     srvConfig.Write("desc", description, "info");
 
-                    srvConfig.Write("vendor", jdk[0], "java");
+                    srvConfig.Write("type", jdk[0], "java");
                     srvConfig.Write("ver", jdk[1], "java");
-                    srvConfig.Write("type", jdk[2], "java");
+                    srvConfig.Write("vendor", jdk[2], "java");
                     srvConfig.Write("minRam", ramAmounts[0], "java");
                     srvConfig.Write("maxRam", ramAmounts[1], "java");
 
@@ -168,9 +168,9 @@ namespace serverplatform
                     srvConfig.Write("name", name, "info");
                     srvConfig.Write("desc", description, "info");
 
-                    srvConfig.Write("vendor", jdk[0], "java");
+                    srvConfig.Write("type", jdk[0], "java");
                     srvConfig.Write("ver", jdk[1], "java");
-                    srvConfig.Write("type", jdk[2], "java");
+                    srvConfig.Write("vendor", jdk[2], "java");
                     srvConfig.Write("minRam", ramAmounts[0], "java");
                     srvConfig.Write("maxRam", ramAmounts[1], "java");
 
@@ -198,9 +198,9 @@ namespace serverplatform
                         srvConfig.Write("name", name, "info");
                         srvConfig.Write("desc", description, "info");
 
-                        srvConfig.Write("vendor", jdk[0], "java");
+                        srvConfig.Write("type", jdk[0], "java");
                         srvConfig.Write("ver", jdk[1], "java");
-                        srvConfig.Write("type", jdk[2], "java");
+                        srvConfig.Write("vendor", jdk[2], "java");
                         srvConfig.Write("minRam", ramAmounts[0], "java");
                         srvConfig.Write("maxRam", ramAmounts[1], "java");
 
@@ -234,9 +234,9 @@ namespace serverplatform
                         srvConfig.Write("name", name, "info");
                         srvConfig.Write("desc", description, "info");
 
-                        srvConfig.Write("vendor", jdk[0], "java");
+                        srvConfig.Write("type", jdk[0], "java");
                         srvConfig.Write("ver", jdk[1], "java");
-                        srvConfig.Write("type", jdk[2], "java");
+                        srvConfig.Write("vendor", jdk[2], "java");
                         srvConfig.Write("minRam", ramAmounts[0], "java");
                         srvConfig.Write("maxRam", ramAmounts[1], "java");
 
