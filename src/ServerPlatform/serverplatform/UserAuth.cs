@@ -1,13 +1,14 @@
-﻿using System;
+﻿using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
+using System.Net;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace serverplatform
 {
@@ -238,6 +239,49 @@ namespace serverplatform
                 return null;
             }
         }
+
+        public static ClaimsPrincipal VerifyJwtFromContext(HttpListenerContext context)
+        {
+            try
+            {
+                var authHeader = context.Request.Headers["Authorization"];
+                if (string.IsNullOrWhiteSpace(authHeader))
+                {
+                    ConsoleLogging.LogWarning("Authorization header missing.", "JWT");
+                    return null;
+                }
+
+                if (!authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                {
+                    ConsoleLogging.LogWarning("Invalid Authorization header format.", "JWT");
+                    return null;
+                }
+
+                var token = authHeader.Substring("Bearer ".Length).Trim();
+
+                if (string.IsNullOrEmpty(token))
+                {
+                    ConsoleLogging.LogWarning("Bearer token missing after prefix.", "JWT");
+                    return null;
+                }
+
+                var principal = ValidateJwtToken(token);
+                if (principal == null)
+                {
+                    ConsoleLogging.LogWarning("JWT validation failed.", "JWT");
+                    return null;
+                }
+
+                ConsoleLogging.LogSuccess($"JWT verified for user: {principal.Identity?.Name}", "JWT");
+                return principal;
+            }
+            catch (Exception ex)
+            {
+                ConsoleLogging.LogError($"Error verifying JWT from context: {ex.Message}", "JWT");
+                return null;
+            }
+        }
+
 
         public static JObject LogoutUser(string token)
         {
