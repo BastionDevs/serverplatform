@@ -27,13 +27,20 @@ namespace serverplatform
 
         public static void HandleCreationRequest(HttpListenerContext context)
         {
+            var user = UserAuth.VerifyJwtFromContext(context);
+            if (user == null)
+            {
+                context.Response.StatusCode = 401;
+                ApiHandler.RespondJson(context, "{\"success\":\"false\", \"message\":\"Unauthorised.\"}");
+                return;
+            }
+
             var requestBody =
                 new StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
             var body = JObject.Parse(requestBody);
 
             ConsoleLogging.LogMessage($"User is attempting to create a server with name {body["serverName"]?.ToString()}.", "ServerCreation");
 
-            string auth = body["auth"]?.ToString();
             string name = body["serverName"]?.ToString();
             string desc= body["serverDesc"]?.ToString();
             string software = body["software"]?.ToString();
