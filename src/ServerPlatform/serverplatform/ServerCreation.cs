@@ -229,7 +229,7 @@ namespace serverplatform
                          * 3rd: build num
                          */
 
-                        string serverJarUrl = PaperVersions.GetPaperJarUrl(version[1], version[2]);
+                        string serverJarUrl = VelocityVersions.GetVelocityJarUrl(version[1], version[2]);
                         string jarFileName = Path.GetFileName(new Uri(serverJarUrl).AbsolutePath);
                         new WebClient().DownloadFile(serverJarUrl, $@"{serverDirectory}\\files\\{jarFileName}");
 
