@@ -1,3 +1,5 @@
+@inject MinecraftVersionService VersionService
+
 <MudDialog>
     <DialogContent>
         <MudStack Spacing="2">
@@ -75,7 +77,8 @@
     private string? _maxRam;
 
     private readonly string[] _serverSoftwareOptions = { "Paper", "Spigot", "Vanilla", "Fabric" };
-    private readonly string[] _serverVersionOptions = { "1.20.4", "1.20.1", "1.19.4", "1.18.2" };
+    private List<string> _serverVersionOptions = new();
+    private bool _isLoadingVersions;
 
     private bool IsCreateDisabled =>
         string.IsNullOrWhiteSpace(_serverName) ||
@@ -86,11 +89,28 @@
 
     private bool IsCurrentStepInvalid =>
         (_currentStep == 0 && string.IsNullOrWhiteSpace(_selectedSoftware)) ||
-        (_currentStep == 1 && string.IsNullOrWhiteSpace(_selectedVersion)) ||
+        (_currentStep == 1 && (string.IsNullOrWhiteSpace(_selectedVersion) || _isLoadingVersions)) ||
         (_currentStep == 2 && (string.IsNullOrWhiteSpace(_serverName) || string.IsNullOrWhiteSpace(_minRam) || string.IsNullOrWhiteSpace(_maxRam)));
 
-    private void Next()
+    private async Task Next()
     {
+        if (_currentStep == 0 && !string.IsNullOrWhiteSpace(_selectedSoftware))
+        {
+            _isLoadingVersions = true;
+            _serverVersionOptions.Clear();
+
+            try
+            {
+                _serverVersionOptions = await VersionService.GetVersionsAsync(_selectedSoftware);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to load versions: {ex.Message}");
+            }
+
+            _isLoadingVersions = false;
+        }
+
         if (_currentStep < 3)
             _currentStep++;
     }
@@ -123,5 +143,4 @@
         public string? MinRam { get; set; }
         public string? MaxRam { get; set; }
     }
-
 }

@@ -8,6 +8,7 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddScoped<StorageService>();
+builder.Services.AddScoped<MinecraftVersionService>();
 
 
 // Add MudBlazor services to DI container
