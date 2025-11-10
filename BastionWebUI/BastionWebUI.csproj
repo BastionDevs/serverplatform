@@ -7,17 +7,18 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="IdentityModel" Version="7.0.0-preview.4"/>
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.4"/>
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.4" PrivateAssets="all"/>
-        <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.4"/>
-        <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.9.0"/>
-        <PackageReference Include="MudBlazor" Version="8.6.0"/>
-        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.9.0"/>
+        <PackageReference Include="IdentityModel" Version="7.0.0-preview.4" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.4" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.4" PrivateAssets="all" />
+        <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.4" />
+        <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.9.0" />
+        <PackageReference Include="MudBlazor" Version="8.6.0" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.9.0" />
     </ItemGroup>
 
     <ItemGroup>
-        <_ContentIncludedByDefault Remove="Pages\Dialogs\LogoutDialog.razor"/>
+        <_ContentIncludedByDefault Remove="Pages\Dialogs\LogoutDialog.razor" />
     </ItemGroup>
 
 </Project>
