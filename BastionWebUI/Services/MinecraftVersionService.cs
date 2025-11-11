@@ -32,8 +32,8 @@
         {
             var response = await _http.GetStringAsync("https://api.papermc.io/v2/projects/paper");
             var versionsObj = JObject.Parse(response);
-            var versionsArray = (JArray)versionsObj["versions"];
-            return versionsArray.ToObject<List<string>>() ?? new List<string>();
+            var versionsArray = versionsObj.Value<JArray>("versions");
+            return versionsArray?.ToObject<List<string>>() ?? new List<string>();
         }
 
         private async Task<List<string>> GetVanillaVersionsAsync()
