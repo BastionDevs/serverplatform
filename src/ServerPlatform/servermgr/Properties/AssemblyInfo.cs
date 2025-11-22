@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Server Platform Server Manager")]
-[assembly: AssemblyDescription("Windows-first Minecraft server management suite")]
+[assembly: AssemblyTitle("Server Manager for Bastion Server Platform")]
+[assembly: AssemblyDescription("Manage your servers through a graphical user interface")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Bastion Server Platform")]
-[assembly: AssemblyCopyright("Copyright © 2025 BastionSG")]
+[assembly: AssemblyCompany("BastionSG")]
+[assembly: AssemblyProduct("Server Platform")]
+[assembly: AssemblyCopyright("Copyright © BastionSG 2025")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
