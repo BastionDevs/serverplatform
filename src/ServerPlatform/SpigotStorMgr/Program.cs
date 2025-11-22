@@ -15,7 +15,7 @@ namespace SpigotStorMgr
             Console.OutputEncoding = Encoding.UTF8;
             Console.ForegroundColor = ConsoleColor.Cyan;
 
-            Console.Title = "Bastion Server Platform | Backend Server";
+            Console.Title = "Bastion Server Platform | Spigot Repo Manager";
 
             // Fancy ASCII Logo
             Console.WriteLine(" ▄▄▄▄    ▄▄▄        ██████ ▄▄▄█████▓ ██▓ ▒█████   ███▄    █  ▄████▄    ██████ ");
