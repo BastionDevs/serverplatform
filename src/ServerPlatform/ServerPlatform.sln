@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpigotStorMgr", "SpigotStor
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "servermgr", "servermgr\servermgr.csproj", "{CCCD0EE4-A6B6-4387-9051-46814F19DF88}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "httpsysutil", "httpsysutil\httpsysutil.csproj", "{F8525E15-7ED1-4FF0-807E-D33481B0F797}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -83,6 +85,18 @@ Global
 		{CCCD0EE4-A6B6-4387-9051-46814F19DF88}.Release|x64.Build.0 = Release|Any CPU
 		{CCCD0EE4-A6B6-4387-9051-46814F19DF88}.Release|x86.ActiveCfg = Release|Any CPU
 		{CCCD0EE4-A6B6-4387-9051-46814F19DF88}.Release|x86.Build.0 = Release|Any CPU
+		{F8525E15-7ED1-4FF0-807E-D33481B0F797}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F8525E15-7ED1-4FF0-807E-D33481B0F797}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F8525E15-7ED1-4FF0-807E-D33481B0F797}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F8525E15-7ED1-4FF0-807E-D33481B0F797}.Debug|x64.Build.0 = Debug|Any CPU
+		{F8525E15-7ED1-4FF0-807E-D33481B0F797}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F8525E15-7ED1-4FF0-807E-D33481B0F797}.Debug|x86.Build.0 = Debug|Any CPU
+		{F8525E15-7ED1-4FF0-807E-D33481B0F797}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F8525E15-7ED1-4FF0-807E-D33481B0F797}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F8525E15-7ED1-4FF0-807E-D33481B0F797}.Release|x64.ActiveCfg = Release|Any CPU
+		{F8525E15-7ED1-4FF0-807E-D33481B0F797}.Release|x64.Build.0 = Release|Any CPU
+		{F8525E15-7ED1-4FF0-807E-D33481B0F797}.Release|x86.ActiveCfg = Release|Any CPU
+		{F8525E15-7ED1-4FF0-807E-D33481B0F797}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
