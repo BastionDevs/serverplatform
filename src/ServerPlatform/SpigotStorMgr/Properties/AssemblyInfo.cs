@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("SpigotStorMgr")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("Spigot Repository Manager for Bastion Server Platform")]
+[assembly: AssemblyDescription("Manage available Spigot and Bukkit JARs")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("SpigotStorMgr")]
-[assembly: AssemblyCopyright("Copyright ©  2025")]
+[assembly: AssemblyCompany("BastionSG")]
+[assembly: AssemblyProduct("Server Platform")]
+[assembly: AssemblyCopyright("Copyright © BastionSG 2025")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
