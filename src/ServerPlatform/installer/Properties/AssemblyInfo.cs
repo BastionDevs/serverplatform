@@ -4,12 +4,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("installer")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("Installer for Bastion Server Platform")]
+[assembly: AssemblyDescription("Installs Server Platform and its utilities on your Computer")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("installer")]
-[assembly: AssemblyCopyright("Copyright ©  2025")]
+[assembly: AssemblyCompany("BastionSG")]
+[assembly: AssemblyProduct("Server Platform")]
+[assembly: AssemblyCopyright("Copyright © BastionSG 2025")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
