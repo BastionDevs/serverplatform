@@ -31,7 +31,8 @@ namespace httpsysutil
                             Console.Title = "Bastion Server Platform | HTTP System Utility";
                             Console.WriteLine(UrlAclExists(args[2]));
                             Environment.Exit(0);
-                        } else
+                        }
+                        else
                         {
                             Console.Title = "Bastion Server Platform | HTTP System Utility";
                             Console.WriteLine("Bastion Server Platform");
@@ -40,7 +41,26 @@ namespace httpsysutil
                             Console.WriteLine("Invalid option. Try 'httpsysutil --help' for more information");
                             Environment.Exit(1);
                         }
-                    } else
+                    }
+                    else if (args.Length == 4)
+                    {
+                        if (args[1] == "acl")
+                        {
+                            Console.Title = "Bastion Server Platform | HTTP System Utility";
+                            Console.WriteLine(UrlAclExists(args[2], args[3]));
+                            Environment.Exit(0);
+                        }
+                        else
+                        {
+                            Console.Title = "Bastion Server Platform | HTTP System Utility";
+                            Console.WriteLine("Bastion Server Platform");
+                            Console.WriteLine("HTTP System Utility");
+                            Console.WriteLine();
+                            Console.WriteLine("Invalid option. Try 'httpsysutil --help' for more information");
+                            Environment.Exit(1);
+                        }
+                    }
+                    else
                     {
                         Console.Title = "Bastion Server Platform | HTTP System Utility";
                         Console.WriteLine("Bastion Server Platform");
@@ -53,7 +73,7 @@ namespace httpsysutil
             }
         }
 
-        public static bool UrlAclExists(string prefix)
+        public static bool UrlAclExists(string prefix, string user = null)
         {
             // Normalize the input the way netsh normalizes it
             string normalizedPrefix = NormalizePrefix(prefix);
@@ -79,11 +99,38 @@ namespace httpsysutil
                 string found = NormalizePrefix(m.Groups[1].Value);
 
                 if (string.Equals(found, normalizedPrefix, StringComparison.OrdinalIgnoreCase))
-                    return true;
+                {
+                    if (string.IsNullOrEmpty(user))
+                        return true;
+
+                    // Find the block of text for this URL
+                    int startIndex = m.Index;
+                    int endIndex = (matches.Cast<Match>()
+                                           .Where(x => x.Index > startIndex)
+                                           .Select(x => x.Index)
+                                           .DefaultIfEmpty(output.Length)
+                                           .Min());
+
+                    string urlBlock = output.Substring(startIndex, endIndex - startIndex);
+
+                    // Look for "User : <username>"
+                    Regex userLine = new Regex(@"^\s*User\s*:\s*(.+)$",
+                        RegexOptions.Multiline | RegexOptions.IgnoreCase);
+
+                    foreach (Match um in userLine.Matches(urlBlock))
+                    {
+                        string foundUser = um.Groups[1].Value.Trim();
+                        if (string.Equals(foundUser, user, StringComparison.OrdinalIgnoreCase))
+                            return true;
+                    }
+
+                    return false; // URL exists but user not found
+                }
             }
 
-            return false;
+            return false; // URL not found
         }
+
 
         private static string NormalizePrefix(string prefix)
         {
