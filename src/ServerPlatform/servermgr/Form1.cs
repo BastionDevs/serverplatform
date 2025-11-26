@@ -157,6 +157,7 @@ namespace servermgr
                     webBrowser1.Navigate($"file:///{Directory.GetCurrentDirectory()}/html/login.html");
                     this.Focus();
                     StartSmoothResize(originalFormSize);
+                    MessageBox.Show("Error occured while signing in. Check username and password, as well as server connectivity.", "Bastion Server Platform", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 else
                 {
