@@ -152,12 +152,18 @@ namespace servermgr
                 // Async call here
                 token = await BackendAuthAsync.getAuthTokenAsync(email, pwd);
 
-                if (token.StartsWith("ERROR-AuthFailure"))
+                if (token.StartsWith("ERROR-AuthFailure") && token != "ERROR-AuthFailure-ConnectionError")
                 {
                     webBrowser1.Navigate($"file:///{Directory.GetCurrentDirectory()}/html/login.html");
                     this.Focus();
                     StartSmoothResize(originalFormSize);
-                    MessageBox.Show("Error occured while signing in. Check username and password, as well as server connectivity.", "Bastion Server Platform", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Error occured while signing in. Check username and password.", "Bastion Server Platform", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                } else if (token == "ERROR-AuthFailure-ConnectionError")
+                {
+                    webBrowser1.Navigate($"file:///{Directory.GetCurrentDirectory()}/html/login.html");
+                    this.Focus();
+                    StartSmoothResize(originalFormSize);
+                    MessageBox.Show("Unable to connect to server. Check server settings.", "Bastion Server Platform", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 else
                 {

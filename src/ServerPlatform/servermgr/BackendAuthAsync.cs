@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace servermgr
 {
@@ -85,7 +86,11 @@ namespace servermgr
 
             string resp = await PostJsonAsync(url, jsonBody);
 
-            if (resp.StartsWith("Error:") || resp.StartsWith("Exception:"))
+            if (resp == "Exception: An error occurred while sending the request.")
+            {
+                return "ERROR-AuthFailure-ConnectionError";
+            } 
+            else if (resp.StartsWith("Error:") || resp.StartsWith("Exception:"))
             {
                 return "ERROR-AuthFailure-" + resp;
             }
