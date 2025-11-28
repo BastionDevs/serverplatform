@@ -108,6 +108,14 @@ namespace serverplatform
                 {
                     HandleProfile(context);
                 }
+                else if (context.Request.HttpMethod == "GET" && context.Request.Url.AbsolutePath == "/endpointinfo")
+                {
+                    RespondJson(context, JObject.FromObject(new
+                    {
+                        server = "BSP Backend Server",
+                        version = "1.0.0"
+                    }).ToString());
+                }
                 else
                 {
                     context.Response.StatusCode = 404;
