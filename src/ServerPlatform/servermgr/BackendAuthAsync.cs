@@ -115,6 +115,11 @@ namespace servermgr
                 serverAddr += ":5678";
             }
 
+            if (!CheckSPServerAsync(serverAddr).GetAwaiter().GetResult())
+            {
+                return "ERROR-AuthFailure-InvalidEndpoint";
+            }
+
             string url = $"http://{serverAddr}/auth/login";
             string jsonBody = $"{{\"username\": \"{user}\", \"password\": \"{pass}\"}}";
 
