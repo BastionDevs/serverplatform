@@ -152,7 +152,13 @@ namespace servermgr
                 // Async call here
                 token = await BackendAuthAsync.getAuthTokenAsync(email, pwd);
 
-                if (token.StartsWith("ERROR-AuthFailure") && token != "ERROR-AuthFailure-ConnectionError")
+                if (token == "ERROR-AuthFailure-InvalidEndpoint")
+                {
+                    webBrowser1.Navigate($"file:///{Directory.GetCurrentDirectory()}/html/login.html");
+                    this.Focus();
+                    StartSmoothResize(originalFormSize);
+                    MessageBox.Show("Invalid Server Platform endpoint. Check server settings.", "Bastion Server Platform", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                } else if (token.StartsWith("ERROR-AuthFailure") && token != "ERROR-AuthFailure-ConnectionError")
                 {
                     webBrowser1.Navigate($"file:///{Directory.GetCurrentDirectory()}/html/login.html");
                     this.Focus();
@@ -164,12 +170,6 @@ namespace servermgr
                     this.Focus();
                     StartSmoothResize(originalFormSize);
                     MessageBox.Show("Unable to connect to server. Check server settings.", "Bastion Server Platform", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                } else if (token == "ERROR-AuthFailure-InvalidEndpoint")
-                {
-                    webBrowser1.Navigate($"file:///{Directory.GetCurrentDirectory()}/html/login.html");
-                    this.Focus();
-                    StartSmoothResize(originalFormSize);
-                    MessageBox.Show("Invalid Server Platform endpoint. Check server settings.", "Bastion Server Platform", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 else
                 {
