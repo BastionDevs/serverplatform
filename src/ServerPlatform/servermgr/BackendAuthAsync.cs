@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -15,15 +16,28 @@ namespace servermgr
     {
         public static async Task<bool> CheckSPServerAsync(string endpoint)
         {
-            var request = (HttpWebRequest)WebRequest.Create(endpoint);
-            request.Method = "HEAD";
+            if (!endpoint.EndsWith("/"))
+                endpoint += "/";
+
+            string url = endpoint + "endpointinfo";
+
+            var request = (HttpWebRequest)WebRequest.Create(url);
+            request.Method = "GET";
             request.Timeout = 2000;
 
             try
             {
                 using (var response = (HttpWebResponse)await request.GetResponseAsync())
+                using (var stream = response.GetResponseStream())
+                using (var reader = new StreamReader(stream))
                 {
-                    return true;
+                    string json = await reader.ReadToEndAsync();
+
+                    JObject obj = JObject.Parse(json);
+
+                    string serverName = (string)obj["server"];
+
+                    return serverName == "BSP Backend Server";
                 }
             }
             catch
