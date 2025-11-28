@@ -120,7 +120,7 @@ namespace servermgr
                 serverAddr = "http://" + serverAddr;
             }
 
-            if (!CheckBSPServerAsync(serverAddr).GetAwaiter().GetResult())
+            if (!await CheckBSPServerAsync(serverAddr))
             {
                 return "ERROR-AuthFailure-InvalidEndpoint";
             }
