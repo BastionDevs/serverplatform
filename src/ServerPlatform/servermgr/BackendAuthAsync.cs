@@ -115,6 +115,11 @@ namespace servermgr
                 serverAddr += ":5678";
             }
 
+            if (!serverAddr.StartsWith("http://") && !serverAddr.StartsWith("https://"))
+            {
+                serverAddr = "http://" + serverAddr;
+            }
+
             if (!CheckBSPServerAsync(serverAddr).GetAwaiter().GetResult())
             {
                 return "ERROR-AuthFailure-InvalidEndpoint";
