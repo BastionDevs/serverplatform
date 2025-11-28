@@ -23,7 +23,7 @@ namespace servermgr
 
             var request = (HttpWebRequest)WebRequest.Create(url);
             request.Method = "GET";
-            request.Timeout = 2000;
+            request.Timeout = 3000;
 
             try
             {
