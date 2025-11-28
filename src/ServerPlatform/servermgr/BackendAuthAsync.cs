@@ -14,7 +14,7 @@ namespace servermgr
 {
     internal class BackendAuthAsync
     {
-        public static async Task<bool> CheckSPServerAsync(string endpoint)
+        public static async Task<bool> CheckBSPServerAsync(string endpoint)
         {
             if (!endpoint.EndsWith("/"))
                 endpoint += "/";
@@ -115,7 +115,7 @@ namespace servermgr
                 serverAddr += ":5678";
             }
 
-            if (!CheckSPServerAsync(serverAddr).GetAwaiter().GetResult())
+            if (!CheckBSPServerAsync(serverAddr).GetAwaiter().GetResult())
             {
                 return "ERROR-AuthFailure-InvalidEndpoint";
             }
