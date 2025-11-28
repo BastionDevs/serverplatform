@@ -2,7 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
+using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -11,6 +13,24 @@ namespace servermgr
 {
     internal class BackendAuthAsync
     {
+        public static async Task<bool> CheckSPServerAsync(string endpoint)
+        {
+            var request = (HttpWebRequest)WebRequest.Create(endpoint);
+            request.Method = "HEAD";
+            request.Timeout = 2000;
+
+            try
+            {
+                using (var response = (HttpWebResponse)await request.GetResponseAsync())
+                {
+                    return true;
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
 
         public static async Task<string> PostJsonAsync(string url, string jsonBody)
         {
