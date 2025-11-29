@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Net.Sockets;
 using System.Security.Policy;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -15,24 +16,31 @@ namespace servermgr
 {
     internal class BackendAuthAsync
     {
-        public static bool TCPResponsive(string host, int port, int timeoutMs = 1500)
+        public static async Task<bool> TCPResponsive(string host, int port, int timeoutMs = 1500)
         {
-            try
+            using (var cts = new CancellationTokenSource())
             {
-                var client = new TcpClient();
-                var result = client.BeginConnect(host, port, null, null);
-                bool success = result.AsyncWaitHandle.WaitOne(timeoutMs);
+                cts.CancelAfter(timeoutMs);
 
-                if (!success)
+                try
+                {
+                    using (var client = new TcpClient())
+                    {
+                        var connectTask = client.ConnectAsync(host, port);
+
+                        var completedTask = await Task.WhenAny(connectTask, Task.Delay(Timeout.Infinite, cts.Token));
+
+                        if (completedTask != connectTask)
+                            return false;
+
+                        await connectTask;
+                        return true;
+                    }
+                }
+                catch
+                {
                     return false;
-
-                client.EndConnect(result);
-                client.Close();
-                return true;
-            }
-            catch
-            {
-                return false;
+                }
             }
         }
 
@@ -145,7 +153,7 @@ namespace servermgr
 
             Uri uri = new Uri(serverAddr);
 
-            if (!TCPResponsive(uri.Host, uri.Port))
+            if (!await TCPResponsive(uri.Host, uri.Port))
             {
                 return "ERROR-AuthFailure-ConnectionError";
             }
