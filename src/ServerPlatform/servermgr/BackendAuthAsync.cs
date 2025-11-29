@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Sockets;
 using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,6 +15,28 @@ namespace servermgr
 {
     internal class BackendAuthAsync
     {
+        public static bool TCPResponsive(string host, int port, int timeoutMs = 1500)
+        {
+            try
+            {
+                var client = new TcpClient();
+                var result = client.BeginConnect(host, port, null, null);
+                bool success = result.AsyncWaitHandle.WaitOne(timeoutMs);
+
+                if (!success)
+                    return false;
+
+                client.EndConnect(result);
+                client.Close();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+
         public static async Task<bool> CheckBSPServerAsync(string endpoint)
         {
             if (!endpoint.EndsWith("/"))
@@ -118,6 +141,13 @@ namespace servermgr
             if (!serverAddr.StartsWith("http://") && !serverAddr.StartsWith("https://"))
             {
                 serverAddr = "http://" + serverAddr;
+            }
+
+            Uri uri = new Uri(serverAddr);
+
+            if (!TCPResponsive(uri.Host, uri.Port))
+            {
+                return "ERROR-AuthFailure-ConnectionError";
             }
 
             if (!await CheckBSPServerAsync(serverAddr))
