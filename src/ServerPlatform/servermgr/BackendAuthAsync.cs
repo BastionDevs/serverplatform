@@ -163,7 +163,7 @@ namespace servermgr
                 return "ERROR-AuthFailure-InvalidEndpoint";
             }
 
-            string url = $"http://{serverAddr}/auth/login";
+            string url = $"{serverAddr}/auth/login";
             string jsonBody = $"{{\"username\": \"{user}\", \"password\": \"{pass}\"}}";
 
             string resp = await PostJsonAsync(url, jsonBody);
