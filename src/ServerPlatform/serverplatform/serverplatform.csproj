@@ -118,6 +118,7 @@
     <Compile Include="Config.cs" />
     <Compile Include="ConsoleLogging.cs" />
     <Compile Include="Cryptography.cs" />
+    <Compile Include="HandleACL.cs" />
     <Compile Include="IniFile.cs" />
     <Compile Include="JavaRuntimes.cs" />
     <Compile Include="NetConnectivity.cs" />
