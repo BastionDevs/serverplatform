@@ -50,7 +50,7 @@ namespace serverplatform
 
             try
             {
-                Console.WriteLine("Calling listener.Start()...");
+                ConsoleLogging.LogMessage("Starting HttpListener...", "Listener");
                 listener.Start();
                 ConsoleLogging.LogSuccess($"Backend API started and listening on port {port}.", "Listener");
 
