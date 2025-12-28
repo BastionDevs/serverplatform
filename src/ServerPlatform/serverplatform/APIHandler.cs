@@ -16,8 +16,26 @@ namespace serverplatform
     {
         public static async Task StartServer(CancellationToken token, int port)
         {
+            string prefix = $"http://localhost:{port}/";
+
+            if (!HandleACL.UrlAclExists(prefix))
+            {
+                ConsoleLogging.LogError("URL ACL for Server Platform backend endpoint is not registered.", "Listener");
+                ConsoleLogging.LogWarning("Server Platform will now register the URL ACL. Please press \"Yes\" on the UAC.", "Listener");
+                Console.Write("Press Enter to register...");
+                Console.ReadLine();
+
+                bool success = HandleACL.UrlAclExists(prefix);
+                if (!success)
+                {
+                    Console.WriteLine();
+                    ConsoleLogging.LogError("An error occured, and Server Platform was not able to register the URL ACL.", "Listener");
+                    ConsoleLogging.LogError($"Please run `netsh http add urlacl url={prefix} user=Everyone` in an elevated shell to manually register it.", "Listener");
+                }
+            }
+
             var listener = new HttpListener();
-            listener.Prefixes.Add($"http://localhost:{port}/");
+            listener.Prefixes.Add(prefix);
 
             try
             {
