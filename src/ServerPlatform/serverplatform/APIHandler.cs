@@ -35,12 +35,10 @@ namespace serverplatform
                 bool success = HandleACL.UrlAclExists(prefix);
                 if (!success)
                 {
-                    Console.WriteLine();
                     ConsoleLogging.LogError("An error occured, and Server Platform was not able to register the URL ACL.", "Listener");
                     ConsoleLogging.LogError($"Please run `netsh http add urlacl url={prefix} user={win_userstring}` in an elevated shell to manually register it.", "Listener");
                 } else
                 {
-                    Console.WriteLine();
                     ConsoleLogging.LogSuccess("Successfully created URL ACL.", "Listener");
                 }
             }
