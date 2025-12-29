@@ -96,6 +96,18 @@ namespace serverplatform
         {
             try
             {
+                Server newServer = new Server
+                {
+                    Id = id,
+                    Name = name,
+                    Owner = "admin",
+                    Node = "central",
+                    Software = version[0],
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                Config.serverIndex.AddServer(newServer);
+
                 var serversFolder = Config.GetConfig("ServersDir", "main");
 
                 if (Directory.Exists($@"{serversFolder}\\{id}")) throw new Exception("Folder already exists.");
