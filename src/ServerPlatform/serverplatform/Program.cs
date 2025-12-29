@@ -55,7 +55,6 @@ namespace serverplatform
                         else
                         {
                             Config.MakeDefaultConfig();
-                            UserAuth.CreateDefaultUsers(); // Add this if user creation is part of first run
                             ConsoleLogging.LogSuccess("First run completed successfully.");
                             Environment.Exit(0);
                         }
