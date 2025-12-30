@@ -35,11 +35,13 @@ namespace serverplatform
                 return;
             }
 
+            string uname = UserAuth.GetUsernameFromPrincipal(user);
+
             var requestBody =
                 new StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
             var body = JObject.Parse(requestBody);
 
-            ConsoleLogging.LogMessage($"User is attempting to create a server with name {body["serverName"]?.ToString()}.", "ServerCreation");
+            ConsoleLogging.LogMessage($"User {uname} is attempting to create a server with name {body["serverName"]?.ToString()}.", "ServerCreation");
 
             string name = body["serverName"]?.ToString();
             string desc= body["serverDesc"]?.ToString();
@@ -61,7 +63,7 @@ namespace serverplatform
             try
             {
                 string sid = GenerateServerId();
-                CreateServer(sid, name, desc, fullVersionArray, ramAmmounts, new string[] { javaType, javaRuntime, javaVendor });
+                CreateServer(sid, name, desc, fullVersionArray, ramAmmounts, new string[] { javaType, javaRuntime, javaVendor }, uname);
                 ConsoleLogging.LogSuccess($"Successfully created server {name} with ID {sid}.");
                 ApiHandler.RespondJson(context, "{\"success\":\"true\", \"message\":\"Server created successfully.\"}");
             } catch (Exception ex)
@@ -92,7 +94,7 @@ namespace serverplatform
             }
         }
 
-        public static void CreateServer(string id, string name, string description, string[] version, string[] ramAmounts, string[] jdk)
+        public static void CreateServer(string id, string name, string description, string[] version, string[] ramAmounts, string[] jdk, string user)
         {
             try
             {
@@ -100,7 +102,7 @@ namespace serverplatform
                 {
                     Id = id,
                     Name = name,
-                    Owner = "admin",
+                    Owner = user,
                     //Node = "central",
                     Software = version[0],
                     CreatedAt = DateTime.UtcNow

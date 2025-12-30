@@ -282,6 +282,42 @@ namespace serverplatform
             }
         }
 
+        public static string GetUsernameFromContext(HttpListenerContext context)
+        {
+            var principal = VerifyJwtFromContext(context);
+            if (principal == null)
+                return null;
+
+            // Preferred: standard Name claim
+            var username =
+                principal.Identity?.Name ??
+                principal.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ??
+                principal.FindFirst("username")?.Value ??
+                principal.FindFirst("sub")?.Value;
+
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                ConsoleLogging.LogWarning("Username claim missing in JWT.", "JWT");
+                return null;
+            }
+
+            return username;
+        }
+
+        public static string GetUsernameFromPrincipal(ClaimsPrincipal principal)
+        {
+            if (principal == null)
+                return null;
+
+            // Preferred: standard Name claim
+            var username =
+                principal.Identity?.Name ??
+                principal.FindFirst(ClaimTypes.Name)?.Value ??
+                principal.FindFirst("username")?.Value ??
+                principal.FindFirst("sub")?.Value;
+
+            return string.IsNullOrWhiteSpace(username) ? null : username;
+        }
 
         public static JObject LogoutUser(string token)
         {
