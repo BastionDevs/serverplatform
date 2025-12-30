@@ -101,7 +101,7 @@ namespace serverplatform
                     Id = id,
                     Name = name,
                     Owner = "admin",
-                    Node = "central",
+                    //Node = "central",
                     Software = version[0],
                     CreatedAt = DateTime.UtcNow
                 };

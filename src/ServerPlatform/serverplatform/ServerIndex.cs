@@ -88,7 +88,7 @@ public class Server
     public string Id { get; set; }
     public string Name { get; set; }
     public string Owner { get; set; } // This should be the username, not the user ID
-    public string Node { get; set; }
+    //public string Node { get; set; }
     public string Software { get; set; }
     public DateTime CreatedAt { get; set; }
 }
