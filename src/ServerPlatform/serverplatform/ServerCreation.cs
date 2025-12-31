@@ -5,6 +5,7 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Security.Policy;
 using System.Text;
+using System.Threading.Tasks;
 using TinyINIController;
 
 namespace serverplatform
@@ -25,7 +26,7 @@ namespace serverplatform
             }
         }
 
-        public static void HandleCreationRequest(HttpListenerContext context)
+        public static async Task HandleCreationRequestAsync(HttpListenerContext context)
         {
             var user = UserAuth.VerifyJwtFromContext(context);
             if (user == null)
@@ -62,13 +63,57 @@ namespace serverplatform
 
             try
             {
+                var dist = JavaRuntimes.ParseVendor(javaVendor);
+
+                // 🔽 Ensure Java exists
+                if (!JavaRuntimes.JavaRuntimeExists(dist, javaRuntime, javaType))
+                {
+                    ConsoleLogging.LogWarning(
+                        $"Java {javaVendor} {javaType} {javaRuntime} not found. Downloading...",
+                        "ServerCreation"
+                    );
+
+                    await JavaRuntimes.DownloadRuntimeAsync(
+                        dist,
+                        javaRuntime,
+                        javaType
+                    );
+
+                    ConsoleLogging.LogSuccess(
+                        $"Java {javaVendor} {javaType} {javaRuntime} downloaded.",
+                        "ServerCreation"
+                    );
+                }
+
                 string sid = GenerateServerId();
-                CreateServer(sid, name, desc, fullVersionArray, ramAmmounts, new string[] { javaType, javaRuntime, javaVendor }, uname);
-                ConsoleLogging.LogSuccess($"Successfully created server {name} with ID {sid}.");
-                ApiHandler.RespondJson(context, "{\"success\":\"true\", \"message\":\"Server created successfully.\"}");
-            } catch (Exception ex)
+
+                CreateServer(
+                    sid,
+                    name,
+                    desc,
+                    fullVersionArray,
+                    ramAmmounts,
+                    new string[] { javaType, javaRuntime, javaVendor },
+                    uname
+                );
+
+                ConsoleLogging.LogSuccess(
+                    $"Successfully created server {name} with ID {sid}.",
+                    "ServerCreation"
+                );
+
+                ApiHandler.RespondJson(
+                    context,
+                    "{\"success\":\"true\", \"message\":\"Server created successfully.\"}"
+                );
+            }
+            catch (Exception ex)
             {
-                ConsoleLogging.LogError($"Exception occured while trying to create server {name}: {ex.Message}", "ServerCreation");
+                ConsoleLogging.LogError(
+                    $"Exception occured while trying to create server {name}: {ex.Message}",
+                    "ServerCreation"
+                );
+
                 ApiHandler.RespondJson(context, JObject.FromObject(new
                 {
                     success = false,

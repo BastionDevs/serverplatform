@@ -129,7 +129,7 @@ namespace serverplatform
                 }
                 else if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/servers/create")
                 {
-                    ServerCreation.HandleCreationRequest(context);
+                    ServerCreation.HandleCreationRequestAsync(context);
                 }
                 else if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/profile/public")
                 {

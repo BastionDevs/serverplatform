@@ -76,6 +76,21 @@ namespace serverplatform
             );
         }
 
+        public static bool JavaRuntimeExists(JavaRuntimes.JDKDist dist, string javaver, string javatype)
+        {
+            string javaExe = JavaRuntimes.GetJavaExecutable(dist, javaver, javatype);
+            return !string.IsNullOrEmpty(javaExe) && File.Exists(javaExe);
+        }
+
+        public static JavaRuntimes.JDKDist ParseVendor(string vendor)
+        {
+            return (JavaRuntimes.JDKDist)Enum.Parse(
+                typeof(JavaRuntimes.JDKDist),
+                vendor,
+                ignoreCase: true
+            );
+        }
+
         // ========= ZIP Extraction =========
 
         public static void ExtractJavaZip(string zipPath, string targetDir)
