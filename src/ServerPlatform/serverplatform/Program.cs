@@ -168,6 +168,10 @@ namespace serverplatform
                 else
                     backendPort = int.Parse(Config.GetConfig("port", "backend"));
 
+                Console.WriteLine();
+                ConsoleLogging.LogWarning("Server Platform will run with Development settings.");
+                Console.WriteLine();
+
                 // Start server
                 ConsoleLogging.LogSuccess("Server is now online and listening.");
                 ApiHandler.StartServer(Cts.Token, backendPort).GetAwaiter().GetResult();
