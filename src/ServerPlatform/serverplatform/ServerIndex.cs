@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -80,6 +81,29 @@ namespace serverplatform
 
             return removed > 0;
         }
+
+        public static void HandleGetServers(HttpListenerContext context)
+        {
+            var principal = UserAuth.VerifyJwtFromContext(context);
+            if (principal == null)
+            {
+                context.Response.StatusCode = 401;
+                ApiHandler.RespondJson(context, "{\"success\":\"false\", \"message\":\"Unauthorised.\"}");
+                return;
+            }
+
+            string username = UserAuth.GetUsernameFromPrincipal(principal);
+
+            var serverIndex = Config.serverIndex;
+            var servers = serverIndex.GetServersForUser(username);
+
+            string json = JsonConvert.SerializeObject(servers, Formatting.Indented);
+
+            ConsoleLogging.LogSuccess($"User {username} successfully retrieved server list.", "ServerIndex");
+
+            ApiHandler.RespondJson(context, json);
+        }
+
     }
 }
 

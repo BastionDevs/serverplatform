@@ -135,6 +135,10 @@ namespace serverplatform
                 {
                     HandleProfile(context);
                 }
+                else if (context.Request.HttpMethod == "GET" && context.Request.Url.AbsolutePath == "/profile/servers")
+                {
+                    ServerIndex.HandleGetServers(context);
+                }
                 else if (context.Request.HttpMethod == "GET" && context.Request.Url.AbsolutePath == "/endpointinfo")
                 {
                     RespondJson(context, JObject.FromObject(new
