@@ -18,7 +18,7 @@ namespace serverplatform
         public static event Action<string, string> OnConsoleOutput;
 
         static string serversDirectory = Config.GetConfig("ServersDir", "main");
-        static string runtimesdir = $@"{Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)}\JavaRuntimes";
+        static string runtimesdir = Path.Combine(AppContext.BaseDirectory, "JavaRuntimes");
 
         public static void StartServer(string id)
         {
