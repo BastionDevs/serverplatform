@@ -5,7 +5,6 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Security.Policy;
 using System.Text;
-using System.Threading.Tasks;
 using TinyINIController;
 
 namespace serverplatform
@@ -26,7 +25,7 @@ namespace serverplatform
             }
         }
 
-        public static async Task HandleCreationRequestAsync(HttpListenerContext context)
+        public static void HandleCreationRequest(HttpListenerContext context)
         {
             var user = UserAuth.VerifyJwtFromContext(context);
             if (user == null)
@@ -73,7 +72,7 @@ namespace serverplatform
                         "ServerCreation"
                     );
 
-                    await JavaRuntimes.DownloadRuntimeAsync(
+                    JavaRuntimes.DownloadRuntimeAsync(
                         dist,
                         javaRuntime,
                         javaType
