@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -212,45 +212,6 @@ namespace serverplatform
             var assetitself = assetsarray[0];
 
             return assetitself["version"]?.ToString();
-        }
-    }
-
-    class CorrettoDownload
-    {
-        public enum CorrettoVersion
-        {
-            J8,
-            JRE8,
-            J11,
-            J17,
-            J21
-        }
-
-        static string GetVersionNumber(CorrettoVersion version)
-        {
-            string name = version.ToString();
-
-            // Extract the number from the end of the enum name
-            for (int i = 0; i < name.Length; i++)
-            {
-                if (char.IsDigit(name[i]))
-                {
-                    return name.Substring(i);
-                }
-            }
-
-            return string.Empty; // or throw exception if needed
-        }
-
-        public static string CorrettoDownloadLink(CorrettoVersion ver, string platform, string arch, string packaging)
-        {
-            if (ver == CorrettoVersion.JRE8)
-            {
-                return $"https://corretto.aws/downloads/latest/amazon-corretto-8-{arch}-{platform}-jre.{packaging}";
-            } else
-            {
-                return $"https://corretto.aws/downloads/latest/amazon-corretto-{GetVersionNumber(ver)}-{arch}-{platform}-jdk.{packaging}";
-            }
         }
     }
 }
