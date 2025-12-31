@@ -131,6 +131,10 @@ namespace serverplatform
                 {
                     ServerCreation.HandleCreationRequest(context);
                 }
+                else if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/servers/delete")
+                {
+                    ServerDeletion.HandleDeletionRequest(context);
+                }
                 else if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/profile/public")
                 {
                     HandleProfile(context);
