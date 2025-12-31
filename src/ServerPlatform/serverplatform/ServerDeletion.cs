@@ -77,6 +77,7 @@ namespace serverplatform
             if (!ownsServer)
             {
                 // IMPORTANT: identical response for "not found" and "not owned"
+                ConsoleLogging.LogWarning($"User {username} tried to delete {serverId} but does not exist/have permissions!", "ServerDeletion");
                 context.Response.StatusCode = 404;
                 ApiHandler.RespondJson(
                     context,
