@@ -76,7 +76,7 @@ namespace serverplatform
                         dist,
                         javaRuntime,
                         javaType
-                    );
+                    ).GetAwaiter().GetResult();
 
                     ConsoleLogging.LogSuccess(
                         $"Java {javaVendor} {javaType} {javaRuntime} downloaded.",
