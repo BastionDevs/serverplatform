@@ -47,14 +47,25 @@ namespace serverplatform
         private static void WriteLog(string message, string component, string level, ConsoleColor color)
         {
             LogDirCheck();
-            var timestamp = $"[{DateTime.Now:HH:mm:ss}]";
-            var prefix = level != null
-                ? $"[{(component != null ? $"{component} - " : "")}{level}]"
-                : component != null
-                    ? $"[{component}]"
-                    : "";
 
-            var fullMessage = $"{timestamp} {prefix} {message}".Trim();
+            var timestamp = $"[{DateTime.Now:HH:mm:ss}]";
+
+            string prefix = null;
+
+            if (!string.IsNullOrEmpty(level))
+            {
+                prefix = component != null
+                    ? $"[{component} - {level}]"
+                    : $"[{level}]";
+            }
+            else if (!string.IsNullOrEmpty(component))
+            {
+                prefix = $"[{component}]";
+            }
+
+            var fullMessage = prefix != null
+                ? $"{timestamp} {prefix} {message}"
+                : $"{timestamp} {message}";
 
             using (var sw = new StreamWriter(LogFile, true))
             {
@@ -64,6 +75,7 @@ namespace serverplatform
                 Console.ForegroundColor = ConsoleColor.Gray;
             }
         }
+
 
         private static void LogDirCheck()
         {
