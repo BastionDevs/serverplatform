@@ -1,3 +1,4 @@
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -6,6 +7,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using TinyINIController;
@@ -22,83 +24,197 @@ namespace serverplatform
             Corretto
         }
 
+        // ========= Paths =========
+
+        public static readonly string RuntimesDir =
+            Path.Combine(
+                Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+                "JavaRuntimes"
+            );
+
+        private static readonly string DownloadDir =
+            Path.Combine(RuntimesDir, "download");
+
+        private static readonly string IndexFile =
+            Path.Combine(RuntimesDir, "runtimes.json");
+
+        // ========= Models =========
+
+        private class RuntimeIndex
+        {
+            public List<RuntimeEntry> Runtimes { get; set; } = new List<RuntimeEntry>();
+        }
+
+        private class RuntimeEntry
+        {
+            public string Distribution { get; set; }
+            public string JavaVersion { get; set; }   // "8", "17", "21"
+            public string JavaType { get; set; }      // "jre" / "jdk"
+            public string FullVersion { get; set; }   // "17.0.10+7"
+            public string Path { get; set; }
+        }
+
+        // ========= Index Helpers =========
+
+        private static RuntimeIndex LoadIndex()
+        {
+            if (!File.Exists(IndexFile))
+                return new RuntimeIndex();
+
+            return JsonConvert.DeserializeObject<RuntimeIndex>(
+                File.ReadAllText(IndexFile)
+            );
+        }
+
+        private static void SaveIndex(RuntimeIndex index)
+        {
+            Directory.CreateDirectory(RuntimesDir);
+
+            File.WriteAllText(
+                IndexFile,
+                JsonConvert.SerializeObject(index, Formatting.Indented)
+            );
+        }
+
+        // ========= ZIP Extraction =========
+
         public static void ExtractJavaZip(string zipPath, string targetDir)
         {
-            string tempExtractDir = Path.Combine(Path.GetTempPath(), "spjava", Path.GetFileName(zipPath).Replace(".zip", ""));
+            string tempExtractDir = Path.Combine(
+                Path.GetTempPath(),
+                "spjava",
+                Path.GetFileNameWithoutExtension(zipPath)
+            );
 
-            // Extract to temp folder
             ZipFile.ExtractToDirectory(zipPath, tempExtractDir);
 
-            // Find the first directory inside the extracted temp dir
-            string[] topLevelEntries = Directory.GetDirectories(tempExtractDir);
-            if (topLevelEntries.Length == 0)
-                throw new Exception("No directories found in ZIP archive.");
+            string[] topLevelDirs = Directory.GetDirectories(tempExtractDir);
+            if (topLevelDirs.Length == 0)
+                throw new Exception("No directories found in Java ZIP.");
 
-            string actualJavaFolder = topLevelEntries[0];
+            string actualJavaDir = topLevelDirs[0];
 
-            // Create target if not exists
             Directory.CreateDirectory(targetDir);
 
-            // Move contents from actualJavaFolder to targetDir
-            foreach (string dirPath in Directory.GetDirectories(actualJavaFolder, "*", SearchOption.AllDirectories))
+            foreach (string dir in Directory.GetDirectories(actualJavaDir, "*", SearchOption.AllDirectories))
             {
-                Directory.CreateDirectory(dirPath.Replace(actualJavaFolder, targetDir));
+                Directory.CreateDirectory(dir.Replace(actualJavaDir, targetDir));
             }
 
-            foreach (string newPath in Directory.GetFiles(actualJavaFolder, "*.*", SearchOption.AllDirectories))
+            foreach (string file in Directory.GetFiles(actualJavaDir, "*.*", SearchOption.AllDirectories))
             {
-                File.Copy(newPath, newPath.Replace(actualJavaFolder, targetDir), true);
+                File.Copy(
+                    file,
+                    file.Replace(actualJavaDir, targetDir),
+                    true
+                );
             }
 
-            // Clean up
             Directory.Delete(tempExtractDir, true);
         }
 
-        public static readonly string runtimesdir = $@"{Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)}\JavaRuntimes";
-        static IniFile runtimes = new IniFile($@"{runtimesdir}\runtimes.ini");
+        // ========= Download =========
 
         public static async Task DownloadRuntimeAsync(JDKDist dist, string javaver, string javatype)
         {
-            string downloadurl = "";
+            Directory.CreateDirectory(RuntimesDir);
+            Directory.CreateDirectory(DownloadDir);
+
+            string downloadUrl;
+            string apiResp;
+            string fullVersion;
             string os = "windows";
-            string apiresp = "";
-            string version = "";
 
             switch (dist)
             {
                 case JDKDist.Temurin:
-                    apiresp = await AdoptiumAPI.TemurinAssetsAsync(javaver, os, "x64", javatype);
-                    downloadurl = AdoptiumAPI.ParseDownloadUrl(apiresp);
-                    version = AdoptiumAPI.ParseVersion(apiresp);
+                    apiResp = await AdoptiumAPI.TemurinAssetsAsync(javaver, os, "x64", javatype);
+                    downloadUrl = AdoptiumAPI.ParseDownloadUrl(apiResp);
+                    fullVersion = AdoptiumAPI.ParseVersion(apiResp);
                     break;
 
                 case JDKDist.Zulu:
-                    apiresp = await AzulMetadataAPI.ZuluPkgAsync(javaver, os, "x64", "zip", javatype, false, true, javaver);
-                    downloadurl = AzulMetadataAPI.ParseDownloadUrl(apiresp);
-                    version = AzulMetadataAPI.ParseVersion(apiresp);
+                    apiResp = await AzulMetadataAPI.ZuluPkgAsync(
+                        javaver, os, "x64", "zip", javatype, false, true, javaver
+                    );
+                    downloadUrl = AzulMetadataAPI.ParseDownloadUrl(apiResp);
+                    fullVersion = AzulMetadataAPI.ParseVersion(apiResp);
                     break;
 
                 case JDKDist.Liberica:
-                    apiresp = await BellSoftOpenJDKProdDiscoveryAPI.LibericaReleaseAsync(javaver, os, "64", "x86", "zip", javatype, false, true, "8");
-                    downloadurl = BellSoftOpenJDKProdDiscoveryAPI.ParseDownloadUrl(apiresp);
-                    version = BellSoftOpenJDKProdDiscoveryAPI.ParseVersion(apiresp);
+                    apiResp = await BellSoftOpenJDKProdDiscoveryAPI.LibericaReleaseAsync(
+                        javaver, os, "64", "x86", "zip", javatype, false, true, "8"
+                    );
+                    downloadUrl = BellSoftOpenJDKProdDiscoveryAPI.ParseDownloadUrl(apiResp);
+                    fullVersion = BellSoftOpenJDKProdDiscoveryAPI.ParseVersion(apiResp);
                     break;
+
+                default:
+                    throw new NotSupportedException("Unsupported JDK distribution.");
             }
 
-            string zipdlpath = Path.Combine(runtimesdir, "download", $"{dist}{javatype}{javaver}.zip");
+            string zipPath = Path.Combine(
+                DownloadDir,
+                $"{dist}{javatype}{javaver}.zip"
+            );
 
-            using (var httpClient = new HttpClient())
-            using (var stream = await httpClient.GetStreamAsync(downloadurl))
-            using (var fileStream = File.Create(zipdlpath))
+            using (var http = new HttpClient())
+            using (var stream = await http.GetStreamAsync(downloadUrl))
+            using (var fs = File.Create(zipPath))
             {
-                await stream.CopyToAsync(fileStream);
+                await stream.CopyToAsync(fs);
             }
 
-            await Task.Run(() => ExtractJavaZip(zipdlpath, Path.Combine(runtimesdir, $"{dist}{javatype}{javaver}")));
+            string installPath = Path.Combine(
+                RuntimesDir,
+                $"{dist}{javatype}{javaver}"
+            );
 
-            runtimes.Write("version", version, $"{dist}{javaver}");
+            await Task.Run(() => ExtractJavaZip(zipPath, installPath));
+
+            // ========= Update JSON Index =========
+
+            var index = LoadIndex();
+
+            index.Runtimes.RemoveAll(r =>
+                r.Distribution == dist.ToString() &&
+                r.JavaVersion == javaver &&
+                r.JavaType == javatype
+            );
+
+            index.Runtimes.Add(new RuntimeEntry
+            {
+                Distribution = dist.ToString(),
+                JavaVersion = javaver,
+                JavaType = javatype,
+                FullVersion = fullVersion,   // ✅ the only extra data
+                Path = installPath
+            });
+
+            SaveIndex(index);
         }
 
+        // ========= Lookup (used by server launcher) =========
+
+        public static string GetJavaExecutable(
+            JDKDist dist,
+            string javaver,
+            string javatype
+        )
+        {
+            var index = LoadIndex();
+
+            var runtime = index.Runtimes.FirstOrDefault(r =>
+                r.Distribution == dist.ToString() &&
+                r.JavaVersion == javaver &&
+                r.JavaType == javatype
+            );
+
+            if (runtime == null)
+                return null;
+
+            return Path.Combine(runtime.Path, "bin", "java.exe");
+        }
     }
 
     class AdoptiumAPI
