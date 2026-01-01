@@ -211,40 +211,60 @@ namespace serverplatform
                 $"{dist}{javatype}{javaver}.zip"
             );
 
-            using (var http = new HttpClient())
-            using (var stream = await http.GetStreamAsync(downloadUrl))
-            using (var fs = File.Create(zipPath))
+            try
             {
-                await stream.CopyToAsync(fs);
+                using (var http = new HttpClient())
+                using (var stream = await http.GetStreamAsync(downloadUrl))
+                using (var fs = File.Create(zipPath))
+                {
+                    await stream.CopyToAsync(fs);
+                }
+
+                string installPath = Path.Combine(
+                    RuntimesDir,
+                    $"{dist}{javatype}{javaver}"
+                );
+
+                await Task.Run(() => ExtractJavaZip(zipPath, installPath));
+
+                // ========= Update JSON Index =========
+
+                var index = LoadIndex();
+
+                index.Runtimes.RemoveAll(r =>
+                    r.Distribution == dist.ToString() &&
+                    r.JavaVersion == javaver &&
+                    r.JavaType == javatype
+                );
+
+                index.Runtimes.Add(new RuntimeEntry
+                {
+                    Distribution = dist.ToString(),
+                    JavaVersion = javaver,
+                    JavaType = javatype,
+                    FullVersion = fullVersion,   // ✅ the only extra data
+                    Path = installPath
+                });
+
+                SaveIndex(index);
             }
-
-            string installPath = Path.Combine(
-                RuntimesDir,
-                $"{dist}{javatype}{javaver}"
-            );
-
-            await Task.Run(() => ExtractJavaZip(zipPath, installPath));
-
-            // ========= Update JSON Index =========
-
-            var index = LoadIndex();
-
-            index.Runtimes.RemoveAll(r =>
-                r.Distribution == dist.ToString() &&
-                r.JavaVersion == javaver &&
-                r.JavaType == javatype
-            );
-
-            index.Runtimes.Add(new RuntimeEntry
+            finally
             {
-                Distribution = dist.ToString(),
-                JavaVersion = javaver,
-                JavaType = javatype,
-                FullVersion = fullVersion,   // ✅ the only extra data
-                Path = installPath
-            });
-
-            SaveIndex(index);
+                // 🧹 Always try to clean up ZIP
+                try
+                {
+                    if (File.Exists(zipPath))
+                        File.Delete(zipPath);
+                }
+                catch (Exception ex)
+                {
+                    // Non-fatal; log and continue
+                    ConsoleLogging.LogWarning(
+                        $"Failed to delete temp ZIP {zipPath}: {ex.Message}",
+                        "JavaRuntimes"
+                    );
+                }
+            }
         }
 
         // ========= Lookup (used by server launcher) =========
