@@ -96,42 +96,6 @@ namespace serverplatform
 
         // ========= ZIP Extraction =========
 
-        public static Task EnsureRuntimeAsync(JDKDist dist, string javaver, string javatype)
-        {
-            string key = $"{dist}|{javaver}|{javatype}";
-
-            // Already installed?
-            if (JavaRuntimeExists(dist, javaver, javatype))
-                return Task.CompletedTask;
-
-            lock (_downloadLock)
-            {
-                // Download already in progress?
-                if (_activeDownloads.TryGetValue(key, out var existingTask))
-                    return existingTask;
-
-                // Start new background download
-                var task = Task.Run(async () =>
-                {
-                    try
-                    {
-                        await DownloadRuntimeAsync(dist, javaver, javatype);
-                    }
-                    finally
-                    {
-                        lock (_downloadLock)
-                        {
-                            _activeDownloads.Remove(key);
-                        }
-                    }
-                });
-
-                _activeDownloads[key] = task;
-                return task;
-            }
-        }
-
-
         public static void ExtractJavaZip(string zipPath, string targetDir)
         {
             string tempExtractDir = Path.Combine(
@@ -168,6 +132,41 @@ namespace serverplatform
         }
 
         // ========= Download =========
+
+        public static Task EnsureRuntimeAsync(JDKDist dist, string javaver, string javatype)
+        {
+            string key = $"{dist}|{javaver}|{javatype}";
+
+            // Already installed?
+            if (JavaRuntimeExists(dist, javaver, javatype))
+                return Task.CompletedTask;
+
+            lock (_downloadLock)
+            {
+                // Download already in progress?
+                if (_activeDownloads.TryGetValue(key, out var existingTask))
+                    return existingTask;
+
+                // Start new background download
+                var task = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await DownloadRuntimeAsync(dist, javaver, javatype);
+                    }
+                    finally
+                    {
+                        lock (_downloadLock)
+                        {
+                            _activeDownloads.Remove(key);
+                        }
+                    }
+                });
+
+                _activeDownloads[key] = task;
+                return task;
+            }
+        }
 
         public static async Task DownloadRuntimeAsync(JDKDist dist, string javaver, string javatype)
         {
