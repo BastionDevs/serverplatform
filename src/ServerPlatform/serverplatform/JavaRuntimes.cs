@@ -16,6 +16,9 @@ namespace serverplatform
 {
     internal class JavaRuntimes
     {
+        private static readonly Dictionary<string, Task> _activeDownloads = new Dictionary<string, Task>();
+        private static readonly object _downloadLock = new object();
+
         public enum JDKDist
         {
             Temurin,
@@ -92,6 +95,42 @@ namespace serverplatform
         }
 
         // ========= ZIP Extraction =========
+
+        public static Task EnsureRuntimeAsync(JDKDist dist, string javaver, string javatype)
+        {
+            string key = $"{dist}|{javaver}|{javatype}";
+
+            // Already installed?
+            if (JavaRuntimeExists(dist, javaver, javatype))
+                return Task.CompletedTask;
+
+            lock (_downloadLock)
+            {
+                // Download already in progress?
+                if (_activeDownloads.TryGetValue(key, out var existingTask))
+                    return existingTask;
+
+                // Start new background download
+                var task = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await DownloadRuntimeAsync(dist, javaver, javatype);
+                    }
+                    finally
+                    {
+                        lock (_downloadLock)
+                        {
+                            _activeDownloads.Remove(key);
+                        }
+                    }
+                });
+
+                _activeDownloads[key] = task;
+                return task;
+            }
+        }
+
 
         public static void ExtractJavaZip(string zipPath, string targetDir)
         {
@@ -318,31 +357,50 @@ namespace serverplatform
 
     class BellSoftOpenJDKProdDiscoveryAPI
     {
-        readonly static string APIBaseUri = "https://api.bell-sw.com/v1";
-        
-        public static async Task<string> LibericaReleaseAsync(string javaver, string os, string bitness, string arch, string packaging, string javatype, bool jfx, bool latestrel, string distver)
+        private static readonly string APIBaseUri = "https://api.bell-sw.com/v1";
+
+        public static async Task<string> LibericaReleaseAsync(
+            string javaver,
+            string os,
+            string bitness,
+            string arch,
+            string packaging,
+            string javatype,
+            bool jfx,          // kept for compatibility, but ignored
+            bool latestrel,    // ignored (latest is implicit)
+            string distver     // ignored
+        )
         {
-            string RequestUri = $"{APIBaseUri}/liberica/releases?version-feature={javaver}&version-modifier=latest&bitness={bitness}&fx={jfx}&os={os}&arch={arch}&installation-type=archive&package-type={packaging}&bundle-type={javatype}&output=json&fields=downloadUrl,version";
+            string requestUri =
+                $"{APIBaseUri}/liberica/releases" +
+                $"?version-feature={javaver}" +
+                $"&version-modifier=latest" +
+                $"&bitness={bitness}" +
+                $"&os={os}" +
+                $"&arch={arch}" +
+                $"&installation-type=archive" +
+                $"&package-type={packaging}" +
+                $"&bundle-type={javatype}" +
+                $"&output=json" +
+                $"&fields=downloadUrl,version";
+
             using (var client = new HttpClient())
             {
-                return await client.GetStringAsync(RequestUri);
+                return await client.GetStringAsync(requestUri);
             }
         }
 
         public static string ParseDownloadUrl(string assetsresponse)
         {
             var assetsarray = JArray.Parse(assetsresponse);
-            var assetitself = assetsarray[0];
-
-            return assetitself["downloadUrl"]?.ToString();
+            return assetsarray[0]?["downloadUrl"]?.ToString();
         }
 
         public static string ParseVersion(string assetsresponse)
         {
             var assetsarray = JArray.Parse(assetsresponse);
-            var assetitself = assetsarray[0];
-
-            return assetitself["version"]?.ToString();
+            return assetsarray[0]?["version"]?.ToString();
         }
     }
+
 }

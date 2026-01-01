@@ -72,11 +72,11 @@ namespace serverplatform
                         "ServerCreation"
                     );
 
-                    JavaRuntimes.DownloadRuntimeAsync(
+                    JavaRuntimes.EnsureRuntimeAsync(
                         dist,
                         javaRuntime,
                         javaType
-                    ).GetAwaiter().GetResult();
+                    );
 
                     ConsoleLogging.LogSuccess(
                         $"Java {javaVendor} {javaType} {javaRuntime} downloaded.",
