@@ -1,7 +1,13 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Net;
+using System.Runtime.Remoting.Contexts;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,137 +16,532 @@ using TinyINIController;
 
 namespace serverplatform
 {
-    internal class ServerControls
+    internal sealed class ServerInstance
     {
-        private static Dictionary<string, Process> servers = new Dictionary<string, Process>();
-        private static Dictionary<string, StringBuilder> logs = new Dictionary<string, StringBuilder>();
+        public string Id { get; }
+        public Process Process { get; }
+        public StringBuilder Log { get; } = new StringBuilder();
+        public DateTime StartedAt { get; } = DateTime.UtcNow;
+
+        public ServerInstance(string id, Process process)
+        {
+            Id = id;
+            Process = process;
+        }
+    }
+
+    internal static class ServerControls
+    {
+        private static readonly ConcurrentDictionary<string, ServerInstance> servers =
+            new ConcurrentDictionary<string, ServerInstance>(StringComparer.OrdinalIgnoreCase);
 
         public static event Action<string, string> OnConsoleOutput;
 
-        static string serversDirectory = Config.GetConfig("ServersDir", "main");
-        static string runtimesdir = Path.Combine(AppContext.BaseDirectory, "JavaRuntimes");
+        private static readonly string ServersDir =
+            Config.GetConfig("ServersDir", "main");
 
-        public static void StartServer(string id)
+        private static readonly string JavaRuntimesDir =
+            Path.Combine(AppContext.BaseDirectory, "JavaRuntimes");
+
+        private const int MaxLogChars = 5_000_000;
+
+        // -------------------------
+        // START SERVER
+        // -------------------------
+        public static async Task StartServer(string id)
         {
-            IniFile srvConfig = new IniFile($@"{serversDirectory}\{id}\srvconfig.ini");
-            string srvName = srvConfig.Read("name", "info");
+            if (servers.ContainsKey(id))
+                return;
 
-            string javaVendor = srvConfig.Read("vendor", "java");
-            string javaVer = srvConfig.Read("ver", "java");
-            string javaType = srvConfig.Read("type", "java");
+            string serverRoot = Path.Combine(ServersDir, id);
+            string filesDir = Path.Combine(serverRoot, "files");
 
-            string minRam = srvConfig.Read("minRam", "java");
-            string maxRam = srvConfig.Read("maxRam", "java");
+            var ini = new IniFile(Path.Combine(serverRoot, "srvconfig.ini"));
 
-            if (servers.ContainsKey(id) && !servers[id].HasExited)
-                return; // Already running
+            string javaVendor = ini.Read("vendor", "java");
+            string javaType = ini.Read("type", "java");
+            string javaVer = ini.Read("ver", "java");
+            string minRam = ini.Read("minRam", "java");
+            string maxRam = ini.Read("maxRam", "java");
 
-            ProcessStartInfo psi = new ProcessStartInfo
+            string launchArgs = File.ReadAllText(
+                Path.Combine(serverRoot, "minecraft.launch"));
+
+            string javaPath = Path.Combine(
+                JavaRuntimesDir,
+                $"{javaVendor}{javaType}{javaVer}",
+                "bin",
+                "java.exe"
+            );
+
+            if (!File.Exists(javaPath))
             {
-                FileName = $"{runtimesdir}\\{javaVendor}{javaType}{javaVer}\\bin\\java.exe",
-                Arguments = $"-Xms {minRam} -Xmx {maxRam}" + File.ReadAllText($"{serversDirectory}\\{id}\\minecraft.launch"),
-                WorkingDirectory = $"{serversDirectory}\\id\\files",
+                await JavaRuntimes.EnsureRuntimeAsync(
+                    JavaRuntimes.ParseVendor(javaVendor),
+                    javaVer,
+                    javaType
+                );
+
+                if (!File.Exists(javaPath))
+                    throw new FileNotFoundException(
+                        "Java runtime not found after install.", javaPath);
+            }
+
+            ConsoleLogging.LogMessage(
+                $"Launching server {id} using Java: {javaPath}",
+                "ServerControls"
+            );
+
+            ConsoleLogging.LogMessage(
+                $"{javaPath} -Xms{minRam}M -Xmx{maxRam}M {launchArgs} nogui",
+                "ServerControls"
+            );
+
+            var psi = new ProcessStartInfo
+            {
+                FileName = javaPath,
+                Arguments = $"-Xms{minRam}M -Xmx{maxRam}M {launchArgs} nogui",
+                WorkingDirectory = filesDir,
                 UseShellExecute = false,
+                RedirectStandardInput = true,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
-                RedirectStandardInput = true,
                 CreateNoWindow = true
             };
 
-            Process serverProcess = new Process
+            var process = new Process
             {
                 StartInfo = psi,
                 EnableRaisingEvents = true
             };
 
-            StringBuilder consoleLog = new StringBuilder();
-            logs[id] = consoleLog;
-            servers[id] = serverProcess;
+            var instance = new ServerInstance(id, process);
 
-            serverProcess.OutputDataReceived += (s, e) =>
+            // ATOMIC ADD before start
+            if (!servers.TryAdd(id, instance))
+                return;
+
+            process.OutputDataReceived += (_, e) =>
             {
                 if (e.Data != null)
-                {
-                    consoleLog.AppendLine(e.Data);
-                    OnConsoleOutput?.Invoke(id, e.Data);
-                }
+                    AppendLog(instance, e.Data);
             };
 
-            serverProcess.ErrorDataReceived += (s, e) =>
+            process.ErrorDataReceived += (_, e) =>
             {
                 if (e.Data != null)
-                {
-                    consoleLog.AppendLine("[ERROR] " + e.Data);
-                    OnConsoleOutput?.Invoke(id, "[ERROR] " + e.Data);
-                }
+                    AppendLog(instance, "[STDERR] " + e.Data);
             };
 
-            serverProcess.Start();
-            serverProcess.BeginOutputReadLine();
-            serverProcess.BeginErrorReadLine();
+            process.Exited += (_, __) =>
+            {
+                ServerInstance removed;
+                servers.TryRemove(id, out removed);
+                AppendLog(instance, "[SERVER PLATFORM] Server process exited.");
+            };
+
+            try
+            {
+                process.Start();
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+            }
+            catch
+            {
+                servers.TryRemove(id, out _);
+                throw;
+            }
         }
 
-        public static async Task StopServer(string id)
+        // -------------------------
+        // STOP SERVER
+        // -------------------------
+        public static async Task StopServer(string id, int timeoutMs = 30000)
         {
-            if (servers.TryGetValue(id, out var process) && !process.HasExited)
+            if (!servers.TryGetValue(id, out var instance))
+                return;
+
+            var process = instance.Process;
+
+            try
             {
-                try
+                if (!process.HasExited)
                 {
-                    // Send "stop" command
                     process.StandardInput.WriteLine("stop");
                     process.StandardInput.Flush();
 
-                    // Wait for graceful shutdown (e.g., 30 seconds max)
-                    await Task.Run(() => process.WaitForExit(30000));
-
-                    if (!process.HasExited)
-                    {
-                        // Force kill as fallback
+                    bool exited = await Task.Run(() => process.WaitForExit(timeoutMs));
+                    if (!exited)
                         process.Kill();
-                    }
                 }
-                catch
-                {
-                    process.Kill(); // Ensure cleanup on exception
-                }
-                finally
-                {
-                    process.Dispose();
-                    servers.Remove(id);
-                    logs.Remove(id);
-                }
+            }
+            finally
+            {
+                process.Dispose();
+                servers.TryRemove(id, out _);
             }
         }
 
+        // -------------------------
+        // RESTART SERVER
+        // -------------------------
         public static async Task RestartServer(string id)
         {
-            if (servers.TryGetValue(id, out var process) && !process.HasExited)
+            await StopServer(id);
+            await Task.Delay(1000);
+            await StartServer(id);
+        }
+
+        // -------------------------
+        // SEND COMMAND
+        // -------------------------
+        public static void SendCommand(string id, string command)
+        {
+            if (servers.TryGetValue(id, out var instance) &&
+                !instance.Process.HasExited)
             {
-                await StopServer(id);
-                StartServer(id);
+                instance.Process.StandardInput.WriteLine(command);
+                instance.Process.StandardInput.Flush();
             }
         }
 
-        public static void SendCommand(string id, string command)
+        // -------------------------
+        // STATUS / LOGS
+        // -------------------------
+        public static bool IsRunning(string id)
         {
-            if (servers.TryGetValue(id, out var process) && !process.HasExited)
-            {
-                process.StandardInput.WriteLine(command);
-                process.StandardInput.Flush();
-            }
+            return servers.TryGetValue(id, out var s) &&
+                   !s.Process.HasExited;
         }
 
         public static string GetLog(string id)
         {
-            if (logs.TryGetValue(id, out var log))
-                return log.ToString();
-
-            return null;
+            return servers.TryGetValue(id, out var s)
+                ? s.Log.ToString()
+                : string.Empty;
         }
 
-        public static bool IsServerRunning(string id)
+        private static void AppendLog(ServerInstance instance, string line)
         {
-            return servers.TryGetValue(id, out var process) && !process.HasExited;
+            string stamped = $"[{DateTime.Now:HH:mm:ss}] {line}";
+            instance.Log.AppendLine(stamped);
+
+            if (instance.Log.Length > MaxLogChars)
+                instance.Log.Remove(0, instance.Log.Length - MaxLogChars);
+
+            OnConsoleOutput?.Invoke(instance.Id, stamped);
+        }
+    }
+
+
+    internal class ServerControlsHandler 
+    {
+        public static void HandleStartServer(HttpListenerContext context)
+        {
+            // 1. Authenticate
+            var principal = UserAuth.VerifyJwtFromContext(context);
+            if (principal == null)
+            {
+                context.Response.StatusCode = 401;
+                ApiHandler.RespondJson(
+                    context,
+                    "{\"success\":false,\"message\":\"Unauthorised.\"}"
+                );
+                return;
+            }
+
+            string username = UserAuth.GetUsernameFromPrincipal(principal);
+
+            // 2. Read request body
+            string requestBody;
+            using (var reader = new StreamReader(
+                context.Request.InputStream,
+                context.Request.ContentEncoding))
+            {
+                requestBody = reader.ReadToEnd();
+            }
+
+            JObject body;
+            try
+            {
+                body = JObject.Parse(requestBody);
+            }
+            catch
+            {
+                context.Response.StatusCode = 400;
+                ApiHandler.RespondJson(
+                    context,
+                    "{\"success\":false,\"error\":\"invalidJson\"}"
+                );
+                return;
+            }
+
+            string serverId = body["id"]?.ToString();
+            if (string.IsNullOrWhiteSpace(serverId))
+            {
+                context.Response.StatusCode = 400;
+                ApiHandler.RespondJson(
+                    context,
+                    "{\"success\":false,\"error\":\"missingServerId\"}"
+                );
+                return;
+            }
+
+            var serverIndex = Config.serverIndex;
+
+            // 3. Ownership check using existing API ONLY
+            var userServers = serverIndex.GetServersForUser(username);
+            bool ownsServer = userServers.Any(s =>
+                s.Id.Equals(serverId, StringComparison.OrdinalIgnoreCase));
+
+            if (!ownsServer)
+            {
+                // IMPORTANT: identical response for "not found" and "not owned"
+                ConsoleLogging.LogWarning($"User {username} tried to start {serverId} but does not exist/have permissions!", "ServerControls");
+                context.Response.StatusCode = 404;
+                ApiHandler.RespondJson(
+                    context,
+                    "{\"success\":false,\"error\":\"serverNotFound\"}"
+                );
+                return;
+            }
+
+            ConsoleLogging.LogMessage(
+                $"User {username} requested to start server {serverId}.",
+                "ServerControls"
+            );
+
+            try
+            {
+                _ = Task.Run(() => ServerControls.StartServer(serverId));
+                ConsoleLogging.LogSuccess(
+                    $"Server {serverId} started by {username}.",
+                    "ServerControls"
+                );
+
+                ApiHandler.RespondJson(
+                    context,
+                    "{\"success\":true,\"message\":\"Server started.\"}"
+                );
+            }
+            catch (Exception ex)
+            {
+                ConsoleLogging.LogError(
+                    $"Failed to start server {serverId}: {ex.Message}",
+                    "ServerControls"
+                );
+
+                context.Response.StatusCode = 500;
+                ApiHandler.RespondJson(
+                    context,
+                    "{\"success\":false,\"error\":\"internalError\"}"
+                );
+            }
+        }
+
+        public static void HandleStopServer(HttpListenerContext context)
+        {
+            // 1. Authenticate
+            var principal = UserAuth.VerifyJwtFromContext(context);
+            if (principal == null)
+            {
+                context.Response.StatusCode = 401;
+                ApiHandler.RespondJson(
+                    context,
+                    "{\"success\":false,\"message\":\"Unauthorised.\"}"
+                );
+                return;
+            }
+
+            string username = UserAuth.GetUsernameFromPrincipal(principal);
+
+            // 2. Read request body
+            string requestBody;
+            using (var reader = new StreamReader(
+                context.Request.InputStream,
+                context.Request.ContentEncoding))
+            {
+                requestBody = reader.ReadToEnd();
+            }
+
+            JObject body;
+            try
+            {
+                body = JObject.Parse(requestBody);
+            }
+            catch
+            {
+                context.Response.StatusCode = 400;
+                ApiHandler.RespondJson(
+                    context,
+                    "{\"success\":false,\"error\":\"invalidJson\"}"
+                );
+                return;
+            }
+
+            string serverId = body["id"]?.ToString();
+            if (string.IsNullOrWhiteSpace(serverId))
+            {
+                context.Response.StatusCode = 400;
+                ApiHandler.RespondJson(
+                    context,
+                    "{\"success\":false,\"error\":\"missingServerId\"}"
+                );
+                return;
+            }
+
+            var serverIndex = Config.serverIndex;
+
+            // 3. Ownership check using existing API ONLY
+            var userServers = serverIndex.GetServersForUser(username);
+            bool ownsServer = userServers.Any(s =>
+                s.Id.Equals(serverId, StringComparison.OrdinalIgnoreCase));
+
+            if (!ownsServer)
+            {
+                // IMPORTANT: identical response for "not found" and "not owned"
+                ConsoleLogging.LogWarning($"User {username} tried to stop {serverId} but does not exist/have permissions!", "ServerDeletion");
+                context.Response.StatusCode = 404;
+                ApiHandler.RespondJson(
+                    context,
+                    "{\"success\":false,\"error\":\"serverNotFound\"}"
+                );
+                return;
+            }
+
+            ConsoleLogging.LogMessage(
+                $"User {username} requested to stop server {serverId}.",
+                "ServerControls"
+            );
+
+            try
+            {
+                _ = Task.Run(() => ServerControls.StopServer(serverId));
+                ConsoleLogging.LogSuccess(
+                    $"Server {serverId} stopped by {username}.",
+                    "ServerControls"
+                );
+
+                ApiHandler.RespondJson(
+                    context,
+                    "{\"success\":true,\"message\":\"Server stopped.\"}"
+                );
+            }
+            catch (Exception ex)
+            {
+                ConsoleLogging.LogError(
+                    $"Failed to stop server {serverId}: {ex.Message}",
+                    "ServerControls"
+                );
+
+                context.Response.StatusCode = 500;
+                ApiHandler.RespondJson(
+                    context,
+                    "{\"success\":false,\"error\":\"internalError\"}"
+                );
+            }
+        }
+        public static void HandleRestartServer(HttpListenerContext context)
+        {
+            // 1. Authenticate
+            var principal = UserAuth.VerifyJwtFromContext(context);
+            if (principal == null)
+            {
+                context.Response.StatusCode = 401;
+                ApiHandler.RespondJson(
+                    context,
+                    "{\"success\":false,\"message\":\"Unauthorised.\"}"
+                );
+                return;
+            }
+
+            string username = UserAuth.GetUsernameFromPrincipal(principal);
+
+            // 2. Read request body
+            string requestBody;
+            using (var reader = new StreamReader(
+                context.Request.InputStream,
+                context.Request.ContentEncoding))
+            {
+                requestBody = reader.ReadToEnd();
+            }
+
+            JObject body;
+            try
+            {
+                body = JObject.Parse(requestBody);
+            }
+            catch
+            {
+                context.Response.StatusCode = 400;
+                ApiHandler.RespondJson(
+                    context,
+                    "{\"success\":false,\"error\":\"invalidJson\"}"
+                );
+                return;
+            }
+
+            string serverId = body["id"]?.ToString();
+            if (string.IsNullOrWhiteSpace(serverId))
+            {
+                context.Response.StatusCode = 400;
+                ApiHandler.RespondJson(
+                    context,
+                    "{\"success\":false,\"error\":\"missingServerId\"}"
+                );
+                return;
+            }
+
+            var serverIndex = Config.serverIndex;
+
+            // 3. Ownership check using existing API ONLY
+            var userServers = serverIndex.GetServersForUser(username);
+            bool ownsServer = userServers.Any(s =>
+                s.Id.Equals(serverId, StringComparison.OrdinalIgnoreCase));
+
+            if (!ownsServer)
+            {
+                // IMPORTANT: identical response for "not found" and "not owned"
+                ConsoleLogging.LogWarning($"User {username} tried to restart {serverId} but does not exist/have permissions!", "ServerControls");
+                context.Response.StatusCode = 404;
+                ApiHandler.RespondJson(
+                    context,
+                    "{\"success\":false,\"error\":\"serverNotFound\"}"
+                );
+                return;
+            }
+
+            ConsoleLogging.LogMessage(
+                $"User {username} requested to restart server {serverId}.",
+                "ServerControls"
+            );
+
+            try
+            {
+                _ = Task.Run(() => ServerControls.RestartServer(serverId));
+                ConsoleLogging.LogSuccess(
+                    $"Server {serverId} restarted by {username}.",
+                    "ServerControls"
+                );
+
+                ApiHandler.RespondJson(
+                    context,
+                    "{\"success\":true,\"message\":\"Server restarted.\"}"
+                );
+            }
+            catch (Exception ex)
+            {
+                ConsoleLogging.LogError(
+                    $"Failed to restart server {serverId}: {ex.Message}",
+                    "ServerControls"
+                );
+
+                context.Response.StatusCode = 500;
+                ApiHandler.RespondJson(
+                    context,
+                    "{\"success\":false,\"error\":\"internalError\"}"
+                );
+            }
         }
     }
 }

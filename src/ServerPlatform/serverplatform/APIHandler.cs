@@ -135,6 +135,18 @@ namespace serverplatform
                 {
                     ServerDeletion.HandleDeletionRequest(context);
                 }
+                else if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/servers/start")
+                {
+                    ServerControlsHandler.HandleStartServer(context);
+                }
+                else if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/servers/stop")
+                {
+                    ServerControlsHandler.HandleStopServer(context);
+                }
+                else if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/servers/restart")
+                {
+                    ServerControlsHandler.HandleRestartServer(context);
+                }
                 else if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/profile/public")
                 {
                     HandleProfile(context);
