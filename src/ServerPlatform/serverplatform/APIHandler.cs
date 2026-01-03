@@ -147,6 +147,10 @@ namespace serverplatform
                 {
                     ServerControlsHandler.HandleRestartServer(context);
                 }
+                else if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/servers/console/stream")
+                {
+                    ServerControlsHandler.HandleConsoleStream(context);
+                }
                 else if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/profile/public")
                 {
                     HandleProfile(context);

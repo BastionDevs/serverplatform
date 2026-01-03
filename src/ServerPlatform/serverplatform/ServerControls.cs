@@ -21,12 +21,17 @@ namespace serverplatform
         public string Id { get; }
         public Process Process { get; }
         public StringBuilder Log { get; } = new StringBuilder();
+
+        public volatile bool IsRunning;
+        public int ConsoleViewers;
+
         public DateTime StartedAt { get; } = DateTime.UtcNow;
 
         public ServerInstance(string id, Process process)
         {
             Id = id;
             Process = process;
+            IsRunning = true;
         }
     }
 
@@ -45,13 +50,15 @@ namespace serverplatform
 
         private const int MaxLogChars = 5_000_000;
 
-        // -------------------------
+        // ------------------------------------------------
         // START SERVER
-        // -------------------------
+        // ------------------------------------------------
         public static async Task StartServer(string id)
         {
-            if (servers.ContainsKey(id))
+            if (servers.TryGetValue(id, out var existing) && existing.IsRunning)
                 return;
+
+            servers.TryRemove(id, out _);
 
             string serverRoot = Path.Combine(ServersDir, id);
             string filesDir = Path.Combine(serverRoot, "files");
@@ -81,21 +88,7 @@ namespace serverplatform
                     javaVer,
                     javaType
                 );
-
-                if (!File.Exists(javaPath))
-                    throw new FileNotFoundException(
-                        "Java runtime not found after install.", javaPath);
             }
-
-            ConsoleLogging.LogMessage(
-                $"Launching server {id} using Java: {javaPath}",
-                "ServerControls"
-            );
-
-            ConsoleLogging.LogMessage(
-                $"{javaPath} -Xms{minRam}M -Xmx{maxRam}M {launchArgs} nogui",
-                "ServerControls"
-            );
 
             var psi = new ProcessStartInfo
             {
@@ -116,10 +109,7 @@ namespace serverplatform
             };
 
             var instance = new ServerInstance(id, process);
-
-            // ATOMIC ADD before start
-            if (!servers.TryAdd(id, instance))
-                return;
+            servers[id] = instance;
 
             process.OutputDataReceived += (_, e) =>
             {
@@ -135,27 +125,19 @@ namespace serverplatform
 
             process.Exited += (_, __) =>
             {
-                ServerInstance removed;
-                servers.TryRemove(id, out removed);
+                instance.IsRunning = false;
                 AppendLog(instance, "[SERVER PLATFORM] Server process exited.");
+                TryDisposeIfIdle(id);
             };
 
-            try
-            {
-                process.Start();
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
-            }
-            catch
-            {
-                servers.TryRemove(id, out _);
-                throw;
-            }
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
         }
 
-        // -------------------------
+        // ------------------------------------------------
         // STOP SERVER
-        // -------------------------
+        // ------------------------------------------------
         public static async Task StopServer(string id, int timeoutMs = 30000)
         {
             if (!servers.TryGetValue(id, out var instance))
@@ -163,28 +145,27 @@ namespace serverplatform
 
             var process = instance.Process;
 
-            try
+            if (!process.HasExited)
             {
-                if (!process.HasExited)
+                try
                 {
                     process.StandardInput.WriteLine("stop");
                     process.StandardInput.Flush();
-
-                    bool exited = await Task.Run(() => process.WaitForExit(timeoutMs));
-                    if (!exited)
-                        process.Kill();
                 }
+                catch { }
+
+                bool exited = await Task.Run(() => process.WaitForExit(timeoutMs));
+                if (!exited)
+                    process.Kill();
             }
-            finally
-            {
-                process.Dispose();
-                servers.TryRemove(id, out _);
-            }
+
+            instance.IsRunning = false;
+            TryDisposeIfIdle(id);
         }
 
-        // -------------------------
+        // ------------------------------------------------
         // RESTART SERVER
-        // -------------------------
+        // ------------------------------------------------
         public static async Task RestartServer(string id)
         {
             await StopServer(id);
@@ -192,45 +173,74 @@ namespace serverplatform
             await StartServer(id);
         }
 
-        // -------------------------
+        // ------------------------------------------------
         // SEND COMMAND
-        // -------------------------
-        public static void SendCommand(string id, string command)
+        // ------------------------------------------------
+        public static bool SendCommand(string id, string command)
         {
-            if (servers.TryGetValue(id, out var instance) &&
-                !instance.Process.HasExited)
+            if (!servers.TryGetValue(id, out var instance))
+                return false;
+
+            if (!instance.IsRunning || instance.Process.HasExited)
+                return false;
+
+            try
             {
                 instance.Process.StandardInput.WriteLine(command);
                 instance.Process.StandardInput.Flush();
+                return true;
+            }
+            catch
+            {
+                return false;
             }
         }
 
-        // -------------------------
-        // STATUS / LOGS
-        // -------------------------
-        public static bool IsRunning(string id)
-        {
-            return servers.TryGetValue(id, out var s) &&
-                   !s.Process.HasExited;
-        }
-
-        public static string GetLog(string id)
-        {
-            return servers.TryGetValue(id, out var s)
-                ? s.Log.ToString()
-                : string.Empty;
-        }
-
+        // ------------------------------------------------
+        // LOGGING
+        // ------------------------------------------------
         private static void AppendLog(ServerInstance instance, string line)
         {
             string stamped = $"[{DateTime.Now:HH:mm:ss}] {line}";
-            instance.Log.AppendLine(stamped);
+            lock (instance.Log)
+            {
+                instance.Log.AppendLine(stamped);
 
-            if (instance.Log.Length > MaxLogChars)
-                instance.Log.Remove(0, instance.Log.Length - MaxLogChars);
+                if (instance.Log.Length > MaxLogChars)
+                    instance.Log.Remove(0, instance.Log.Length - MaxLogChars);
+            }
 
             OnConsoleOutput?.Invoke(instance.Id, stamped);
         }
+
+        // ------------------------------------------------
+        // DISPOSAL
+        // ------------------------------------------------
+        internal static void TryDisposeIfIdle(string id)
+        {
+            if (!servers.TryGetValue(id, out var instance))
+                return;
+
+            if (instance.IsRunning)
+                return;
+
+            if (instance.ConsoleViewers > 0)
+                return;
+
+            try
+            {
+                instance.Process?.Dispose();
+            }
+            catch { }
+
+            servers.TryRemove(id, out _);
+        }
+
+        // ------------------------------------------------
+        // HELPERS
+        // ------------------------------------------------
+        public static bool TryGetInstance(string id, out ServerInstance instance)
+            => servers.TryGetValue(id, out instance);
     }
 
 
@@ -543,5 +553,71 @@ namespace serverplatform
                 );
             }
         }
+
+        public static async Task HandleConsoleStream(HttpListenerContext context)
+        {
+            var principal = UserAuth.VerifyJwtFromContext(context);
+            if (principal == null)
+            {
+                context.Response.StatusCode = 401;
+                context.Response.Close();
+                return;
+            }
+
+            string serverId = context.Request.QueryString["id"];
+
+            if (!ServerControls.TryGetInstance(serverId, out var instance))
+            {
+                context.Response.StatusCode = 404;
+                context.Response.Close();
+                return;
+            }
+
+            var response = context.Response;
+            response.ContentType = "text/event-stream";
+            response.Headers.Add("Cache-Control", "no-cache");
+            response.SendChunked = true;
+
+            Interlocked.Increment(ref instance.ConsoleViewers);
+
+            using (var writer = new StreamWriter(response.OutputStream))
+            {
+                // Send buffered log immediately
+                lock (instance.Log)
+                {
+                    writer.Write(instance.Log.ToString());
+                    writer.Flush();
+                }
+
+                Action<string, string> handler = (id, line) =>
+                {
+                    if (!id.Equals(serverId, StringComparison.OrdinalIgnoreCase))
+                        return;
+
+                    try
+                    {
+                        writer.WriteLine($"data: {line}");
+                        writer.WriteLine();
+                        writer.Flush();
+                    }
+                    catch { }
+                };
+
+                ServerControls.OnConsoleOutput += handler;
+
+                try
+                {
+                    while (response.OutputStream.CanWrite)
+                        await Task.Delay(1000);
+                }
+                finally
+                {
+                    ServerControls.OnConsoleOutput -= handler;
+                    Interlocked.Decrement(ref instance.ConsoleViewers);
+                    ServerControls.TryDisposeIfIdle(serverId);
+                }
+            }
+        }
+
     }
 }
