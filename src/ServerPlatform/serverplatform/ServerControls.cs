@@ -560,16 +560,43 @@ namespace serverplatform
             if (principal == null)
             {
                 context.Response.StatusCode = 401;
-                context.Response.Close();
+                ApiHandler.RespondJson(
+                    context,
+                    "{\"success\":false,\"message\":\"Unauthorised.\"}"
+                );
                 return;
             }
 
+            string username = UserAuth.GetUsernameFromPrincipal(principal);
+
             string serverId = context.Request.QueryString["id"];
+
+            var serverIndex = Config.serverIndex;
+
+            // 3. Ownership check using existing API ONLY
+            var userServers = serverIndex.GetServersForUser(username);
+            bool ownsServer = userServers.Any(s =>
+                s.Id.Equals(serverId, StringComparison.OrdinalIgnoreCase));
+
+            if (!ownsServer)
+            {
+                // IMPORTANT: identical response for "not found" and "not owned"
+                ConsoleLogging.LogWarning($"User {username} tried to restart {serverId} but does not exist/have permissions!", "ServerControls");
+                context.Response.StatusCode = 404;
+                ApiHandler.RespondJson(
+                    context,
+                    "{\"success\":false,\"error\":\"serverNotFound\"}"
+                );
+                return;
+            }
 
             if (!ServerControls.TryGetInstance(serverId, out var instance))
             {
                 context.Response.StatusCode = 404;
-                context.Response.Close();
+                ApiHandler.RespondJson(
+                    context,
+                    "{\"success\":false,\"error\":\"serverNotStarted\"}"
+                );
                 return;
             }
 
