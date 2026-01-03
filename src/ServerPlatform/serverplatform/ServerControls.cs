@@ -581,7 +581,7 @@ namespace serverplatform
             if (!ownsServer)
             {
                 // IMPORTANT: identical response for "not found" and "not owned"
-                ConsoleLogging.LogWarning($"User {username} tried to restart {serverId} but does not exist/have permissions!", "ServerControls");
+                ConsoleLogging.LogWarning($"User {username} tried to view logs for {serverId} but does not exist/have permissions!", "ServerControls");
                 context.Response.StatusCode = 404;
                 ApiHandler.RespondJson(
                     context,
@@ -592,6 +592,7 @@ namespace serverplatform
 
             if (!ServerControls.TryGetInstance(serverId, out var instance))
             {
+                ConsoleLogging.LogWarning($"User {username} tried to view logs for {serverId} but it has not been started!", "ServerControls");
                 context.Response.StatusCode = 404;
                 ApiHandler.RespondJson(
                     context,
