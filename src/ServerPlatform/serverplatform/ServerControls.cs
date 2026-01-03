@@ -573,49 +573,84 @@ namespace serverplatform
                 return;
             }
 
+            bool connected = true;
+
             var response = context.Response;
+            response.StatusCode = 200;
             response.ContentType = "text/event-stream";
             response.Headers.Add("Cache-Control", "no-cache");
+            response.Headers.Add("Connection", "keep-alive");
             response.SendChunked = true;
 
             Interlocked.Increment(ref instance.ConsoleViewers);
 
-            using (var writer = new StreamWriter(response.OutputStream))
+            try
             {
-                // Send buffered log immediately
-                lock (instance.Log)
+                using (var writer = new StreamWriter(response.OutputStream) { AutoFlush = true })
                 {
-                    writer.Write(instance.Log.ToString());
-                    writer.Flush();
-                }
+                    // ---- send buffered log (proper SSE framing)
+                    lock (instance.Log)
+                    {
+                        var lines = instance.Log.ToString()
+                            .Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
 
-                Action<string, string> handler = (id, line) =>
-                {
-                    if (!id.Equals(serverId, StringComparison.OrdinalIgnoreCase))
-                        return;
+                        foreach (var line in lines)
+                        {
+                            writer.WriteLine($"data: {line}");
+                        }
+
+                        writer.WriteLine();
+                    }
+
+                    Action<string, string> handler = (id, line) =>
+                    {
+                        if (!connected)
+                            return;
+
+                        if (!id.Equals(serverId, StringComparison.OrdinalIgnoreCase))
+                            return;
+
+                        try
+                        {
+                            writer.WriteLine($"data: {line}");
+                            writer.WriteLine();
+                        }
+                        catch
+                        {
+                            // socket is gone, stop attempting writes
+                            connected = false;
+                        }
+                    };
+
+                    ServerControls.OnConsoleOutput += handler;
 
                     try
                     {
-                        writer.WriteLine($"data: {line}");
-                        writer.WriteLine();
-                        writer.Flush();
+                        // ---- heartbeat loop (CRITICAL)
+                        while (connected)
+                        {
+                            await Task.Delay(5000);
+                            writer.WriteLine(": heartbeat");
+                            writer.WriteLine();
+                        }
                     }
-                    catch { }
-                };
-
-                ServerControls.OnConsoleOutput += handler;
-
-                try
-                {
-                    while (response.OutputStream.CanWrite)
-                        await Task.Delay(1000);
+                    finally
+                    {
+                        ServerControls.OnConsoleOutput -= handler;
+                    }
                 }
-                finally
-                {
-                    ServerControls.OnConsoleOutput -= handler;
-                    Interlocked.Decrement(ref instance.ConsoleViewers);
-                    ServerControls.TryDisposeIfIdle(serverId);
-                }
+            }
+            catch
+            {
+                // swallow — any exception means client is gone
+                connected = false;
+            }
+            finally
+            {
+                Interlocked.Decrement(ref instance.ConsoleViewers);
+                ServerControls.TryDisposeIfIdle(serverId);
+
+                try { response.Close(); } catch { }
             }
         }
 
