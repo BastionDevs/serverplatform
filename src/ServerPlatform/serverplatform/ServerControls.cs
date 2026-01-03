@@ -682,5 +682,78 @@ namespace serverplatform
             }
         }
 
+        public static void HandleSendCommand(HttpListenerContext context)
+        {
+            // 1. Authenticate
+            var principal = UserAuth.VerifyJwtFromContext(context);
+            if (principal == null)
+            {
+                context.Response.StatusCode = 401;
+                ApiHandler.RespondJson(
+                    context,
+                    "{\"success\":false,\"message\":\"Unauthorised.\"}"
+                );
+                return;
+            }
+
+            string username = UserAuth.GetUsernameFromPrincipal(principal);
+
+            // 2. Read request body
+            string requestBody;
+            using (var reader = new StreamReader(
+                context.Request.InputStream,
+                context.Request.ContentEncoding))
+            {
+                requestBody = reader.ReadToEnd();
+            }
+
+            JObject body;
+            try
+            {
+                body = JObject.Parse(requestBody);
+            }
+            catch
+            {
+                context.Response.StatusCode = 400;
+                ApiHandler.RespondJson(
+                    context,
+                    "{\"success\":false,\"error\":\"invalidJson\"}"
+                );
+                return;
+            }
+
+            string serverId = body["id"]?.ToString();
+            string command = body["command"]?.ToString();
+            if (string.IsNullOrWhiteSpace(serverId) || string.IsNullOrWhiteSpace(command))
+            {
+                context.Response.StatusCode = 400;
+                ApiHandler.RespondJson(
+                    context,
+                    "{\"success\":false,\"error\":\"missingServerId\"}"
+                );
+                return;
+            }
+
+            var serverIndex = Config.serverIndex;
+
+            // 3. Ownership check using existing API ONLY
+            var userServers = serverIndex.GetServersForUser(username);
+            bool ownsServer = userServers.Any(s =>
+                s.Id.Equals(serverId, StringComparison.OrdinalIgnoreCase));
+
+            if (!ownsServer)
+            {
+                // IMPORTANT: identical response for "not found" and "not owned"
+                ConsoleLogging.LogWarning($"User {username} tried to restart {serverId} but does not exist/have permissions!", "ServerControls");
+                context.Response.StatusCode = 404;
+                ApiHandler.RespondJson(
+                    context,
+                    "{\"success\":false,\"error\":\"serverNotFound\"}"
+                );
+                return;
+            }
+
+            ServerControls.SendCommand(serverId, command)
+        }
     }
 }
