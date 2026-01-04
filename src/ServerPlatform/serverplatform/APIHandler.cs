@@ -90,7 +90,7 @@ namespace serverplatform
             {
                 if (context.Request.HttpMethod == "OPTIONS")
                 {
-                    AddCorsHeaders(context.Response, context.Request.Url.ToString());
+                    AddCorsHeaders(context.Response, context.Request.Headers["Origin"]);
                     context.Response.StatusCode = 204;
                     context.Response.Close();
                     ConsoleLogging.LogMessage($"Handled CORS preflight request for {context.Request.Url.AbsolutePath}",
