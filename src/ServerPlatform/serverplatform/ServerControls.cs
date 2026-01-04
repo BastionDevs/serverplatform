@@ -753,7 +753,7 @@ namespace serverplatform
                 return;
             }
 
-            ServerControls.SendCommand(serverId, command)
+            ServerControls.SendCommand(serverId, command);
         }
     }
 }
