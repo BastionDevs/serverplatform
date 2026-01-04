@@ -90,7 +90,7 @@ namespace serverplatform
             {
                 if (context.Request.HttpMethod == "OPTIONS")
                 {
-                    AddCorsHeaders(context.Response);
+                    AddCorsHeaders(context.Response, context.Request.Url.ToString());
                     context.Response.StatusCode = 204;
                     context.Response.Close();
                     ConsoleLogging.LogMessage($"Handled CORS preflight request for {context.Request.Url.AbsolutePath}",
@@ -351,11 +351,12 @@ namespace serverplatform
             }
         }
 
-        private static void AddCorsHeaders(HttpListenerResponse response)
+        private static void AddCorsHeaders(HttpListenerResponse response, string origin = "*")
         {
-            response.AddHeader("Access-Control-Allow-Origin", "*");
+            response.AddHeader("Access-Control-Allow-Origin", origin);
             response.AddHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
             response.AddHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+            response.AddHeader("Access-Control-Allow-Credentials", "true");
         }
 
         public static void RespondJson(HttpListenerContext context, string json)
