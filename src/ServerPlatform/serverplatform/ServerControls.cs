@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
@@ -201,16 +201,15 @@ namespace serverplatform
         // ------------------------------------------------
         private static void AppendLog(ServerInstance instance, string line)
         {
-            string stamped = $"[{DateTime.Now:HH:mm:ss}] {line}";
             lock (instance.Log)
             {
-                instance.Log.AppendLine(stamped);
+                instance.Log.AppendLine(line);
 
                 if (instance.Log.Length > MaxLogChars)
                     instance.Log.Remove(0, instance.Log.Length - MaxLogChars);
             }
 
-            OnConsoleOutput?.Invoke(instance.Id, stamped);
+            OnConsoleOutput?.Invoke(instance.Id, line);
         }
 
         // ------------------------------------------------
