@@ -602,12 +602,26 @@ namespace serverplatform
 
             bool connected = true;
 
+            var request = context.Request;
             var response = context.Response;
+
+            string origin = request.Headers["Origin"];
+
             response.StatusCode = 200;
             response.ContentType = "text/event-stream";
-            response.Headers.Add("Cache-Control", "no-cache");
-            response.Headers.Add("Connection", "keep-alive");
+            response.Headers["Cache-Control"] = "no-cache";
+            response.Headers["Connection"] = "keep-alive";
             response.SendChunked = true;
+
+            if (!string.IsNullOrEmpty(origin))
+            {
+                response.Headers["Access-Control-Allow-Origin"] = origin;
+                response.Headers["Access-Control-Allow-Credentials"] = "true";
+                response.Headers["Vary"] = "Origin";
+            }
+
+            response.Headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS";
+            response.Headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization";
 
             Interlocked.Increment(ref instance.ConsoleViewers);
 
