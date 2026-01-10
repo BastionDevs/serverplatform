@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("BastionSG")]
 [assembly: AssemblyProduct("Server Platform")]
-[assembly: AssemblyCopyright("Copyright © BastionSG 2025")]
+[assembly: AssemblyCopyright("Copyright © BastionSG 2026")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
