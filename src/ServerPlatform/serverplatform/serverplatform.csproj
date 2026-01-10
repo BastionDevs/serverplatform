@@ -129,6 +129,7 @@
     <Compile Include="ServerControls.cs" />
     <Compile Include="ServerCreation.cs" />
     <Compile Include="ServerDeletion.cs" />
+    <Compile Include="ServerFiles.cs" />
     <Compile Include="ServerIndex.cs" />
     <Compile Include="ServerPropertiesReader.cs" />
     <Compile Include="SpigotStor.cs" />
