@@ -155,6 +155,38 @@ namespace serverplatform
                 {
                     ServerControlsHandler.HandleSendCommand(context);
                 }
+                else if (context.Request.HttpMethod == "GET" && context.Request.Url.AbsolutePath == "/servers/files/list")
+                {
+                    ServerFilesHandler.HandleListFiles(context);
+                }
+                else if (context.Request.HttpMethod == "GET" && context.Request.Url.AbsolutePath == "/servers/files/read")
+                {
+                    ServerFilesHandler.HandleReadFile(context);
+                }
+                else if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/servers/files/write")
+                {
+                    ServerFilesHandler.HandleWriteFile(context);
+                }
+                else if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/servers/files/delete")
+                {
+                    ServerFilesHandler.HandleDeleteFile(context);
+                }
+                else if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/servers/files/mkdir")
+                {
+                    ServerFilesHandler.HandleCreateDirectory(context);
+                }
+                else if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/servers/files/move")
+                {
+                    ServerFilesHandler.HandleMoveFile(context);
+                }
+                else if (context.Request.HttpMethod == "GET" && context.Request.Url.AbsolutePath == "/servers/files/download")
+                {
+                    ServerFilesHandler.HandleDownloadFile(context);
+                }
+                else if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/servers/files/upload")
+                {
+                    ServerFilesHandler.HandleFileUpload(context).GetAwaiter().GetResult();
+                }
                 else if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/profile/public")
                 {
                     HandleProfile(context);
