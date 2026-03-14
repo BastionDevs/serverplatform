@@ -96,10 +96,13 @@ namespace serverplatform
                     ConsoleLogging.LogMessage($"Handled CORS preflight request for {context.Request.Url.AbsolutePath}",
                         "API");
                     return;
+                } else
+                {
+                    AddCorsHeaders(context.Response, context.Request.Headers["Origin"]);
                 }
 
-                ConsoleLogging.LogMessage(
-                    $"Incoming {context.Request.HttpMethod} request for {context.Request.Url.AbsolutePath}", "API");
+                    ConsoleLogging.LogMessage(
+                        $"Incoming {context.Request.HttpMethod} request for {context.Request.Url.AbsolutePath}", "API");
 
                 if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath.StartsWith("/auth"))
                 {
