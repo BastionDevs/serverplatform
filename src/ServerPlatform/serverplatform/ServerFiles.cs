@@ -547,24 +547,23 @@ namespace serverplatform
 
         public static void HandleDownloadFile(HttpListenerContext context)
         {
-            string serverId = context.Request.QueryString["id"];
-            string path = context.Request.QueryString["path"];
-            string token = context.Request.QueryString["token"];
-
-            if (string.IsNullOrWhiteSpace(serverId) || string.IsNullOrWhiteSpace(path) || string.IsNullOrWhiteSpace(token))
-            {
-                context.Response.StatusCode = 400;
-                ApiHandler.RespondJson(context,
-                    "{\"success\":false,\"error\":\"missingParameters\"}");
-                return;
-            }
-
-            var principal = UserAuth.ValidateJwtToken(token);
+            var principal = UserAuth.VerifyJwtFromContext(context);
             if (principal == null)
             {
                 context.Response.StatusCode = 401;
                 ApiHandler.RespondJson(context,
                     "{\"success\":false,\"error\":\"unauthorised\"}");
+                return;
+            }
+
+            string serverId = context.Request.QueryString["id"];
+            string path = context.Request.QueryString["path"];
+
+            if (string.IsNullOrWhiteSpace(serverId) || string.IsNullOrWhiteSpace(path))
+            {
+                context.Response.StatusCode = 400;
+                ApiHandler.RespondJson(context,
+                    "{\"success\":false,\"error\":\"missingParameters\"}");
                 return;
             }
 
