@@ -103,7 +103,7 @@ namespace serverplatform
 
                 ApiHandler.RespondJson(
                     context,
-                    "{\"success\":\"true\", \"message\":\"Server created successfully.\"}"
+                    "{\"success\":\"true\", \"message\":\"Server created successfully.\", \"id\":\"" + sid + "\"}"
                 );
             }
             catch (Exception ex)
