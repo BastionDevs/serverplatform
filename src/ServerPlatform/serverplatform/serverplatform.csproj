@@ -143,6 +143,7 @@
     <Compile Include="ServerDeletion.cs" />
     <Compile Include="ServerFiles.cs" />
     <Compile Include="ServerIndex.cs" />
+    <Compile Include="ServerMetrics.cs" />
     <Compile Include="ServerPropertiesReader.cs" />
     <Compile Include="SpigotStor.cs" />
     <Compile Include="UserAuth.cs" />

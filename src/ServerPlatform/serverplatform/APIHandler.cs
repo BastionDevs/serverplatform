@@ -52,6 +52,10 @@ namespace serverplatform
                 listener.Start();
                 ConsoleLogging.LogSuccess($"Backend API started and listening on port {port}.", "Listener");
 
+                //Metrics
+                ConsoleLogging.LogMessage("Starting Merics service...", "Metrics");
+                ServerControls.StartMetricsMonitoring();
+
                 while (!token.IsCancellationRequested)
                 {
                     var contextTask = listener.GetContextAsync();
@@ -79,6 +83,10 @@ namespace serverplatform
                     listener.Stop();
                     listener.Close();
                 }
+
+                //Metrics
+                ConsoleLogging.LogMessage("Stopping Merics service...", "Metrics");
+                await ServerControls.StopMetricsMonitoring();
 
                 ConsoleLogging.LogMessage("API listener stopped.", "Listener");
             }

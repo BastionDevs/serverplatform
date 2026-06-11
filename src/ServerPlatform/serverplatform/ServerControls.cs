@@ -27,10 +27,15 @@ namespace serverplatform
 
         public DateTime StartedAt { get; } = DateTime.UtcNow;
 
+        public ServerMetrics Metrics { get; }
+
         public ServerInstance(string id, Process process)
         {
             Id = id;
             Process = process;
+
+            Metrics = new ServerMetrics(this);
+
             IsRunning = true;
         }
     }
@@ -49,6 +54,56 @@ namespace serverplatform
             Path.Combine(AppContext.BaseDirectory, "JavaRuntimes");
 
         private const int MaxLogChars = 5_000_000;
+
+        // METRICS
+        private static CancellationTokenSource metricsCts;
+        private static Task metricsTask;
+
+        public static void StartMetricsMonitoring()
+        {
+            if (metricsTask != null)
+                return;
+
+            metricsCts = new CancellationTokenSource();
+
+            ConsoleLogging.LogSuccess("Started Metrics service!", "Metrics");
+
+            metricsTask = Task.Run(async () =>
+            {
+                while (!metricsCts.IsCancellationRequested)
+                {
+                    foreach (var server in servers.Values)
+                    {
+                        try
+                        {
+                            server.Metrics.Update();
+                        }
+                        catch
+                        {
+                        }
+                    }
+
+                    await Task.Delay(1000, metricsCts.Token);
+                }
+            });
+        }
+
+        public static async Task StopMetricsMonitoring()
+        {
+            if (metricsCts == null)
+                return;
+
+            metricsCts.Cancel();
+
+            try
+            {
+                await metricsTask;
+            }
+            catch
+            {
+            }
+            ConsoleLogging.LogSuccess("Stopped Metrics service!", "Metrics");
+        }
 
         // ------------------------------------------------
         // START SERVER
