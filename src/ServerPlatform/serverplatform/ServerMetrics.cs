@@ -166,7 +166,13 @@ namespace serverplatform
 
                 ApiHandler.RespondJson(
                     context,
-                    "{\"success\":true,\"cpu\":\"cpu" + metrics.CpuPercent + "\", \"memory\": \"" + metrics.MemoryMB + "\"}"
+                    JObject.FromObject(new
+                    {
+                        success = true,
+                        cpu = metrics.CpuPercent,
+                        memory = metrics.MemoryBytes,
+                        memoryMB = metrics.MemoryMB
+                    }).ToString()
                 );
             }
             catch (Exception ex)
