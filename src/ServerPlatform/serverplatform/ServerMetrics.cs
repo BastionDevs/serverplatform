@@ -25,6 +25,7 @@ namespace serverplatform
 
         private TimeSpan lastCpuTime;
         private DateTime lastCpuSample;
+        private bool hasSample;
 
         public double CpuPercent { get; private set; }
         public long MemoryBytes { get; private set; }
@@ -32,19 +33,17 @@ namespace serverplatform
         public ServerMetrics(ServerInstance instance)
         {
             this.instance = instance;
-
-            lastCpuTime = instance.Process.TotalProcessorTime;
-            lastCpuSample = DateTime.UtcNow;
         }
 
         public void Update()
         {
             var process = instance.Process;
 
-            if (process.HasExited)
+            if (process == null || process.HasExited)
             {
                 CpuPercent = 0;
                 MemoryBytes = 0;
+                hasSample = false;
                 return;
             }
 
@@ -55,19 +54,21 @@ namespace serverplatform
             TimeSpan currentCpu = process.TotalProcessorTime;
             DateTime now = DateTime.UtcNow;
 
-            double cpuUsedMs =
-                (currentCpu - lastCpuTime).TotalMilliseconds;
-
-            double elapsedMs =
-                (now - lastCpuSample).TotalMilliseconds;
-
-            if (elapsedMs > 0)
+            if (!hasSample)
             {
-                CpuPercent =
-                    cpuUsedMs /
-                    (elapsedMs * Environment.ProcessorCount) *
-                    100.0;
+                lastCpuTime = currentCpu;
+                lastCpuSample = now;
+                hasSample = true;
+                CpuPercent = 0;
+                return;
             }
+
+            double cpuUsedMs = (currentCpu - lastCpuTime).TotalMilliseconds;
+            double elapsedMs = (now - lastCpuSample).TotalMilliseconds;
+
+            CpuPercent = elapsedMs > 0
+                ? cpuUsedMs / (elapsedMs * Environment.ProcessorCount) * 100.0
+                : 0;
 
             lastCpuTime = currentCpu;
             lastCpuSample = now;
