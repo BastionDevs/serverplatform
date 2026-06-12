@@ -377,7 +377,7 @@ namespace serverplatform
 
             try
             {
-                _ = Task.Run(() => ServerControls.StartServer(serverId));
+                ServerControls.StartServer(serverId).GetAwaiter().GetResult();
                 ConsoleLogging.LogSuccess(
                     $"Server {serverId} started by {username}.",
                     "ServerControls"
