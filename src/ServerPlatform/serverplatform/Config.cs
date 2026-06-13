@@ -17,7 +17,7 @@ namespace serverplatform
 
         public static void MakeDefaultConfig()
         {
-            SpCnfFile.Write("port", "4100", "backend");
+            SpCnfFile.Write("port", "5678", "backend");
             SpCnfFile.Write("ServersDir", Path.Combine(AppContext.BaseDirectory, "servers"), "main");
             UserAuth.CreateDefaultUsers();
         }
