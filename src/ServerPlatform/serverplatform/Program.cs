@@ -159,8 +159,9 @@ namespace serverplatform
                     Console.WriteLine();
                 }
 
-                Console.WriteLine("Development use? [True/False]");
-                var devMode = bool.Parse(Console.ReadLine());
+                // Console.WriteLine("Development use? [True/False]");
+                //var devMode = bool.Parse(Console.ReadLine());
+                var devMode = false;
 
                 int backendPort;
                 if (devMode)
@@ -168,17 +169,17 @@ namespace serverplatform
                 else
                     backendPort = int.Parse(Config.GetConfig("port", "backend"));
 
-                Console.WriteLine();
-                ConsoleLogging.LogWarning("Server Platform will run with Development settings.");
-                Console.WriteLine();
+                //Console.WriteLine();
+                //ConsoleLogging.LogWarning("Server Platform will run with Development settings.");
+                //Console.WriteLine();
 
                 // Start server
-                ConsoleLogging.LogSuccess("Server is now online and listening.");
+                ConsoleLogging.LogSuccess("Backend server is now online and listening.");
                 ApiHandler.StartServer(Cts.Token, backendPort).GetAwaiter().GetResult();
 
                 // Server stopping
-                ConsoleLogging.LogSuccess("Server has stopped cleanly.");
-                ConsoleLogging.LogMessage("Stopping Server Platform...");
+                ConsoleLogging.LogSuccess("Backend server has stopped cleanly.");
+                ConsoleLogging.LogMessage("Stopping backend server...");
                 Console.ReadLine();
             }
             finally
