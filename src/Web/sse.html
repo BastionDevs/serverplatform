@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Server Platform Console Viewer</title>
+<style>
+    body {
+        background: #0e0e0e;
+        color: #e0e0e0;
+        font-family: monospace;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+    }
+    #top-bar {
+        display: flex;
+        padding: 6px;
+        gap: 6px;
+        border-bottom: 1px solid #333;
+        background: #0b0b0b;
+    }
+    #token {
+        flex: 1;
+        background: #111;
+        border: none;
+        color: #fff;
+        padding: 6px;
+        font-family: monospace;
+        outline: none;
+    }
+    #connect {
+        padding: 6px 12px;
+        background: #2563eb;
+        border: none;
+        color: white;
+        cursor: pointer;
+    }
+    #connect:hover { background: #1d4ed8; }
+    #console {
+        flex: 1;
+        padding: 10px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        font-size: 13px;
+        line-height: 1.4;
+    }
+    #input-bar {
+        display: flex;
+        border-top: 1px solid #333;
+    }
+    #command {
+        flex: 1;
+        padding: 10px;
+        background: #111;
+        border: none;
+        color: #fff;
+        font-family: monospace;
+        outline: none;
+    }
+    #send {
+        padding: 10px 16px;
+        background: #2563eb;
+        border: none;
+        color: white;
+        cursor: pointer;
+    }
+    #send:hover { background: #1d4ed8; }
+    .system { color: #999; }
+    .error { color: #ff6b6b; }
+</style>
+</head>
+<body>
+
+<div id="top-bar">
+    <input id="token" placeholder="Authorization token (Bearer ...)" autocomplete="off">
+    <button id="connect">Connect</button>
+</div>
+
+<div id="console"></div>
+
+<div id="input-bar">
+    <input id="command" placeholder="Type a command..." autocomplete="off">
+    <button id="send">Send</button>
+</div>
+
+<script>
+// ---------------------- Simple SSE helper ----------------------
+class SimpleSSE {
+    constructor(url, options = {}) {
+        this.url = url;
+        this.headers = options.headers || {};
+        this.reconnectInterval = options.reconnectInterval || 2000;
+        this.listeners = {};
+        this._xhr = null;
+        this._stopped = false;
+    }
+
+    addEventListener(type, callback) {
+        if (!this.listeners[type]) this.listeners[type] = [];
+        this.listeners[type].push(callback);
+    }
+
+    _dispatchEvent(type, data) {
+        if (!this.listeners[type]) return;
+        this.listeners[type].forEach(fn => fn({ data }));
+    }
+
+    stream() {
+        this._stopped = false;
+        this._connect();
+    }
+
+    close() {
+        this._stopped = true;
+        if (this._xhr) {
+            try { this._xhr.abort(); } catch {}
+            this._xhr = null;
+        }
+    }
+
+    _connect() {
+        if (this._stopped) return;
+
+        const xhr = new XMLHttpRequest();
+        xhr.open("GET", this.url, true);
+
+        // ✅ REQUIRED for proper CORS behavior with Authorization
+        xhr.withCredentials = true;
+
+        for (const key in this.headers) {
+            xhr.setRequestHeader(key, this.headers[key]);
+        }
+
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState === 2) {
+                this._dispatchEvent("open", "");
+            }
+        };
+
+        let lastIndex = 0;
+        xhr.onprogress = () => {
+            const chunk = xhr.responseText.substring(lastIndex);
+            lastIndex = xhr.responseText.length;
+
+            const lines = chunk.split(/\r?\n/);
+            lines.forEach(line => {
+                if (line.startsWith("data:")) {
+                    const data = line.slice(5).trim();
+                    this._dispatchEvent("message", data);
+                }
+            });
+        };
+
+        xhr.onerror = () => {
+            this._dispatchEvent("error", "");
+            this._reconnect();
+        };
+
+        xhr.onloadend = () => {
+            if (!this._stopped) this._reconnect();
+        };
+
+        xhr.send();
+        this._xhr = xhr;
+    }
+
+    _reconnect() {
+        if (this._stopped) return;
+        setTimeout(() => this._connect(), this.reconnectInterval);
+    }
+}
+// ---------------------- End Simple SSE ----------------------
+
+function getQueryParamByRegex(name) {
+    var regex = new RegExp('[?&]' + name + '=([^&#]*)', 'i');
+    var match = regex.exec(window.location.search);
+    return match ? decodeURIComponent(match[1]) : null;
+}
+
+const serverId = getQueryParamByRegex("id");
+const consoleEl = document.getElementById("console");
+const input = document.getElementById("command");
+const sendBtn = document.getElementById("send");
+const connectBtn = document.getElementById("connect");
+const tokenInput = document.getElementById("token");
+
+let sse = null;
+
+function appendLine(text, cls = "") {
+    const div = document.createElement("div");
+    div.textContent = text;
+    if (cls) div.className = cls;
+    consoleEl.appendChild(div);
+    consoleEl.scrollTop = consoleEl.scrollHeight;
+}
+
+function connectConsole() {
+    const token = tokenInput.value.trim();
+    if (!token) {
+        appendLine("[SERVER PLATFORM] Auth token required", "error");
+        return;
+    }
+
+    disconnectConsole();
+    appendLine("[SERVER PLATFORM] Connecting to console...", "system");
+
+    sse = new SimpleSSE(
+        `http://localhost:5678/servers/console/stream?id=${encodeURIComponent(serverId)}`,
+        { headers: { "Authorization": token }, reconnectInterval: 2000 }
+    );
+
+    sse.addEventListener("open", () => appendLine("[SERVER PLATFORM] Connected", "system"));
+    sse.addEventListener("message", e => appendLine(e.data));
+    sse.addEventListener("error", () => appendLine("[SERVER PLATFORM] Console disconnected. Reconnecting...", "system"));
+
+    sse.stream();
+}
+
+function disconnectConsole() {
+    if (sse) {
+        sse.close();
+        sse = null;
+    }
+}
+
+connectBtn.onclick = connectConsole;
+
+sendBtn.onclick = sendCommand;
+input.addEventListener("keydown", e => { if (e.key === "Enter") sendCommand(); });
+
+function sendCommand() {
+    const cmd = input.value.trim();
+    const token = tokenInput.value.trim();
+    if (!cmd || !token) return;
+
+    fetch("http://localhost:5678/servers/console/command", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": token
+        },
+        body: JSON.stringify({ id: serverId, command: cmd })
+    });
+
+    input.value = "";
+}
+</script>
+
+</body>
+</html>

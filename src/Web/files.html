@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Server Platform File Manager</title>
+
+<style>
+body {
+    background: #0e0e0e;
+    color: #e0e0e0;
+    font-family: monospace;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+#top-bar {
+    display: flex;
+    padding: 6px;
+    gap: 6px;
+    border-bottom: 1px solid #333;
+    background: #0b0b0b;
+}
+
+#token {
+    flex: 1;
+    background: #111;
+    border: none;
+    color: #fff;
+    padding: 6px;
+    outline: none;
+}
+
+button {
+    background: #2563eb;
+    border: none;
+    color: white;
+    padding: 6px 12px;
+    cursor: pointer;
+}
+button:hover { background: #1d4ed8; }
+
+#main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+#files {
+    width: 320px;
+    border-right: 1px solid #333;
+    overflow-y: auto;
+    padding: 6px;
+}
+
+#files div {
+    padding: 4px;
+    cursor: pointer;
+}
+
+#files div:hover {
+    background: #1a1a1a;
+}
+
+.selected {
+    background: #1e293b;
+}
+
+.dir { color: #60a5fa; }
+.file { color: #e0e0e0; }
+
+#editor {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+#path {
+    padding: 6px;
+    border-bottom: 1px solid #333;
+    background: #0b0b0b;
+    font-size: 12px;
+}
+
+textarea {
+    flex: 1;
+    background: #111;
+    color: #e0e0e0;
+    border: none;
+    padding: 10px;
+    font-family: monospace;
+    outline: none;
+    resize: none;
+}
+
+#editor-bar {
+    border-top: 1px solid #333;
+    padding: 6px;
+    display: flex;
+    gap: 6px;
+    background: #0b0b0b;
+}
+
+.system { color: #999; }
+</style>
+</head>
+
+<body>
+
+<div id="top-bar">
+    <input id="token" placeholder="Authorization token (Bearer ...)" autocomplete="off">
+    <button onclick="loadFiles()">Load</button>
+    <button onclick="createFolder()">New Folder</button>
+    <button onclick="uploadFile()">Upload</button>
+</div>
+
+<div id="main">
+    <div id="files"></div>
+
+    <div id="editor">
+        <div id="path" class="system">No file selected</div>
+        <textarea id="content" disabled></textarea>
+
+        <div id="editor-bar">
+            <button onclick="saveFile()">Save</button>
+            <button onclick="renameEntry()">Rename</button>
+            <button onclick="downloadFile()">Download</button>
+            <button onclick="deleteEntry()">Delete</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function getQueryParamByRegex(name) {
+    var regex = new RegExp('[?&]' + name + '=([^&#]*)', 'i');
+    var match = regex.exec(window.location.search);
+    return match ? decodeURIComponent(match[1]) : null;
+}
+
+const API = "http://localhost:5678";
+const serverId = getQueryParamByRegex("id");
+
+let currentPath = "";
+let currentFile = null;
+let currentIsDir = false;
+
+const filesEl = document.getElementById("files");
+const editor = document.getElementById("content");
+const pathEl = document.getElementById("path");
+const tokenEl = document.getElementById("token");
+
+function authHeaders(extra = {}) {
+    return {
+        "Authorization": tokenEl.value,
+        ...extra
+    };
+}
+
+function joinPath(base, name) {
+    if (!base) return name;
+    return base.replace(/\/$/, "") + "/" + name;
+}
+
+/* ---------- LIST FILES ---------- */
+async function loadFiles(path = "") {
+    currentPath = path;
+    currentFile = null;
+    editor.value = "";
+    editor.disabled = true;
+    pathEl.textContent = path || "/";
+
+    const res = await fetch(
+        `${API}/servers/files/list?id=${serverId}&path=${encodeURIComponent(path)}`,
+        { headers: authHeaders() }
+    );
+
+    const json = await res.json();
+    filesEl.innerHTML = "";
+
+    if (!json.success) {
+        filesEl.textContent = "Failed to load files";
+        return;
+    }
+
+    if (path) {
+        const up = document.createElement("div");
+        up.textContent = "..";
+        up.className = "dir";
+        up.onclick = () => {
+            const parent = path.split("/").slice(0, -1).join("/");
+            loadFiles(parent);
+        };
+        filesEl.appendChild(up);
+    }
+
+    for (const e of json.entries) {
+        const div = document.createElement("div");
+        div.textContent = e.name;
+        div.className = e.isDirectory ? "dir" : "file";
+
+        div.onclick = () => selectEntry(e);
+        filesEl.appendChild(div);
+    }
+}
+
+function selectEntry(entry) {
+    document.querySelectorAll("#files div").forEach(d => d.classList.remove("selected"));
+    event.target.classList.add("selected");
+
+    currentFile = joinPath(currentPath, entry.name);
+    currentIsDir = entry.isDirectory;
+
+    pathEl.textContent = currentFile;
+
+    if (entry.isDirectory) {
+        editor.value = "";
+        editor.disabled = true;
+        loadFiles(currentFile);
+    } else {
+        readFile(currentFile);
+    }
+}
+
+/* ---------- READ ---------- */
+async function readFile(path) {
+    const res = await fetch(
+        `${API}/servers/files/read?id=${serverId}&path=${encodeURIComponent(path)}`,
+        { headers: authHeaders() }
+    );
+    const json = await res.json();
+
+    if (!json.success) {
+        alert("Failed to read file");
+        return;
+    }
+
+    editor.disabled = false;
+    editor.value = json.content;
+}
+
+/* ---------- SAVE ---------- */
+async function saveFile() {
+    if (!currentFile || currentIsDir) return;
+
+    await fetch(`${API}/servers/files/write`, {
+        method: "POST",
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({
+            id: serverId,
+            path: currentFile,
+            content: editor.value
+        })
+    });
+
+    alert("Saved");
+}
+
+/* ---------- DELETE ---------- */
+async function deleteEntry() {
+    if (!currentFile) return;
+    if (!confirm("Delete this?")) return;
+
+    await fetch(`${API}/servers/files/delete`, {
+        method: "POST",
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({
+            id: serverId,
+            path: currentFile
+        })
+    });
+
+    loadFiles(currentPath);
+}
+
+/* ---------- CREATE DIR ---------- */
+async function createFolder() {
+    const name = prompt("Folder name:");
+    if (!name) return;
+
+    await fetch(`${API}/servers/files/mkdir`, {
+        method: "POST",
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({
+            id: serverId,
+            path: joinPath(currentPath, name)
+        })
+    });
+
+    loadFiles(currentPath);
+}
+
+/* ---------- RENAME / MOVE ---------- */
+async function renameEntry() {
+    if (!currentFile) return;
+
+    const name = prompt("New name:");
+    if (!name) return;
+
+    const target = joinPath(currentPath, name);
+
+    await fetch(`${API}/servers/files/move`, {
+        method: "POST",
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({
+            id: serverId,
+            from: currentFile,
+            to: target
+        })
+    });
+
+    loadFiles(currentPath);
+}
+
+/* ---------- DOWNLOAD ---------- */
+async function downloadFile() {
+    if (!currentFile || currentIsDir) return;
+
+    const url = `${API}/servers/files/download?id=${serverId}&path=${encodeURIComponent(currentFile)}`;
+
+    try {
+        const res = await fetch(url, {
+            headers: authHeaders()
+        });
+
+        if (!res.ok) {
+            alert("Download failed");
+            return;
+        }
+
+        const blob = await res.blob();
+        const objectUrl = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = objectUrl;
+        a.download = currentFile.split("/").pop(); // filename
+        a.style.display = "none";
+
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        URL.revokeObjectURL(objectUrl);
+
+    } catch (err) {
+        console.error(err);
+        alert("Download error");
+    }
+}
+
+/* ---------- UPLOAD ---------- */
+async function uploadFile() {
+    const input = document.createElement("input");
+    input.type = "file";
+
+    input.onchange = async () => {
+        const file = input.files[0];
+        if (!file) return;
+
+        const form = new FormData();
+        form.append("id", serverId);
+        form.append("path", currentPath.endsWith("/") ? currentPath : currentPath + "/");
+        form.append("file", file);
+
+        await fetch(`${API}/servers/files/upload`, {
+            method: "POST",
+            headers: authHeaders(),
+            body: form
+        });
+
+        loadFiles(currentPath);
+    };
+
+    input.click();
+}
+</script>
+
+</body>
+</html>
