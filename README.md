@@ -9,30 +9,30 @@ Open-source, Windows-based server management system designed for Minecraft serve
 
 ---
 
-## 🚀 Features
+## Features
 
-- 🔧 **Minecraft Server Management** (Start, Stop, Restart)
-- ⚙️ **Plugin/Mod Manager** installs and updates Plugins and Mods quickly for your servers
-- 🖥️ **Web-Based Admin Panel** allows easy access, even remotely
-- 🔒 **Secure Auth System** with Roles (Admin/User)
-- 📜 **Server Logs and Console Output**
-- 📦 **File Manager** with Upload/Download/Permissions
-- 🔁 **Scheduler & Task Automation**
-- 🌐 **Web API** for integrations
-- 🖼️ **Modern UI** designed with inspiration from the Material Design Language
+- **Minecraft Server Management** (Start, Stop, Restart)
+- **Plugin/Mod Manager** installs and updates Plugins and Mods quickly for your servers
+- **Web-Based Admin Panel** allows easy access, even remotely
+- **Secure Auth** with Roles (Admin/User)
+- **Server Logs and Console Output**
+- **File Manager** with Upload/Download/Permissions
+- **Scheduler & Task Automation**
+- **Web API** for integrations
+- **Modern UI** designed with inspiration from the Material Design Language
 
 ---
 
-## 🛠️ Requirements
+## Requirements
 
 - Windows 10 or newer recommended
 - [.NET Framework 4.7.2](https://dotnet.microsoft.com/download/dotnet-framework/net472)
-- [.NET 9.0](https://dotnet.microsoft.com/en-us/download/dotnet/9.0)
+- A Web Server (for frontend)
 - Administrator privileges
 
 ---
 
-## 🔧 Installation
+## Installation
 
 1. **Download the Installer from the Releases page:**
 
@@ -52,33 +52,33 @@ Open-source, Windows-based server management system designed for Minecraft serve
 
 ---
 
-## 📘 Documentation
+## Documentation
 
 Documentation is available on our [GitHub wiki](https://github.com/BastionDevs/serverplatform/wiki).
 
 ---
 
-## 💬 Community & Support
+## Community & Support
 
-- 📢 Discord: [discord.gg/EmEG5Eecys](https://discord.gg/EmEG5Eecys)  
-- 🐛 Bug reports: Create a new Issue via GitHub  
-- 🙋 Feature requests: Submit via Discussions  
+- Discord: [discord.gg/EmEG5Eecys](https://discord.gg/EmEG5Eecys)  
+- Bug reports: Create a new Issue via GitHub  
+- Feature requests: Submit via Discussions  
 
 ---
 
-## 📝 License
+## License
 
 This project is licensed under **Bastion GSLP 2.1**. See [LICENSE.md](LICENSE.md) for more details.
 
 ---
 
-## ❤️ Contributing
+## Contributing
 
 Pull requests are welcome! Please read the [CONTRIBUTING.md](CONTRIBUTING.md) before submitting.
 
 ---
 
-## 🙌 Credits
+## Credits
 
 - Concept inspired by [Pterodactyl Panel](https://pterodactyl.io/)  
 - Built with ❤️ in C#
