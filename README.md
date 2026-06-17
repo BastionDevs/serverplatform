@@ -1,4 +1,4 @@
-# 🛡️ Bastion Server Platform
+# Bastion Server Platform
 
 [![Bastion GSLP License](https://img.shields.io/badge/Bastion-GSLP%20v2.1-blue?style=for-the-badge)](LICENSE.md)
 [![Discord](https://img.shields.io/discord/871577956852584488?label=Discord&style=for-the-badge)](https://discord.gg/EmEG5Eecys)
@@ -6,8 +6,6 @@
 <img src="sp-banner.png" alt="Banner" height="400"/>
   
 Open-source, Windows-based server management system designed for Minecraft server hosting. Built with C# and .NET Framework, it provides a sleek web-based panel and powerful backend to manage, start, stop, and monitor your servers — all with a Windows-native approach.
-
----
 
 ## Features
 
@@ -21,16 +19,12 @@ Open-source, Windows-based server management system designed for Minecraft serve
 - **Web API** for integrations
 - **Modern UI** designed with inspiration from the Material Design Language
 
----
-
 ## Requirements
 
 - Windows 10 or newer recommended
 - [.NET Framework 4.7.2](https://dotnet.microsoft.com/download/dotnet-framework/net472)
 - A Web Server (for frontend)
 - Administrator privileges
-
----
 
 ## Installation
 
@@ -50,13 +44,9 @@ Open-source, Windows-based server management system designed for Minecraft serve
     - **Username:** `admin`  
     - **Password:** `admin` *(Change this immediately!)*
 
----
-
 ## Documentation
 
 Documentation is available on our [GitHub wiki](https://github.com/BastionDevs/serverplatform/wiki).
-
----
 
 ## Community & Support
 
@@ -64,19 +54,13 @@ Documentation is available on our [GitHub wiki](https://github.com/BastionDevs/s
 - Bug reports: Create a new Issue via GitHub  
 - Feature requests: Submit via Discussions  
 
----
-
 ## License
 
 This project is licensed under **Bastion GSLP 2.1**. See [LICENSE.md](LICENSE.md) for more details.
 
----
-
 ## Contributing
 
 Pull requests are welcome! Please read the [CONTRIBUTING.md](CONTRIBUTING.md) before submitting.
-
----
 
 ## Credits
 
