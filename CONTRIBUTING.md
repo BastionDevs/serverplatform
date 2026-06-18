@@ -1,10 +1,10 @@
-# 🤝 Contributing to Bastion Server Platform
+# Contributing to Bastion Server Platform
 
 Thank you for your interest in contributing to the Bastion Server Platform! Whether you’re fixing a bug, adding a feature, or improving documentation, your help is greatly appreciated. 🚀
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [How to Contribute](#️-how-to-contribute)
 - [Development Setup](#-development-setup)
@@ -15,7 +15,7 @@ Thank you for your interest in contributing to the Bastion Server Platform! Whet
 
 ---
 
-## 🛠️ How to Contribute
+## How to Contribute
 
 1. **Fork** the repository  
 2. **Clone** your fork:
@@ -42,7 +42,7 @@ Thank you for your interest in contributing to the Bastion Server Platform! Whet
 
 ---
 
-## 🧑‍💻 Development Setup
+## Development Setup
 
 - Install [Microsoft Visual Studio 2022](https://visualstudio.microsoft.com/) (recommended) with:
   - .NET Framework 4.7.2 targeting pack  
@@ -51,7 +51,7 @@ Thank you for your interest in contributing to the Bastion Server Platform! Whet
 
 ---
 
-## 🧹 Coding Guidelines
+## Coding Guidelines
 
 - Follow the existing coding style  
 - Use meaningful variable and method names  
@@ -61,7 +61,7 @@ Thank you for your interest in contributing to the Bastion Server Platform! Whet
 
 ---
 
-## ✅ Submitting Pull Requests
+## Submitting Pull Requests
 
 Before submitting:
 
@@ -72,17 +72,17 @@ Before submitting:
 
 ---
 
-## 🌍 Translations
+## Translations
 
 Want to contribute to localization? Check out the `/locales` directory (if present) and submit PRs for new or updated translations.
 
 ---
 
-## 🙋 Notice Any Issues?
+## Notice Any Issues?
 
 - Open an [Issue](https://github.com/BastionDevs/serverplatform/issues) on GitHub  
 - Join our Discord community: [discord.gg/EmEG5Eecys](https://discord.gg/EmEG5Eecys)  
 
 ---
 
-Thanks again for being part of the Bastion community! 💚
+Thanks again for contributing to our community!
