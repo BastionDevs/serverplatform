@@ -1,6 +1,6 @@
-# Contributing to Bastion Server Platform
+# Contributing to Server Platform
 
-Thank you for your interest in contributing to the Bastion Server Platform! Whether you’re fixing a bug, adding a feature, or improving documentation, your help is greatly appreciated.
+Thank you for your interest in contributing to the project! Whether you’re fixing a bug, adding a feature, or improving documentation, your help is greatly appreciated.
 
 ## Table of Contents
 
@@ -8,7 +8,6 @@ Thank you for your interest in contributing to the Bastion Server Platform! Whet
 - [Development Setup](#-development-setup)
 - [Coding Guidelines](#-coding-guidelines)
 - [Submitting Pull Requests](#-submitting-pull-requests)
-- [Translations](#-translations)
 - [Notice Any Issues?](#-notice-any-issues)
 
 ## How to Contribute
@@ -17,7 +16,7 @@ Thank you for your interest in contributing to the Bastion Server Platform! Whet
 2. **Clone** your fork:
 
     ```bash
-    git clone https://github.com/your-username/bastion-server-platform.git
+    git clone https://github.com/BastionDevs/serverplatform.git
     ```
 
 3. Add explanatory **comments** in your code.
@@ -59,10 +58,6 @@ Before submitting:
 - Run existing tests (if any) and make sure they pass  
 - Clearly describe what your PR does  
 - Link to related issues if applicable (e.g. `Fixes #42`)  
-
-## Translations
-
-Want to contribute to localization? Check out the `/locales` directory (if present) and submit PRs for new or updated translations.
 
 ## Notice Any Issues?
 
