@@ -1,6 +1,6 @@
 # Contributing to Bastion Server Platform
 
-Thank you for your interest in contributing to the Bastion Server Platform! Whether you’re fixing a bug, adding a feature, or improving documentation, your help is greatly appreciated. 🚀
+Thank you for your interest in contributing to the Bastion Server Platform! Whether you’re fixing a bug, adding a feature, or improving documentation, your help is greatly appreciated.
 
 ## Table of Contents
 
