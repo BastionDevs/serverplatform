@@ -164,7 +164,7 @@ namespace serverplatform
                 }
                 else if (context.Request.HttpMethod == "GET" && context.Request.Url.AbsolutePath == "/servers/console/stream")
                 {
-                    ServerControlsHandler.HandleConsoleStream(context);
+                    ServerControlsHandler.HandleConsoleStream(context).GetAwaiter().GetResult();
                 }
                 else if (context.Request.HttpMethod == "POST" && context.Request.Url.AbsolutePath == "/servers/console/command")
                 {

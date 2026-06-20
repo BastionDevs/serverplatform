@@ -159,19 +159,7 @@ namespace serverplatform
                     Console.WriteLine();
                 }
 
-                // Console.WriteLine("Development use? [True/False]");
-                //var devMode = bool.Parse(Console.ReadLine());
-                var devMode = false;
-
-                int backendPort;
-                if (devMode)
-                    backendPort = 5678;
-                else
-                    backendPort = int.Parse(Config.GetConfig("port", "backend"));
-
-                //Console.WriteLine();
-                //ConsoleLogging.LogWarning("Server Platform will run with Development settings.");
-                //Console.WriteLine();
+                int backendPort = int.Parse(Config.GetConfig("port", "backend"));
 
                 // Start server
                 ConsoleLogging.LogSuccess("Backend server is now online and listening.");
