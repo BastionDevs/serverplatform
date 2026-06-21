@@ -245,7 +245,6 @@ namespace serverplatform
             return JObject.FromObject(new
             {
                 success = true,
-                token = accessToken, // Backwards-compatible alias.
                 accessToken,
                 refreshToken,
                 tokenType = "Bearer",
