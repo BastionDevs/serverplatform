@@ -124,6 +124,10 @@ namespace serverplatform
                     {
                         HandleLogout(context);
                     }
+                    else if (pathParts.Length == 3 && pathParts[2] == "refresh")
+                    {
+                        HandleRefresh(context);
+                    }
                     else if (pathParts.Length == 3 && pathParts[2] == "register")
                     {
                         HandleRegister(context);
@@ -294,21 +298,27 @@ namespace serverplatform
 
             var token = authHeader.Substring("Bearer ".Length).Trim();
 
-            var handler = new JwtSecurityTokenHandler();
-            if (!handler.CanReadToken(token))
-            {
-                context.Response.StatusCode = 400;
-                RespondJson(context, JObject.FromObject(new
-                {
-                    error = "Hacker Hacker on the Wall!"
-                }).ToString());
-                return;
-            }
-
-            var result = UserAuth.LogoutUser(token);
-
-            context.Response.StatusCode = 200;
+            var body = ReadJsonBody(context);
+            var result = UserAuth.LogoutUser(token, body?["refreshToken"]?.ToString());
+            context.Response.StatusCode = result["success"]?.Value<bool>() == true ? 200 : 401;
             RespondJson(context, result.ToString());
+        }
+
+        private static void HandleRefresh(HttpListenerContext context)
+        {
+            var body = ReadJsonBody(context);
+            var result = UserAuth.RefreshTokens(body?["refreshToken"]?.ToString());
+            context.Response.StatusCode = result["success"]?.Value<bool>() == true ? 200 : 401;
+            RespondJson(context, result.ToString());
+        }
+
+        private static JObject ReadJsonBody(HttpListenerContext context)
+        {
+            using (var reader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding))
+            {
+                var content = reader.ReadToEnd();
+                return string.IsNullOrWhiteSpace(content) ? new JObject() : JObject.Parse(content);
+            }
         }
 
         private static void HandleRegister(HttpListenerContext context)
