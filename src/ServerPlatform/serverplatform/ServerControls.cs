@@ -645,7 +645,11 @@ namespace serverplatform
                 return;
             }
 
-            if (!ServerControls.TryGetInstance(serverId, out var instance))
+            if (!ServerControls.TryGetInstance(serverId, out var instance) ||
+                instance == null ||
+                !instance.IsRunning ||
+                instance.Process == null ||
+                instance.Process.HasExited)
             {
                 ConsoleLogging.LogWarning($"User {username} tried to view logs for {serverId} but it has not been started!", "ServerControls");
                 context.Response.StatusCode = 404;
