@@ -186,6 +186,7 @@ namespace serverplatform
             };
 
             process.Start();
+            AppendLog(instance, "[SERVER PLATFORM] Server process started.");
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
         }
