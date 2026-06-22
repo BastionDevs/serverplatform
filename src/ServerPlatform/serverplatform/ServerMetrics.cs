@@ -163,12 +163,14 @@ namespace serverplatform
                 ServerControls.TryGetInstance(serverId, out var server);
 
                 var metrics = server.Metrics.GetSnapshot();
+                bool running = server.IsRunning && server.Process != null && !server.Process.HasExited;
 
                 ApiHandler.RespondJson(
                     context,
                     JObject.FromObject(new
                     {
                         success = true,
+                        running = running,
                         cpu = metrics.CpuPercent,
                         memory = metrics.MemoryBytes,
                         memoryMB = metrics.MemoryMB
