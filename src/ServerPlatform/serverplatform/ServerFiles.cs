@@ -588,7 +588,7 @@ namespace serverplatform
                 ApiHandler.RespondJson(context,
                     "{\"success\":false,\"error\":\"fileNotFound\"}");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 context.Response.StatusCode = 500;
                 ApiHandler.RespondJson(context,
@@ -638,7 +638,7 @@ namespace serverplatform
                 ApiHandler.RespondJson(context,
                     "{\"success\":true}");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 context.Response.StatusCode = 500;
                 ApiHandler.RespondJson(context,
@@ -692,7 +692,7 @@ namespace serverplatform
                 ApiHandler.RespondJson(context,
                     "{\"success\":true}");
             }
-            catch (IOException ex)
+            catch (IOException)
             {
                 context.Response.StatusCode = 409;
                 ApiHandler.RespondJson(context,
