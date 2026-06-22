@@ -5,6 +5,8 @@ namespace serverplatform
 {
     internal class ConsoleLogging
     {
+        private static readonly object LogLock = new object();
+
         private static readonly string LogDir = Path.Combine(Environment.CurrentDirectory, "logs");
 
         private static readonly string LogFile =
@@ -46,8 +48,6 @@ namespace serverplatform
         // Internal logging logic
         private static void WriteLog(string message, string component, string level, ConsoleColor color)
         {
-            LogDirCheck();
-
             var timestamp = $"[{DateTime.Now:HH:mm:ss}]";
 
             string prefix = null;
@@ -67,12 +67,28 @@ namespace serverplatform
                 ? $"{timestamp} {prefix} {message}"
                 : $"{timestamp} {message}";
 
-            using (var sw = new StreamWriter(LogFile, true))
+            lock (LogLock)
             {
-                Console.ForegroundColor = color;
-                sw.WriteLine(fullMessage);
-                Console.WriteLine(fullMessage);
-                Console.ForegroundColor = ConsoleColor.Gray;
+                try
+                {
+                    LogDirCheck();
+                    File.AppendAllText(LogFile, fullMessage + Environment.NewLine);
+                }
+                catch
+                {
+                    // Logging must never break an API request.
+                }
+
+                try
+                {
+                    Console.ForegroundColor = color;
+                    Console.WriteLine(fullMessage);
+                    Console.ForegroundColor = ConsoleColor.Gray;
+                }
+                catch
+                {
+                    // A detached console must not break the backend either.
+                }
             }
         }
 
