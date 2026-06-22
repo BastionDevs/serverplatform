@@ -160,7 +160,21 @@ namespace serverplatform
 
             try
             {
-                ServerControls.TryGetInstance(serverId, out var server);
+                if (!ServerControls.TryGetInstance(serverId, out var server) || server == null)
+                {
+                    ApiHandler.RespondJson(
+                        context,
+                        JObject.FromObject(new
+                        {
+                            success = true,
+                            running = false,
+                            cpu = 0,
+                            memory = 0,
+                            memoryMB = 0
+                        }).ToString()
+                    );
+                    return;
+                }
 
                 var metrics = server.Metrics.GetSnapshot();
                 bool running = server.IsRunning && server.Process != null && !server.Process.HasExited;
