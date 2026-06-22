@@ -1,0 +1,81 @@
+@page "/servers/{Id}/files"
+@inject ServerApiClient Api
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IJSRuntime Js
+
+<SessionGuard>
+    <MudBreadcrumbs Items="_breadcrumbs" />
+    <div class="d-flex align-center mb-4"><MudText Typo="Typo.h3">Files</MudText><MudSpacer /><MudIconButton Icon="@Icons.Material.Filled.Refresh" OnClick="LoadFiles" /></div>
+    <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-4">Some operations on this screen use backend routes with known authorization and path-safety gaps. See DEVNOTES.md before exposing the panel to untrusted users.</MudAlert>
+    <MudPaper Class="pa-4 mb-4">
+        <div class="d-flex gap-2 align-center flex-wrap">
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward" Disabled="@(string.IsNullOrEmpty(_path))" OnClick="GoUp" />
+            <MudTextField @bind-Value="_newFileName" Label="New text file name" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            <MudButton OnClick="CreateFile" Disabled="@string.IsNullOrWhiteSpace(_newFileName)">New file</MudButton>
+            <MudTextField @bind-Value="_newFolderName" Label="New folder name" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            <MudButton OnClick="CreateDirectory" Disabled="@string.IsNullOrWhiteSpace(_newFolderName)">New folder</MudButton>
+        </div>
+        <div class="d-flex gap-2 align-center flex-wrap mt-3">
+            <InputFile OnChange="UploadFile" disabled="@_uploading" />
+            <MudCheckBox @bind-Value="_overwriteUpload" Label="Overwrite existing file" />
+            <MudCheckBox @bind-Value="_recursive" Label="List subfolders recursively" />
+            @if (_uploading) { <MudProgressCircular Size="Size.Small" Indeterminate="true" /> }
+        </div>
+        <MudText Typo="Typo.caption">/@_path</MudText>
+    </MudPaper>
+    @if (_loading) { <MudProgressLinear Indeterminate="true" /> }
+    else
+    {
+        <MudTable Items="_entries" Hover="true" Dense="true">
+            <HeaderContent><MudTh>Name</MudTh><MudTh>Size</MudTh><MudTh>Modified</MudTh><MudTh></MudTh></HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Name"><MudButton Variant="Variant.Text" StartIcon="@(context.IsDirectory ? Icons.Material.Filled.Folder : Icons.Material.Filled.Description)" OnClick="() => OpenEntry(context)">@context.Name</MudButton></MudTd>
+                <MudTd DataLabel="Size">@(context.IsDirectory ? "—" : FormatSize(context.Size))</MudTd>
+                <MudTd DataLabel="Modified">@context.Modified.ToLocalTime().ToString("g")</MudTd>
+                <MudTd>
+                    @if (!context.IsDirectory) { <MudIconButton Icon="@Icons.Material.Filled.Download" OnClick="() => DownloadEntry(context)" /> }
+                    <MudIconButton Icon="@Icons.Material.Filled.DriveFileRenameOutline" OnClick="() => MoveEntry(context)" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => DeleteEntry(context)" />
+                </MudTd>
+            </RowTemplate>
+            <NoRecordsContent><MudText Class="pa-4">This folder is empty.</MudText></NoRecordsContent>
+        </MudTable>
+    }
+    @if (_editingPath is not null)
+    {
+        <MudPaper Class="pa-4 mt-4">
+            <div class="d-flex align-center"><MudText Typo="Typo.h6">@_editingPath</MudText><MudSpacer /><MudButton OnClick="CloseEditor">Close</MudButton><MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveFile">Save</MudButton></div>
+            <MudTextField @bind-Value="_content" Lines="20" FullWidth="true" Variant="Variant.Outlined" Class="mt-3 file-editor" />
+        </MudPaper>
+    }
+</SessionGuard>
+
+@code {
+    [Parameter] public string Id { get; set; } = "";
+    private List<FileEntry> _entries = [];
+    private List<BreadcrumbItem> _breadcrumbs = [];
+    private string _path = "";
+    private string _newFileName = "";
+    private string _newFolderName = "";
+    private string? _editingPath;
+    private string _content = "";
+    private bool _loading;
+    private bool _uploading;
+    private bool _overwriteUpload;
+    private bool _recursive;
+    protected override async Task OnInitializedAsync() { _breadcrumbs = [new("Dashboard", "/dashboard"), new("Server", $"/servers/{Id}"), new("Files", null, true)]; await LoadFiles(); }
+    private async Task LoadFiles() { _loading = true; try { _entries = await Api.ListFilesAsync(Id, _path, _recursive); } catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); } finally { _loading = false; } }
+    private async Task OpenEntry(FileEntry entry) { if (entry.IsDirectory) { _path = entry.Path; _editingPath = null; await LoadFiles(); } else { _editingPath = entry.Path; try { _content = await Api.ReadFileAsync(Id, entry.Path); } catch { _editingPath = null; Snackbar.Add("This file could not be opened as text.", Severity.Error); } } }
+    private async Task GoUp() { _path = _path.Replace('\\', '/'); var split = _path.LastIndexOf('/'); _path = split < 0 ? "" : _path[..split]; _editingPath = null; await LoadFiles(); }
+    private async Task CreateFile() { var path = CombinePath(_path, _newFileName.Trim()); var result = await Api.WriteFileAsync(Id, path, ""); if (result.Success) { _newFileName = ""; _editingPath = path; _content = ""; await LoadFiles(); } else Snackbar.Add($"Create failed: {result.Error}", Severity.Error); }
+    private async Task CreateDirectory() { var path = CombinePath(_path, _newFolderName.Trim()); var result = await Api.CreateDirectoryAsync(Id, path); if (result.Success) { _newFolderName = ""; await LoadFiles(); } else Snackbar.Add($"Folder creation failed: {result.Error}", Severity.Error); }
+    private async Task UploadFile(InputFileChangeEventArgs args) { _uploading = true; try { var result = await Api.UploadFileAsync(Id, _path, args.File, _overwriteUpload); Snackbar.Add(result.Success ? $"Uploaded {args.File.Name}." : $"Upload failed: {result.Error}", result.Success ? Severity.Success : Severity.Error); if (result.Success) await LoadFiles(); } catch (Exception ex) { Snackbar.Add($"Upload failed: {ex.Message}", Severity.Error); } finally { _uploading = false; } }
+    private async Task DownloadEntry(FileEntry entry) { try { var file = await Api.DownloadFileAsync(Id, entry.Path); await Js.InvokeVoidAsync("fileDownloads.save", file.FileName, file.ContentType, file.Content); } catch (Exception ex) { Snackbar.Add($"Download failed: {ex.Message}", Severity.Error); } }
+    private async Task MoveEntry(FileEntry entry) { var parameters = new DialogParameters<MoveEntryDialog> { { x => x.Source, entry.Path } }; var dialog = await DialogService.ShowAsync<MoveEntryDialog>("Move or rename", parameters); var dialogResult = await dialog.Result; if (dialogResult is not { Canceled: false, Data: MoveEntryDialog.MoveEntryResult move }) return; var result = await Api.MoveFileAsync(Id, entry.Path, move.Destination, move.Overwrite); if (result.Success) { if (_editingPath == entry.Path) _editingPath = move.Destination; await LoadFiles(); } else Snackbar.Add($"Move failed: {result.Error}", Severity.Error); }
+    private async Task SaveFile() { if (_editingPath is null) return; var result = await Api.WriteFileAsync(Id, _editingPath, _content); Snackbar.Add(result.Success ? "File saved." : $"Save failed: {result.Error}", result.Success ? Severity.Success : Severity.Error); }
+    private void CloseEditor() => _editingPath = null;
+    private async Task DeleteEntry(FileEntry entry) { var confirmed = await DialogService.ShowMessageBox("Delete entry", $"Delete {entry.Name}{(entry.IsDirectory ? " and everything inside it" : "")}?", yesText: "Delete", cancelText: "Cancel"); if (confirmed != true) return; var result = await Api.DeleteFileAsync(Id, entry.Path); if (result.Success) { if (_editingPath == entry.Path) _editingPath = null; await LoadFiles(); } else Snackbar.Add($"Delete failed: {result.Error}", Severity.Error); }
+    private static string CombinePath(string folder, string name) => string.IsNullOrEmpty(folder) ? name : $"{folder.TrimEnd('/', '\\')}/{name}";
+    private static string FormatSize(long size) => size >= 1_048_576 ? $"{size / 1_048_576d:0.0} MB" : size >= 1024 ? $"{size / 1024d:0.0} KB" : $"{size} B";
+}

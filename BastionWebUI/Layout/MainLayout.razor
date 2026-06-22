@@ -14,28 +14,23 @@
         <MudSpacer/>
 
 
-        <MudMenu Icon="@Icons.Material.Filled.AccountCircle"
-                 Color="Color.Default"
-                 AriaLabel="Open user menu">
-            <MudMenuItem Label="My account"/>
-            <MudMenuItem Label="Logout" Href="/logout"/>
-            <MudMenuItem Label="Support"/>
-        </MudMenu>
+        <MudButton Href="/backend" Color="Color.Inherit" StartIcon="@Icons.Material.Filled.Info">Backend</MudButton>
+        <MudButton Href="/logout" Color="Color.Inherit" StartIcon="@Icons.Material.Filled.Logout">Logout</MudButton>
     </MudAppBar>
 
     <!-- Drawer -->
     <MudDrawer @bind-Open="@_drawerOpen" Elevation="1" Variant="DrawerVariant.Responsive">
         <MudDrawerHeader>
-            <MudText Typo="Typo.h6">My App</MudText>
+            <MudText Typo="Typo.h6">Server Platform</MudText>
         </MudDrawerHeader>
         <MudNavMenu>
-            <MudNavLink Match="NavLinkMatch.All" Href="/home">Servers</MudNavLink>
-            <MudNavLink Match="NavLinkMatch.All" Href="/dashboard">Dashboard</MudNavLink>
+            <MudNavLink Match="NavLinkMatch.Prefix" Href="/dashboard" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
+            <MudNavLink Match="NavLinkMatch.All" Href="/backend" Icon="@Icons.Material.Filled.Info">Backend</MudNavLink>
         </MudNavMenu>
     </MudDrawer>
 
     <!-- Main Content -->
-    <MudMainContent Class="pt-16 px-16">
+    <MudMainContent Class="pt-16 panel-content">
         @Body
     </MudMainContent>
 </MudLayout>

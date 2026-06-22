@@ -8,6 +8,9 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddScoped<StorageService>();
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<ServerApiClient>();
+builder.Services.AddScoped<PublicApiClient>();
 builder.Services.AddScoped<MinecraftVersionService>();
 
 
@@ -16,7 +19,7 @@ builder.Services.AddMudServices();
 
 builder.Services.AddScoped(sp => new HttpClient
 {
-    BaseAddress = new Uri("http://localhost:5678/")
+    BaseAddress = new Uri(builder.Configuration["BackendUrl"] ?? "http://localhost:5678/")
 });
 
 await builder.Build().RunAsync();

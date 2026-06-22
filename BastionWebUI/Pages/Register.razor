@@ -3,7 +3,7 @@
 @inject HttpClient Http
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
-@inject StorageService StorageService
+@inject AuthService Auth
 
 <MudText Typo="Typo.h3" GutterBottom="true">Register</MudText>
 
@@ -75,8 +75,6 @@
 
     private async Task HandleRegister()
     {
-        Console.WriteLine("task called!"); // Debug, Can remove once no longer needed 
-
         if (_form is null)
         {
             Snackbar.Add("Form is not initialized.", Severity.Error);
@@ -166,11 +164,9 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var storedToken = await StorageService.GetItemAsync("jwtToken");
-        if (!string.IsNullOrEmpty(storedToken))
+        if (await Auth.IsAuthenticatedAsync())
         {
-            Snackbar.Add("You are already logged in!", Severity.Error);
-            NavigationManager.NavigateTo("/dashboard");
+            NavigationManager.NavigateTo("/dashboard", replace: true);
         }
     }
 

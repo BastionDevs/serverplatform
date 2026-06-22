@@ -1,0 +1,25 @@
+@inject AuthService Auth
+@inject NavigationManager Navigation
+
+@if (_ready && _authenticated)
+{
+    @ChildContent
+}
+else if (!_ready)
+{
+    <div class="d-flex justify-center pa-8"><MudProgressCircular Indeterminate="true" /></div>
+}
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    private bool _ready;
+    private bool _authenticated;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _authenticated = await Auth.IsAuthenticatedAsync();
+        _ready = true;
+        if (!_authenticated)
+            Navigation.NavigateTo("/login", replace: true);
+    }
+}

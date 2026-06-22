@@ -1,59 +1,16 @@
-﻿@page "/logout"
-@using System.Net.Http.Headers
-@inject IJSRuntime Js
-@inject HttpClient Http
+@page "/logout"
+@inject AuthService Auth
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
-@layout MainLayout
 
-
-<h3>Logging out...</h3>
+<MudProgressCircular Indeterminate="true" />
+<MudText Class="mt-2">Signing out…</MudText>
 
 @code {
-
     protected override async Task OnInitializedAsync()
     {
-        // Retrieve JWT token from localStorage
-        var token = await Js.InvokeAsync<string>("localStorage.getItem", "jwtToken");
-
-        if (string.IsNullOrEmpty(token))
-        {
-            // No token, redirect to login page
-            Navigation.NavigateTo("/login");
-            return;
-        }
-
-        // Prepare the HTTP request
-        var requestMessage = new HttpRequestMessage(HttpMethod.Post, "/auth/logout");
-        requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-        // Send the request to log out
-        var response = await Http.SendAsync(requestMessage);
-
-        if (response.IsSuccessStatusCode)
-        {
-            // Remove the JWT token from localStorage
-            await Js.InvokeVoidAsync("localStorage.removeItem", "jwtToken");
-
-            // Redirect the user to the login page or another page
-            Navigation.NavigateTo("/login");
-
-            Snackbar.Add("Logout Successful!", Severity.Info);
-        }
-        else
-        {
-            // Handle logout failure
-            var errorResponse = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"Logout failed: {errorResponse}");
-
-            // Delete JWT Token Anyway incase backend fails lol
-            await Js.InvokeVoidAsync("localStorage.removeItem", "jwtToken");
-            Navigation.NavigateTo("/login");
-
-            Snackbar.Add("Token Deleted, but there is a bug! Inform Dev!", Severity.Warning);
-
-            Navigation.NavigateTo("/error");
-        }
+        await Auth.LogoutAsync();
+        Snackbar.Add("Logged out.", Severity.Info);
+        Navigation.NavigateTo("/login", replace: true);
     }
-
 }

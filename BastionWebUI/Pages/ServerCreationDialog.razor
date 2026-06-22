@@ -1,146 +1,177 @@
 @inject MinecraftVersionService VersionService
+@inject ISnackbar Snackbar
 
 <MudDialog>
     <DialogContent>
         <MudStack Spacing="2">
-
-            @if (_currentStep == 0)
+            @if (_step == 0)
             {
-                <MudText Typo="Typo.h6">1. Select a Server Software</MudText>
-                <MudSelect T="string" Label="Select Server Software" @bind-Value="_selectedSoftware"
-                           Variant="Variant.Filled" Required="true">
-                    @foreach (var software in _serverSoftwareOptions)
-                    {
-                        <MudSelectItem Value="@software">@software</MudSelectItem>
-                    }
-                </MudSelect>
+                <MudText Typo="Typo.h6">Choose server software</MudText>
+                <div class="sp-select-field">
+                    <label for="server-software">Software</label>
+                    <select id="server-software" class="sp-native-select" @bind="_software" required>
+                        <option value="">Select server software…</option>
+                        @foreach (var option in _softwareOptions) { <option value="@option">@option</option> }
+                    </select>
+                </div>
             }
-            else if (_currentStep == 1)
+            else if (_step == 1)
             {
-                <MudText Typo="Typo.h6">Select a Server Version</MudText>
-                <MudSelect T="string" Label="Select Server Version" @bind-Value="_selectedVersion"
-                           Variant="Variant.Filled" Required="true">
-                    @foreach (var version in _serverVersionOptions)
-                    {
-                        <MudSelectItem Value="@version">@version</MudSelectItem>
-                    }
-                </MudSelect>
+                <MudText Typo="Typo.h6">Choose a version</MudText>
+                @if (_loading)
+                {
+                    <MudProgressLinear Indeterminate="true" />
+                }
+                @if (UsesImportedJar)
+                {
+                    <MudTextField @bind-Value="_version" Label="Imported JAR version" Variant="Variant.Filled" Required="true"
+                                  HelperText="Enter the version identifier used when the JAR was imported into SpigotStor." />
+                }
+                else
+                {
+                    <div class="sp-select-field">
+                        <label for="minecraft-version">Minecraft version</label>
+                        <select id="minecraft-version" class="sp-native-select" value="@(_version ?? "")" @onchange="VersionChanged" disabled="@_loading" required>
+                            <option value="">Select Minecraft version…</option>
+                            @foreach (var option in _versions) { <option value="@option">@option</option> }
+                        </select>
+                    </div>
+                }
+                @if (NeedsBuild)
+                {
+                    <div class="sp-select-field">
+                        <label for="server-build">Build</label>
+                        <select id="server-build" class="sp-native-select" @bind="_build" disabled="@(_loading || string.IsNullOrWhiteSpace(_version))" required>
+                            <option value="">Select build…</option>
+                            @foreach (var option in _builds) { <option value="@option">@option</option> }
+                        </select>
+                    </div>
+                }
             }
-            else if (_currentStep == 2)
+            else if (_step == 2)
             {
-                <MudText Typo="Typo.h6">Additional details</MudText>
-                <MudTextField @bind-Value="_serverName" Label="Server Name" Variant="Variant.Filled" Required="true"/>
-                <MudTextField @bind-Value="_minRam" Label="Minimum RAM (e.g., 1024 MB)" Variant="Variant.Filled"
-                              Required="true"/>
-                <MudTextField @bind-Value="_maxRam" Label="Maximum RAM (e.g., 4096 MB)" Variant="Variant.Filled"
-                              Required="true"/>
+                <MudText Typo="Typo.h6">Server details</MudText>
+                <MudTextField @bind-Value="_name" Label="Server name" Variant="Variant.Filled" Required="true" />
+                <MudTextField @bind-Value="_description" Label="Description" Variant="Variant.Filled" Lines="2" />
+                <MudGrid>
+                    <MudItem xs="6"><MudNumericField T="int" @bind-Value="_minRam" Label="Minimum RAM (MB)" Min="512" Variant="Variant.Filled" /></MudItem>
+                    <MudItem xs="6"><MudNumericField T="int" @bind-Value="_maxRam" Label="Maximum RAM (MB)" Min="512" Variant="Variant.Filled" /></MudItem>
+                    <MudItem xs="6">
+                        <div class="sp-select-field">
+                            <label for="java-version">Java version</label>
+                            <select id="java-version" class="sp-native-select" @bind="_javaVersion">
+                                @foreach (var version in _javaVersions)
+                                {
+                                    <option value="@version.Value">@version.Label</option>
+                                }
+                            </select>
+                        </div>
+                    </MudItem>
+                    <MudItem xs="6">
+                        <div class="sp-select-field"><label for="java-vendor">Java vendor</label><select id="java-vendor" class="sp-native-select" @bind="_javaVendor"><option value="Temurin">Temurin</option><option value="Zulu">Zulu</option><option value="Liberica">Liberica</option></select></div>
+                    </MudItem>
+                </MudGrid>
             }
-            else if (_currentStep == 3)
+            else
             {
-                <MudText Typo="Typo.subtitle1">Please confirm the details:</MudText>
-                <MudText><b>Software:</b> @_selectedSoftware</MudText>
-                <MudText><b>Version:</b> @_selectedVersion</MudText>
-                <MudText><b>Name:</b> @_serverName</MudText>
-                <MudText><b>Min RAM:</b> @_minRam MB</MudText>
-                <MudText><b>Max RAM:</b> @_maxRam MB</MudText>
+                <MudText Typo="Typo.h6">Confirm server</MudText>
+                <MudList T="string" Dense="true">
+                    <MudListItem>Software: @_software @_versionDisplay</MudListItem>
+                    <MudListItem>Name: @_name</MudListItem>
+                    <MudListItem>Memory: @_minRam–@_maxRam MB</MudListItem>
+                    <MudListItem>Runtime: @_javaVendor Java @_javaVersion</MudListItem>
+                </MudList>
             }
         </MudStack>
     </DialogContent>
-
     <DialogActions>
-        @if (_currentStep > 0)
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        @if (_step > 0) { <MudButton OnClick="Back">Back</MudButton> }
+        @if (_step < 3)
         {
-            <MudButton OnClick="Back" Color="Color.Secondary">Back</MudButton>
-        }
-
-        @if (_currentStep < 3)
-        {
-            <MudButton OnClick="Next" Disabled="@IsCurrentStepInvalid" Color="Color.Primary">Next</MudButton>
+            <MudButton OnClick="Next" Color="Color.Primary" Disabled="IsInvalid">Next</MudButton>
         }
         else
         {
-            <MudButton OnClick="Create" Disabled="@IsCreateDisabled" Color="Color.Primary">Create</MudButton>
+            <MudButton OnClick="Create" Color="Color.Primary" Variant="Variant.Filled">Create</MudButton>
         }
     </DialogActions>
 </MudDialog>
 
-
 @code {
-    [CascadingParameter] IMudDialogInstance? MudDialog { get; set; }
+    [CascadingParameter] private IMudDialogInstance? MudDialog { get; set; }
+    private readonly string[] _softwareOptions = ["Paper", "Vanilla", "Velocity", "Spigot", "Bukkit"];
+    private readonly (string Value, string Label)[] _javaVersions =
+    [
+        ("8", "Java 8 — legacy servers"),
+        ("11", "Java 11 — LTS"),
+        ("16", "Java 16 — Minecraft 1.17"),
+        ("17", "Java 17 — LTS / Minecraft 1.18–1.20.4"),
+        ("21", "Java 21 — LTS / modern Minecraft"),
+        ("25", "Java 25 — LTS")
+    ];
+    private List<string> _versions = [];
+    private List<string> _builds = [];
+    private int _step;
+    private bool _loading;
+    private string? _software;
+    private string? _version;
+    private string? _build;
+    private string? _name;
+    private string? _description;
+    private int _minRam = 1024;
+    private int _maxRam = 4096;
+    private string _javaVersion = "21";
+    private string _javaVendor = "Temurin";
 
-    private int _currentStep;
-
-    private string? _serverName;
-    private string? _selectedSoftware;
-    private string? _selectedVersion;
-    private string? _minRam;
-    private string? _maxRam;
-
-    private readonly string[] _serverSoftwareOptions = { "Paper", "Spigot", "Vanilla", "Fabric" };
-    private List<string> _serverVersionOptions = new();
-    private bool _isLoadingVersions;
-
-    private bool IsCreateDisabled =>
-        string.IsNullOrWhiteSpace(_serverName) ||
-        string.IsNullOrWhiteSpace(_selectedSoftware) ||
-        string.IsNullOrWhiteSpace(_selectedVersion) ||
-        string.IsNullOrWhiteSpace(_minRam) ||
-        string.IsNullOrWhiteSpace(_maxRam);
-
-    private bool IsCurrentStepInvalid =>
-        (_currentStep == 0 && string.IsNullOrWhiteSpace(_selectedSoftware)) ||
-        (_currentStep == 1 && (string.IsNullOrWhiteSpace(_selectedVersion) || _isLoadingVersions)) ||
-        (_currentStep == 2 && (string.IsNullOrWhiteSpace(_serverName) || string.IsNullOrWhiteSpace(_minRam) || string.IsNullOrWhiteSpace(_maxRam)));
+    private bool NeedsBuild => _software is "Paper" or "Velocity";
+    private bool UsesImportedJar => _software is "Spigot" or "Bukkit";
+    private string _versionDisplay => NeedsBuild ? $"{_version} build {_build}" : _version ?? "";
+    private bool IsInvalid => _step switch
+    {
+        0 => string.IsNullOrWhiteSpace(_software),
+        1 => _loading || string.IsNullOrWhiteSpace(_version) || NeedsBuild && string.IsNullOrWhiteSpace(_build),
+        2 => string.IsNullOrWhiteSpace(_name) || _minRam < 512 || _maxRam < _minRam,
+        _ => false
+    };
 
     private async Task Next()
     {
-        if (_currentStep == 0 && !string.IsNullOrWhiteSpace(_selectedSoftware))
+        if (_step == 0)
         {
-            _isLoadingVersions = true;
-            _serverVersionOptions.Clear();
-
-            try
+            _version = null;
+            _build = null;
+            _versions.Clear();
+            if (!UsesImportedJar)
             {
-                _serverVersionOptions = await VersionService.GetVersionsAsync(_selectedSoftware);
+                _loading = true;
+                try { _versions = await VersionService.GetVersionsAsync(_software!); }
+                catch { Snackbar.Add("Could not load versions from the upstream project.", Severity.Error); }
+                finally { _loading = false; }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Failed to load versions: {ex.Message}");
-            }
-
-            _isLoadingVersions = false;
         }
-
-        if (_currentStep < 3)
-            _currentStep++;
+        if (!IsInvalid) _step++;
     }
 
-    private void Back()
+    private async Task VersionChanged(ChangeEventArgs args)
     {
-        if (_currentStep > 0)
-            _currentStep--;
+        var value = args.Value?.ToString();
+        _version = value;
+        _build = null;
+        _builds.Clear();
+        if (!NeedsBuild || string.IsNullOrWhiteSpace(value)) return;
+        _loading = true;
+        try { _builds = await VersionService.GetBuildsAsync(_software!, value); }
+        catch { Snackbar.Add("Could not load builds for that version.", Severity.Error); }
+        finally { _loading = false; }
     }
 
-    private void Create()
+    private void Back() => _step--;
+    private void Cancel() => MudDialog?.Cancel();
+    private void Create() => MudDialog?.Close(DialogResult.Ok(new CreateServerRequest
     {
-        var result = new ServerCreationParams
-        {
-            Name = _serverName,
-            Software = _selectedSoftware,
-            Version = _selectedVersion,
-            MinRam = _minRam,
-            MaxRam = _maxRam
-        };
-
-        MudDialog?.Close(DialogResult.Ok(result));
-    }
-
-    public class ServerCreationParams
-    {
-        public string? Name { get; set; }
-        public string? Software { get; set; }
-        public string? Version { get; set; }
-        public string? MinRam { get; set; }
-        public string? MaxRam { get; set; }
-    }
+        ServerName = _name!, ServerDesc = _description ?? "", Software = _software!.ToLowerInvariant(),
+        Version = NeedsBuild ? $"{_version}/{_build}" : _version!, MinRam = _minRam.ToString(),
+        MaxRam = _maxRam.ToString(), JavaVer = _javaVersion, JavaVendor = _javaVendor, JavaType = "jre"
+    }));
 }

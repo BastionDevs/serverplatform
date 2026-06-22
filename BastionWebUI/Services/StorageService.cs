@@ -18,9 +18,9 @@ public class StorageService
         await _jsRuntime.InvokeVoidAsync("localStorage.setItem", key, value);
     }
 
-    public async Task<string> GetItemAsync(string key)
+    public async Task<string?> GetItemAsync(string key)
     {
-        return await _jsRuntime.InvokeAsync<string>("localStorage.getItem", key);
+        return await _jsRuntime.InvokeAsync<string?>("localStorage.getItem", key);
     }
 
     public async Task RemoveItemAsync(string key)

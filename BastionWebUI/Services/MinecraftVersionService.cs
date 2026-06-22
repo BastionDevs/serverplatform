@@ -20,7 +20,8 @@
             switch (software.ToLower())
             {
                 case "paper":
-                    return await GetPaperVersionsAsync();
+                case "velocity":
+                    return await GetPaperProjectVersionsAsync(software.ToLowerInvariant());
                 case "vanilla":
                     return await GetVanillaVersionsAsync();
                 default:
@@ -28,12 +29,18 @@
             }
         }
 
-        private async Task<List<string>> GetPaperVersionsAsync()
+        public async Task<List<string>> GetBuildsAsync(string software, string version)
         {
-            var response = await _http.GetStringAsync("https://api.papermc.io/v2/projects/paper");
+            var response = await _http.GetStringAsync($"https://api.papermc.io/v2/projects/{software.ToLowerInvariant()}/versions/{version}");
             var versionsObj = JObject.Parse(response);
-            var versionsArray = versionsObj.Value<JArray>("versions");
-            return versionsArray?.ToObject<List<string>>() ?? new List<string>();
+            return versionsObj.Value<JArray>("builds")?.Select(x => x.ToString()).Reverse().ToList() ?? new();
+        }
+
+        private async Task<List<string>> GetPaperProjectVersionsAsync(string project)
+        {
+            var response = await _http.GetStringAsync($"https://api.papermc.io/v2/projects/{project}");
+            var versionsObj = JObject.Parse(response);
+            return versionsObj.Value<JArray>("versions")?.Select(x => x.ToString()).Reverse().ToList() ?? new();
         }
 
         private async Task<List<string>> GetVanillaVersionsAsync()

@@ -1,0 +1,148 @@
+@page "/servers/{Id}"
+@inject ServerApiClient Api
+@inject NavigationManager Navigation
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@implements IAsyncDisposable
+
+<SessionGuard>
+    @if (_server is null)
+    {
+        <MudProgressLinear Indeterminate="true" />
+    }
+    else
+    {
+        <MudBreadcrumbs Items="_breadcrumbs" />
+        <div class="d-flex align-center mb-5">
+            <div><MudText Typo="Typo.h3">@_server.Name</MudText><MudText Color="Color.Secondary">@_server.Software · @_server.Id</MudText></div>
+            <MudSpacer />
+            <MudChip T="string" Color="@StatusColor">@StatusText</MudChip>
+        </div>
+        <MudGrid>
+            <MudItem xs="12" md="8">
+                <MudPaper Class="pa-5 mb-4">
+                    <MudText Typo="Typo.h6" Class="mb-3">Controls</MudText>
+                    <div class="d-flex flex-wrap gap-3">
+                        <MudButton Color="Color.Success" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.PlayArrow" Disabled="@(_server.IsOnline || _busy)" OnClick="Start">Start</MudButton>
+                        <MudButton Color="Color.Error" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Stop" Disabled="@(!_server.IsOnline || _busy)" OnClick="Stop">Stop</MudButton>
+                        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.RestartAlt" Disabled="@(!_server.IsOnline || _busy)" OnClick="Restart">Restart</MudButton>
+                    </div>
+                </MudPaper>
+                <MudGrid>
+                    <MudItem xs="12" sm="6"><MudCard Class="feature-card" @onclick="OpenConsole"><MudCardContent><MudIcon Icon="@Icons.Material.Filled.Terminal" Size="Size.Large" /><MudText Typo="Typo.h6">Console</MudText><MudText>Live output and server commands</MudText></MudCardContent></MudCard></MudItem>
+                    <MudItem xs="12" sm="6"><MudCard Class="feature-card" @onclick="OpenFiles"><MudCardContent><MudIcon Icon="@Icons.Material.Filled.FolderOpen" Size="Size.Large" /><MudText Typo="Typo.h6">Files</MudText><MudText>Browse and edit server files</MudText></MudCardContent></MudCard></MudItem>
+                </MudGrid>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudPaper Class="pa-5 mb-4"><MudText Typo="Typo.h6">Live metrics</MudText><MudText Typo="Typo.h4" Class="mt-3">@(_server.IsOnline ? _server.Metrics?.Cpu.ToString("0.0") : "—")@(_server.IsOnline ? "%" : "")</MudText><MudText>CPU usage</MudText><MudText Typo="Typo.h4" Class="mt-3">@(_server.IsOnline ? _server.Metrics?.MemoryMB.ToString() : "—")@(_server.IsOnline ? " MB" : "")</MudText><MudText>Memory usage</MudText></MudPaper>
+                <MudButton FullWidth="true" Variant="Variant.Text" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" OnClick="Delete">Delete server</MudButton>
+            </MudItem>
+        </MudGrid>
+    }
+</SessionGuard>
+
+@code {
+    [Parameter] public string Id { get; set; } = "";
+    private ServerInfo? _server;
+    private bool _busy;
+    private string? _lifecycleStatus;
+    private readonly CancellationTokenSource _cts = new();
+    private List<BreadcrumbItem> _breadcrumbs = [];
+    protected override async Task OnInitializedAsync()
+    {
+        _breadcrumbs = [new("Dashboard", "/dashboard"), new("Server", null, true)];
+        var servers = await Api.GetServersAsync();
+        _server = servers.FirstOrDefault(x => x.Id.Equals(Id, StringComparison.OrdinalIgnoreCase));
+        if (_server is null) { Snackbar.Add("Server not found.", Severity.Error); Navigation.NavigateTo("/dashboard"); return; }
+        await RefreshMetricsAsync();
+        _ = MonitorMetricsAsync();
+    }
+    private string StatusText => _lifecycleStatus ?? (_server?.IsOnline == true ? "Online" : "Offline");
+    private Color StatusColor => _lifecycleStatus is not null ? Color.Warning : _server?.IsOnline == true ? Color.Success : Color.Default;
+    private Task Start() => RunLifecycleAction(Api.StartAsync, "Starting", true, TimeSpan.FromSeconds(20));
+    private Task Stop() => RunLifecycleAction(Api.StopAsync, "Stopping", false, TimeSpan.FromSeconds(40));
+    private async Task Restart()
+    {
+        if (_server is null) return;
+        _busy = true; _lifecycleStatus = "Restarting";
+        try
+        {
+            var result = await Api.RestartAsync(Id);
+            Snackbar.Add(result.Success ? "Server restarting." : $"Action failed: {result.Error}", result.Success ? Severity.Info : Severity.Error);
+            if (result.Success && !await WaitForRestartAsync(TimeSpan.FromSeconds(50)))
+                Snackbar.Add("Restart is still in progress. Status polling will continue.", Severity.Warning);
+        }
+        finally { _lifecycleStatus = null; _busy = false; }
+    }
+    private void OpenConsole() => Navigation.NavigateTo($"/servers/{Id}/console");
+    private void OpenFiles() => Navigation.NavigateTo($"/servers/{Id}/files");
+    private async Task RunLifecycleAction(Func<string, Task<ApiResult>> action, string status, bool expectedOnline, TimeSpan timeout)
+    {
+        if (_server is null) return;
+        _busy = true; _lifecycleStatus = status;
+        try
+        {
+            var result = await action(Id);
+            Snackbar.Add(result.Success ? $"Server {status.ToLowerInvariant()}." : $"Action failed: {result.Error}", result.Success ? Severity.Info : Severity.Error);
+            if (result.Success && !await WaitForStateAsync(expectedOnline, timeout))
+                Snackbar.Add($"The server has not finished {status.ToLowerInvariant()}. Status polling will continue.", Severity.Warning);
+        }
+        finally { _lifecycleStatus = null; _busy = false; }
+    }
+
+    private async Task<bool> WaitForStateAsync(bool expectedOnline, TimeSpan timeout)
+    {
+        var deadline = DateTime.UtcNow + timeout;
+        while (DateTime.UtcNow < deadline && !_cts.IsCancellationRequested)
+        {
+            await RefreshMetricsAsync();
+            if (_server?.IsOnline == expectedOnline) return true;
+            await Task.Delay(1000, _cts.Token);
+        }
+        return false;
+    }
+
+    private async Task<bool> WaitForRestartAsync(TimeSpan timeout)
+    {
+        var deadline = DateTime.UtcNow + timeout;
+        var observedOffline = false;
+        while (DateTime.UtcNow < deadline && !_cts.IsCancellationRequested)
+        {
+            await RefreshMetricsAsync();
+            if (_server?.IsOnline == false) observedOffline = true;
+            if (observedOffline && _server?.IsOnline == true) return true;
+            await Task.Delay(500, _cts.Token);
+        }
+        return false;
+    }
+
+    private async Task RefreshMetricsAsync()
+    {
+        if (_server is not null)
+            _server.Metrics = await Api.GetMetricsAsync(Id, _cts.Token);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task MonitorMetricsAsync()
+    {
+        try
+        {
+            while (!_cts.IsCancellationRequested)
+            {
+                await Task.Delay(2000, _cts.Token);
+                if (!_busy) await RefreshMetricsAsync();
+            }
+        }
+        catch (OperationCanceledException) { }
+        catch { /* A manual action or navigation will surface API failures. */ }
+    }
+    private async Task Delete()
+    {
+        var confirmed = await DialogService.ShowMessageBox("Delete server", $"Permanently delete {_server?.Name} and all of its files?", yesText: "Delete", cancelText: "Cancel");
+        if (confirmed != true) return;
+        var result = await Api.DeleteServerAsync(Id);
+        Snackbar.Add(result.Success ? "Server deleted." : $"Delete failed: {result.Error}", result.Success ? Severity.Success : Severity.Error);
+        if (result.Success) Navigation.NavigateTo("/dashboard");
+    }
+    public ValueTask DisposeAsync() { _cts.Cancel(); _cts.Dispose(); return ValueTask.CompletedTask; }
+}

@@ -1,0 +1,22 @@
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mb-3">Move or rename <strong>@Source</strong></MudText>
+        <MudTextField @bind-Value="_destination" Label="Destination path" Variant="Variant.Outlined" FullWidth="true" />
+        <MudCheckBox @bind-Value="_overwrite" Label="Overwrite an existing file" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Move" Disabled="@string.IsNullOrWhiteSpace(_destination)">Move</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance? MudDialog { get; set; }
+    [Parameter] public string Source { get; set; } = "";
+    private string _destination = "";
+    private bool _overwrite;
+    protected override void OnInitialized() => _destination = Source;
+    private void Cancel() => MudDialog?.Cancel();
+    private void Move() => MudDialog?.Close(DialogResult.Ok(new MoveEntryResult(_destination.Trim(), _overwrite)));
+    public sealed record MoveEntryResult(string Destination, bool Overwrite);
+}

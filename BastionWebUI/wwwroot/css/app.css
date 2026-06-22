@@ -18,3 +18,25 @@ html, body {
 .MudPaper {
     padding: 20px;
 }
+
+.panel-content { padding: 32px; }
+.stat-card { min-height: 125px; display: flex; flex-direction: column; justify-content: center; }
+.server-card { height: 100%; }
+.server-card-clickable { cursor: pointer; transition: transform .15s ease, box-shadow .15s ease; }
+.server-card-clickable:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(0,0,0,.14); }
+.empty-state { min-height: 240px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+.feature-card { height: 100%; cursor: pointer; transition: transform .15s ease, box-shadow .15s ease; }
+.feature-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+.console-shell { min-height: 420px; max-height: 65vh; overflow: auto; background: #101418 !important; color: #d6e2ea; font: 13px/1.55 Consolas, monospace; white-space: pre-wrap; }
+.file-editor textarea { font-family: Consolas, monospace; }
+.sp-select-field { display: flex; flex-direction: column; gap: 5px; width: 100%; }
+.sp-select-field label { color: rgba(0, 0, 0, .65); font-size: .75rem; }
+.sp-native-select { width: 100%; min-height: 52px; padding: 0 42px 0 12px; border: 0; border-bottom: 1px solid rgba(0, 0, 0, .42); border-radius: 4px 4px 0 0; background: #ececec; color: #222; font: inherit; cursor: pointer; }
+.sp-native-select:focus { outline: 2px solid var(--mud-palette-primary); outline-offset: -2px; }
+.sp-native-select:disabled { cursor: default; opacity: .6; }
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 12px; }
+
+@media (max-width: 600px) {
+    .panel-content { padding: 20px 12px; }
+}

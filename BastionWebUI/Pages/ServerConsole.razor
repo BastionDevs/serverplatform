@@ -1,0 +1,105 @@
+@page "/servers/{Id}/console"
+@inject ServerApiClient Api
+@inject ISnackbar Snackbar
+@inject IJSRuntime Js
+@implements IAsyncDisposable
+
+<SessionGuard>
+    <MudBreadcrumbs Items="_breadcrumbs" />
+    <div class="d-flex align-center mb-4"><MudText Typo="Typo.h3">Console</MudText><MudSpacer /><MudTooltip Text="@(_autoScroll ? "Disable auto-scroll" : "Enable auto-scroll")"><MudIconButton Icon="@(_autoScroll ? Icons.Material.Filled.VerticalAlignBottom : Icons.Material.Filled.Pause)" Color="@(_autoScroll ? Color.Primary : Color.Default)" OnClick="ToggleAutoScroll" /></MudTooltip><MudTooltip Text="Clear displayed output"><MudIconButton Icon="@Icons.Material.Filled.DeleteSweep" OnClick="ClearConsole" /></MudTooltip><MudChip T="string" Color="@(_connected ? Color.Success : Color.Default)">@(_connected ? "Connected" : "Disconnected")</MudChip></div>
+    @if (!string.IsNullOrWhiteSpace(_error)) { <MudAlert Severity="Severity.Warning" Class="mb-3">@_error</MudAlert> }
+    <div @ref="_consoleElement" class="mud-paper mud-elevation-1 console-shell pa-4 mb-3">
+        @if (_lines.Count == 0) { <span>Waiting for server output…</span> }
+        @foreach (var line in _lines) { <div>@line</div> }
+    </div>
+    <div class="d-flex gap-2">
+        <MudTextField @bind-Value="_command" Placeholder="Enter a server command" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true" Immediate="true" OnKeyDown="HandleKeyDown" Disabled="!_connected" />
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SendCommand" Disabled="@(!_connected || string.IsNullOrWhiteSpace(_command))">Send</MudButton>
+    </div>
+</SessionGuard>
+
+@code {
+    [Parameter] public string Id { get; set; } = "";
+    private readonly List<string> _lines = [];
+    private readonly CancellationTokenSource _cts = new();
+    private List<BreadcrumbItem> _breadcrumbs = [];
+    private string _command = "";
+    private string? _error;
+    private bool _connected;
+    private bool _autoScroll = true;
+    private bool _scrollPending;
+    private ElementReference _consoleElement;
+
+    protected override Task OnInitializedAsync()
+    {
+        _breadcrumbs = [new("Dashboard", "/dashboard"), new("Server", $"/servers/{Id}"), new("Console", null, true)];
+        _ = ReadConsoleAsync();
+        return Task.CompletedTask;
+    }
+
+    private async Task ReadConsoleAsync()
+    {
+        try
+        {
+            using var response = await Api.OpenConsoleStreamAsync(Id, _cts.Token);
+            if (!response.IsSuccessStatusCode)
+            {
+                _error = response.StatusCode == System.Net.HttpStatusCode.NotFound ? "Start the server before opening its console." : "Could not connect to the console.";
+                await InvokeAsync(StateHasChanged); return;
+            }
+            _connected = true; await InvokeAsync(StateHasChanged);
+            await using var stream = await response.Content.ReadAsStreamAsync(_cts.Token);
+            using var reader = new StreamReader(stream);
+            while (!_cts.IsCancellationRequested)
+            {
+                var line = await reader.ReadLineAsync(_cts.Token);
+                if (line is null) break;
+                if (!line.StartsWith("data:", StringComparison.Ordinal)) continue;
+                var output = line.Length > 5 ? line[5..].TrimStart() : "";
+                if (output.Equals("[SERVER PLATFORM] Server process started.", StringComparison.Ordinal))
+                    _lines.Clear();
+                _lines.Add(output);
+                if (_lines.Count > 1000) _lines.RemoveRange(0, 100);
+                await InvokeAsync(() =>
+                {
+                    _scrollPending = _autoScroll;
+                    StateHasChanged();
+                });
+            }
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception ex) { _error = $"Console disconnected: {ex.Message}"; }
+        finally { _connected = false; if (!_cts.IsCancellationRequested) await InvokeAsync(StateHasChanged); }
+    }
+
+    private async Task SendCommand()
+    {
+        var command = _command.Trim(); if (command.Length == 0) return; _command = "";
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+        try
+        {
+            var result = await Api.SendCommandAsync(Id, command, timeout.Token);
+            if (!result.Success) Snackbar.Add($"Command failed: {result.Error}", Severity.Error);
+        }
+        catch (OperationCanceledException) { /* Backend currently omits a response after accepting commands. */ }
+        catch (Exception ex) { Snackbar.Add($"Command failed: {ex.Message}", Severity.Error); }
+    }
+    private void ClearConsole() => _lines.Clear();
+    private async Task ToggleAutoScroll()
+    {
+        _autoScroll = !_autoScroll;
+        if (_autoScroll)
+        {
+            _scrollPending = true;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_scrollPending) return;
+        _scrollPending = false;
+        await Js.InvokeVoidAsync("consoleView.scrollToBottom", _consoleElement);
+    }
+    private async Task HandleKeyDown(KeyboardEventArgs args) { if (args.Key == "Enter") await SendCommand(); }
+    public ValueTask DisposeAsync() { _cts.Cancel(); _cts.Dispose(); return ValueTask.CompletedTask; }
+}

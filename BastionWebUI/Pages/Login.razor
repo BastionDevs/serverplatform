@@ -1,9 +1,7 @@
 ﻿@page "/login"
-@using System.Text.Json
-@inject HttpClient Http
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
-@inject StorageService StorageService
+@inject AuthService Auth
 
 <MudText Typo="Typo.h3" GutterBottom="true">Log in</MudText>
 
@@ -31,9 +29,6 @@
                                   For="@(() => _password)"/>
                 </MudItem>
                 <MudItem md="12">
-                    <MudCheckBox @bind-Value="_rememberMe" Label="Remember Me"></MudCheckBox>
-                </MudItem>
-                <MudItem md="12">
                     <MudButton OnClick="HandleLogin"
                                Color="Color.Primary"
                                Variant="Variant.Filled"
@@ -47,25 +42,18 @@
 
         <MudGrid Class="mt-4">
             <MudItem md="12">
-                <MudLink Href="/forgot-password">Forgot your password?</MudLink>
-                <br/>
                 <MudLink Href="/register">Register as a new user</MudLink>
                 <br/>
             </MudItem>
         </MudGrid>
     </MudItem>
 
-    <MudItem md="6">
-        <MudText GutterBottom="true" Typo="Typo.body1">Use another service to log in.</MudText>
-        @* <ExternalLoginPicker/>  will be implemented in the future. *@
-    </MudItem>
 </MudGrid>
 
 @code {
     private MudForm? _form;
     private string _username = string.Empty;
     private string _password = string.Empty;
-    private bool _rememberMe;
     private bool _isLoading;
 
     private async Task HandleLogin()
@@ -88,41 +76,19 @@
         {
             _isLoading = true;
 
-            var loginData = new
+            var result = await Auth.LoginAsync(_username, _password);
+            if (result.Success)
             {
-                username = _username, password = _password
-            };
-
-            var response = await Http.PostAsJsonAsync("/auth/login", loginData);
-            var jsonString = await response.Content.ReadAsStringAsync();
-            var json = JsonSerializer.Deserialize<JsonElement>(jsonString);
-
-            if (response.IsSuccessStatusCode &&
-                json.TryGetProperty("success", out var successElement) &&
-                successElement.ValueKind == JsonValueKind.True)
-            {
-                var token = json.TryGetProperty("token", out var tokenElement)
-                    ? tokenElement.GetString() ?? "NO_TOKEN"
-                    : "NO_TOKEN";
-
                 Snackbar.Add("Login successful!", Severity.Success);
-
-                await StorageService.SetItemAsync("jwtToken", token);
-
-                await Task.Delay(1000);
-                NavigationManager.NavigateTo("/dashboard");
+                NavigationManager.NavigateTo("/dashboard", replace: true);
             }
             else
             {
-                var errorType = json.TryGetProperty("error", out var errorElement)
-                    ? errorElement.GetString() ?? "unknown"
-                    : "unknown";
-
-                var errorMessage = errorType switch
+                var errorMessage = result.Error switch
                 {
                     "incorrectusrorpwd" => "Incorrect User or Password.",
                     "internalError" => "Server error. Please try again later.",
-                    _ => "Login failed. Please contact your Administrator"
+                    _ => "Login failed. Check your credentials and backend connection."
                 };
 
                 Snackbar.Add(errorMessage, Severity.Error);
@@ -160,11 +126,9 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var storedToken = await StorageService.GetItemAsync("jwtToken");
-        if (!string.IsNullOrEmpty(storedToken))
+        if (await Auth.IsAuthenticatedAsync())
         {
-            Snackbar.Add("You are already logged in!", Severity.Error);
-            NavigationManager.NavigateTo("/dashboard");
+            NavigationManager.NavigateTo("/dashboard", replace: true);
         }
     }
 

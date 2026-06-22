@@ -1,0 +1,27 @@
+@page "/backend"
+@inject PublicApiClient Api
+
+<MudText Typo="Typo.h3" Class="mb-5">Backend information</MudText>
+@if (_info is null && _error is null)
+{
+    <MudProgressLinear Indeterminate="true" />
+}
+else if (_error is not null)
+{
+    <MudAlert Severity="Severity.Error">@_error</MudAlert>
+}
+else
+{
+    <MudPaper Class="pa-5">
+        <MudList T="string">
+            <MudListItem Icon="@Icons.Material.Filled.Dns"><MudText Typo="Typo.overline">Server</MudText><MudText>@_info!.Server</MudText></MudListItem>
+            <MudListItem Icon="@Icons.Material.Filled.Info"><MudText Typo="Typo.overline">Reported version</MudText><MudText>@_info!.Version</MudText></MudListItem>
+        </MudList>
+    </MudPaper>
+}
+
+@code {
+    private EndpointInfo? _info;
+    private string? _error;
+    protected override async Task OnInitializedAsync() { try { _info = await Api.GetEndpointInfoAsync(); } catch (Exception ex) { _error = $"Backend unavailable: {ex.Message}"; } }
+}

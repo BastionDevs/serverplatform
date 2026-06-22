@@ -1,155 +1,109 @@
-﻿@inject IDialogService DialogService
 @page "/dashboard"
+@inject ServerApiClient Api
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+@implements IDisposable
 
-<MudText Typo="Typo.h1">DashBoard</MudText>
+<SessionGuard>
+    <div class="d-flex align-center mb-5">
+        <div><MudText Typo="Typo.h3">Servers</MudText><MudText Color="Color.Secondary">Select a server card to manage it</MudText></div>
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.Refresh" OnClick="LoadAsync" Disabled="_loading" />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">Create server</MudButton>
+    </div>
 
-<!-- OUTER PAPER: Elevated, not outlined -->
-<MudPaper Elevation="2" Class="pa-6 mb-6">
-    <MudText Typo="Typo.h6" Class="mb-4">Quick Stats</MudText>
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-4">@_error</MudAlert>
+    }
 
-    <MudGrid Spacing="3">
-        <MudItem xs="12" sm="6" md="3">
-            <!-- INNER PAPER: Flat, outlined -->
-            <MudPaper Elevation="0" Outlined="true" Height="140px"
-                      Class="pa-4 d-flex flex-column justify-center align-center w-100">
-                <MudText Typo="Typo.subtitle1" Align="Align.Center">Online Servers</MudText>
-                <MudText Typo="Typo.h5" Align="Align.Center" Color="Color.Success">3</MudText>
-            </MudPaper>
-        </MudItem>
+    @if (_servers.Count > 0)
+    {
+        <MudGrid Class="mb-4">
+            <MudItem xs="6" md="3"><MudPaper Class="stat-card"><MudText Typo="Typo.overline">Online</MudText><MudText Typo="Typo.h4" Color="Color.Success">@_servers.Count(x => x.IsOnline)</MudText></MudPaper></MudItem>
+            <MudItem xs="6" md="3"><MudPaper Class="stat-card"><MudText Typo="Typo.overline">Total servers</MudText><MudText Typo="Typo.h4">@_servers.Count</MudText></MudPaper></MudItem>
+            <MudItem xs="6" md="3"><MudPaper Class="stat-card"><MudText Typo="Typo.overline">CPU</MudText><MudText Typo="Typo.h4">@_servers.Where(x => x.IsOnline).Sum(x => x.Metrics?.Cpu ?? 0).ToString("0.0")%</MudText></MudPaper></MudItem>
+            <MudItem xs="6" md="3"><MudPaper Class="stat-card"><MudText Typo="Typo.overline">Memory</MudText><MudText Typo="Typo.h4">@FormatMemory(_servers.Where(x => x.IsOnline).Sum(x => x.Metrics?.Memory ?? 0))</MudText></MudPaper></MudItem>
+        </MudGrid>
+    }
 
-        <MudItem xs="12" sm="6" md="3">
-            <MudPaper Elevation="0" Outlined="true" Height="140px"
-                      Class="pa-4 d-flex flex-column justify-center align-center w-100">
-                <MudText Typo="Typo.subtitle1" Align="Align.Center">Total Servers</MudText>
-                <MudText Typo="Typo.h5" Align="Align.Center">5</MudText>
-            </MudPaper>
-        </MudItem>
-
-        <MudItem xs="12" sm="6" md="3">
-            <MudPaper Elevation="0" Outlined="true" Height="140px"
-                      Class="pa-4 d-flex flex-column justify-center align-center w-100">
-                <MudText Typo="Typo.subtitle1" Align="Align.Center">CPU Usage</MudText>
-                <MudText Typo="Typo.h5" Align="Align.Center" Color="Color.Warning">62%</MudText>
-            </MudPaper>
-        </MudItem>
-
-        <MudItem xs="12" sm="6" md="3">
-            <MudPaper Elevation="0" Outlined="true" Height="140px"
-                      Class="pa-4 d-flex flex-column justify-center align-center w-100">
-                <MudText Typo="Typo.subtitle1" Align="Align.Center">RAM Usage</MudText>
-                <MudText Typo="Typo.h5" Align="Align.Center" Color="Color.Error">3.2 GB</MudText>
-            </MudPaper>
-        </MudItem>
-    </MudGrid>
-</MudPaper>
-
-<!-- OUTER PAPER: Elevated, not outlined -->
-<MudPaper Elevation="2" Class="pa-6 mb-6">
-    <MudText Typo="Typo.h6" Class="mb-4">Quick Actions</MudText>
-
-    <MudGrid Spacing="3">
-        <MudItem xs="12" sm="6" md="4">
-            <MudButton Variant="Variant.Filled"
-                       Color="Color.Primary"
-                       StartIcon="@Icons.Material.Filled.Add"
-                       OnClick="OpenCreateServerDialog"
-                       FullWidth="true">
-                Create Server
-            </MudButton>
-        </MudItem>
-
-        <MudItem xs="12" sm="6" md="4">
-            <MudButton
-                Variant="Variant.Outlined"
-                Color="@(_areServersOnline ? Color.Error : Color.Success)"
-                StartIcon="@(_areServersOnline ? Icons.Material.Filled.Stop : Icons.Material.Filled.PlayArrow)"
-                OnClick="@ToggleAllServers"
-                FullWidth="true">
-                @(_areServersOnline ? "Stop All Servers" : "Start All Servers")
-            </MudButton>
-        </MudItem>
-
-        <MudItem xs="12" sm="6" md="4">
-            <MudButton Variant="Variant.Text" Color="Color.Info" StartIcon="@Icons.Material.Filled.Terminal"
-                       FullWidth="true">
-                Open Console
-            </MudButton>
-        </MudItem>
-
-        <MudItem xs="12" sm="6" md="4">
-            <MudButton Variant="Variant.Text" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.FolderOpen"
-                       FullWidth="true">
-                File Manager
-            </MudButton>
-        </MudItem>
-    </MudGrid>
-</MudPaper>
-
-<MudPaper Elevation="2" Class="pa-6 mb-6">
-    <MudText Typo="Typo.h6" Class="mb-4">Your Servers</MudText>
-
-    <MudGrid Spacing="3">
-        @foreach (var server in _servers)
-        {
-            <MudItem xs="12" sm="6" md="4" lg="3">
-                <MudPaper Elevation="1" Class="pa-4 d-flex flex-column justify-between h-100">
-                    <MudText Typo="Typo.subtitle1" Class="mb-2">@server.Name</MudText>
-                    <!-- Optional action buttons below -->
-                    <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Settings">
-                        Manage
-                    </MudButton>
-                </MudPaper>
-            </MudItem>
-        }
-    </MudGrid>
-</MudPaper>
-
+    @if (_loading && _servers.Count == 0)
+    {
+        <MudProgressLinear Indeterminate="true" />
+    }
+    else if (_servers.Count == 0)
+    {
+        <MudPaper Class="empty-state"><MudIcon Icon="@Icons.Material.Filled.Dns" Size="Size.Large" /><MudText Typo="Typo.h6">No servers yet</MudText><MudText>Create one to get started.</MudText></MudPaper>
+    }
+    else
+    {
+        <MudGrid>
+            @foreach (var server in _servers)
+            {
+                <MudItem xs="12" sm="6" lg="4">
+                    <MudCard Class="server-card server-card-clickable" @onclick="() => OpenServer(server.Id)">
+                        <MudCardContent>
+                            <div class="d-flex align-center">
+                                <MudAvatar Color="Color.Primary" Variant="Variant.Filled" Class="mr-3"><MudIcon Icon="@Icons.Material.Filled.Dns" /></MudAvatar>
+                                <div><MudText Typo="Typo.h6">@server.Name</MudText><MudText Typo="Typo.caption" Color="Color.Secondary">@server.Software</MudText></div>
+                                <MudSpacer />
+                                <MudChip T="string" Size="Size.Small" Color="@(server.IsOnline ? Color.Success : Color.Default)">@(server.IsOnline ? "Online" : "Offline")</MudChip>
+                            </div>
+                            <MudDivider Class="my-4" />
+                            <MudGrid Spacing="1">
+                                <MudItem xs="6"><MudText Typo="Typo.caption" Color="Color.Secondary">CPU</MudText><MudText Typo="Typo.body1">@(server.IsOnline ? $"{server.Metrics?.Cpu:0.0}%" : "—")</MudText></MudItem>
+                                <MudItem xs="6"><MudText Typo="Typo.caption" Color="Color.Secondary">Memory</MudText><MudText Typo="Typo.body1">@(server.IsOnline ? FormatMemory(server.Metrics?.Memory ?? 0) : "—")</MudText></MudItem>
+                            </MudGrid>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-4">Created @server.CreatedAt.ToLocalTime().ToString("d MMM yyyy")</MudText>
+                        </MudCardContent>
+                        <MudCardActions><MudSpacer /><MudText Typo="Typo.button" Color="Color.Primary">Manage</MudText><MudIcon Icon="@Icons.Material.Filled.ChevronRight" Color="Color.Primary" /></MudCardActions>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+</SessionGuard>
 
 @code {
-    private bool _areServersOnline = true;
-    private bool _isToggling;
+    private readonly List<ServerInfo> _servers = [];
+    private readonly CancellationTokenSource _cts = new();
+    private bool _loading;
+    private string? _error;
 
-    private async Task ToggleAllServers()
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
     {
-        if (_isToggling) return;
-
-        _isToggling = true;
-
-        // Simulate delay for UI safety
-        await Task.Delay(200); // Prevent multiple triggers
-
-        _areServersOnline = !_areServersOnline;
-
-        _isToggling = false;
-
-        // Optionally call StateHasChanged() here, but it's usually automatic after await
-    }
-
-    private readonly List<ServerEntry> _servers = new()
-    {
-        new ServerEntry { Name = "SMP #1" },
-        new ServerEntry { Name = "Modded" },
-        new ServerEntry { Name = "Skyblock" }
-        // Add more here
-    };
-
-    private class ServerEntry
-    {
-        public string? Name { get; set; } = "";
-    }
-
-    private async Task OpenCreateServerDialog()
-    {
-        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
-        var dialog = DialogService.Show<ServerCreationDialog>("Create New Server", options);
-        var result = await dialog.Result;
-
-        if (!result.Canceled && result.Data is ServerCreationDialog.ServerCreationParams serverData)
+        _loading = true; _error = null;
+        try
         {
-            // Add server to list (you can replace with API call later)
-            _servers.Add(new ServerEntry { Name = serverData.Name });
-            StateHasChanged(); // Update UI
+            var servers = await Api.GetServersAsync(_cts.Token);
+            await Task.WhenAll(servers.Select(async server => server.Metrics = await Api.GetMetricsAsync(server.Id, _cts.Token)));
+            _servers.Clear();
+            _servers.AddRange(servers.OrderByDescending(x => x.IsOnline).ThenBy(x => x.Name));
         }
+        catch (UnauthorizedAccessException) { Navigation.NavigateTo("/login", replace: true); }
+        catch (Exception ex) when (ex is not OperationCanceledException) { _error = ex.Message; }
+        finally { _loading = false; }
     }
 
+    private async Task OpenCreateDialog()
+    {
+        var dialog = await DialogService.ShowAsync<ServerCreationDialog>("Create server", new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true });
+        var result = await dialog.Result;
+        if (result is not { Canceled: false, Data: CreateServerRequest request }) return;
+        _loading = true;
+        try
+        {
+            var created = await Api.CreateServerAsync(request);
+            Snackbar.Add(created.Success ? "Server created." : $"Creation failed: {created.Error ?? "unknown error"}", created.Success ? Severity.Success : Severity.Error);
+            if (created.Success) await LoadAsync();
+        }
+        finally { _loading = false; }
+    }
+
+    private void OpenServer(string id) => Navigation.NavigateTo($"/servers/{id}");
+    private static string FormatMemory(long bytes) => bytes >= 1_073_741_824 ? $"{bytes / 1_073_741_824d:0.0} GB" : $"{bytes / 1_048_576d:0} MB";
+    public void Dispose() { _cts.Cancel(); _cts.Dispose(); }
 }
