@@ -689,11 +689,18 @@ namespace serverplatform
             {
                 using (var writer = new StreamWriter(response.OutputStream) { AutoFlush = true })
                 {
-                    // Console history is scoped to the current browser session.
-                    // Do not replay output collected before this SSE connection.
+                    // Replay the bounded output for the current process run.
                     lock (instance.Log)
                     {
-                        instance.Log.Clear();
+                        var lines = instance.Log.ToString()
+                            .Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+
+                        foreach (var line in lines)
+                        {
+                            writer.WriteLine($"data: {line}");
+                        }
+
+                        writer.WriteLine();
                     }
 
                     Action<string, string> handler = (id, line) =>
@@ -741,14 +748,7 @@ namespace serverplatform
             }
             finally
             {
-                int remainingViewers = Interlocked.Decrement(ref instance.ConsoleViewers);
-                if (remainingViewers <= 0)
-                {
-                    lock (instance.Log)
-                    {
-                        instance.Log.Clear();
-                    }
-                }
+                Interlocked.Decrement(ref instance.ConsoleViewers);
                 ServerControls.TryDisposeIfIdle(serverId);
 
                 try { response.Close(); } catch { }
