@@ -15,12 +15,12 @@ or has known correctness/security limitations.
 | Local authentication | Partial | Registration, login, JWT access tokens, rotating refresh tokens, logout, and persistent revocation are implemented. Roles, recovery, rate limiting, and several hardening items are not. |
 | Server creation | Partial | Paper, Vanilla, Velocity, and locally imported Spigot/Bukkit JARs have creation paths. Purpur and BungeeCord are empty stubs; Fabric is not implemented. |
 | Server lifecycle | Implemented | Per-owner start, stop, restart, process tracking, graceful stop with forced termination fallback, and command input. |
-| Server console | Implemented in backend | Buffered output and live Server-Sent Events are available. The current web panel does not provide a working console screen. |
-| Metrics | Implemented in backend | Per-process CPU and memory sampling is available for running server instances. The web dashboard displays hard-coded sample values. |
-| File management | Partial | Backend list/read/write/delete/mkdir/move/upload/download operations exist with an attempted safe-path boundary. Some handlers lack owner checks, and the web panel is not connected. |
+| Server console | Implemented | Bounded output for the current process run and live Server-Sent Events are available through an authenticated web console. History is cleared between server runs. |
+| Metrics | Implemented | Per-process CPU and memory sampling is displayed by the web dashboard for running server instances. |
+| File management | Partial | The panel exposes all implemented file operations, including routes with documented ownership gaps. See `DEVNOTES.md`. |
 | User profiles | Partial | Public profile lookup and an owner-scoped server list exist. Profile editing and account management do not. |
 | Java runtime management | Partial | Temurin, Zulu, and Liberica download paths and a runtime index exist. Corretto is declared but has no download implementation. |
-| Web panel | Prototype | Login and registration call the backend. Most dashboard data and actions are placeholders; token refresh is not yet used by the client. |
+| Web panel | Partial | Renewable authentication, server-card navigation/management/metrics, live console, and all implemented file operations are connected to the backend. Public profile lookup is intentionally not exposed. |
 | Windows desktop manager | Prototype | Local HTML login and basic profile display exist. It does not expose the server-management features. |
 | Installer | Partial | A Windows Forms installer project exists, but this audit does not treat packaging as production-verified. |
 | Plugin/mod manager | Not implemented | No plugin or mod discovery, install, update, removal, or API routes exist. |
@@ -160,7 +160,7 @@ user owns the requested server.
 | `POST /servers/start` | JSON: `id` | Starts the configured Java process. |
 | `POST /servers/stop` | JSON: `id` | Queues a graceful stop operation. |
 | `POST /servers/restart` | JSON: `id` | Queues stop followed by start. |
-| `POST /servers/metrics` | JSON: `id` | Returns `cpu`, `memory`, and `memoryMB`. The server must have a tracked running instance. |
+| `POST /servers/metrics` | JSON: `id` | Returns `running`, `cpu`, `memory`, and `memoryMB`. The server must have a tracked instance. |
 | `POST /servers/console/command` | JSON: `id`, `command` | Sends a line to the server process. The current handler does not send a normal success response and should be considered incomplete. |
 | `GET /servers/console/stream?id=...` | Query: `id` | `text/event-stream` output plus five-second heartbeats. |
 
@@ -217,19 +217,21 @@ The README promises installation and quick updates for plugins and mods. There
 are no backend models, catalog integrations, API routes, update checks, or UI
 screens for this feature.
 
-### Web-Based Admin Panel — partial prototype
+### Web-Based Admin Panel — partial
 
-The Blazor WebAssembly application contains login, registration, logout, a
-dashboard, and a creation dialog. However:
+The Blazor WebAssembly application connects login, registration, logout,
+refresh-token rotation, protected management routes, server-card navigation and
+creation, lifecycle controls, metrics, console streaming/commands, and file
+operations to the backend. Public profile lookup is intentionally left out of
+the panel. Remaining limitations include:
 
-- dashboard statistics and server cards are hard-coded sample data;
-- start/stop-all, console, file-manager, and manage buttons do not call the API;
-- the creation dialog only adds a local UI card and does not create a backend
-  server;
-- the client stores only the legacy access-token alias and does not store or
-  rotate refresh tokens;
-- route guards and a centralized authenticated HTTP client are absent;
-- the backend URL is hard-coded to `http://localhost:5678/`.
+- the backend URL defaults to `http://localhost:5678/` and must be configured
+  in `wwwroot/appsettings.json` for remote deployments;
+- there is no role/account-management experience because those backend systems
+  do not exist;
+- file upload/download/mkdir/move are exposed for development despite missing
+  owner checks and are documented in `DEVNOTES.md`;
+- there are no browser integration tests or offline/PWA session behaviors.
 
 ### Secure Auth with Roles (Admin/User) — partial auth, roles absent
 
@@ -239,15 +241,16 @@ endpoint, or distinction between admin and ordinary user permissions.
 
 ### Server Logs and Console Output — backend implemented
 
-Process output capture, buffered logs, SSE streaming, and command input exist.
-The command endpoint needs a proper HTTP response, and the feature has no
-functional panel screen.
+Process output capture and buffered/live logs are available through an
+authenticated panel screen. Commands are exposed with a short client timeout
+because the backend command handler still omits a normal success response.
 
 ### File Manager — backend partial
 
-The core file operations exist, but the web UI is not connected and four
-handlers are missing server-owner authorization checks. There are no file size,
-upload size, quota, or text-file size limits.
+The panel can browse, read, create, edit, delete, upload, download, create
+directories, and move/rename entries. Four exposed handlers are missing
+server-owner authorization checks. There are no backend file size, upload size,
+quota, or text-file size limits; the browser imposes a 64 MB upload cap.
 
 ### Scheduler & Task Automation — not implemented
 
@@ -260,11 +263,11 @@ A substantial HTTP API exists, but it is not yet a stable integration API. It
 lacks versioning, formal schemas, consistent status/error responses, OpenAPI,
 API keys/service accounts, pagination, and compatibility guarantees.
 
-### Modern UI — partial prototype
+### Modern UI — partial
 
-The Blazor/MudBlazor shell and responsive components establish a visual base.
-Most management workflows remain placeholders, so the promised panel is not yet
-feature-complete.
+The responsive Blazor/MudBlazor panel provides the implemented authentication,
+server, metrics, console, and safe file-management workflows. Features without
+backend support remain absent, so the promised panel is not yet feature-complete.
 
 ## Known gaps and risks
 
