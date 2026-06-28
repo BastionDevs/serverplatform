@@ -7,7 +7,7 @@
 <SessionGuard>
     <MudBreadcrumbs Items="_breadcrumbs" />
     <div class="d-flex align-center mb-4"><MudText Typo="Typo.h3">Files</MudText><MudSpacer /><MudIconButton Icon="@Icons.Material.Filled.Refresh" OnClick="LoadFiles" /></div>
-    <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-4">Some operations on this screen use backend routes with known path-safety gaps. See DEVNOTES.md before exposing the panel to untrusted users.</MudAlert>
+    @* <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-4">Some operations on this screen use backend routes with known path-safety gaps. See DEVNOTES.md before exposing the panel to untrusted users.</MudAlert> *@
     <MudPaper Class="pa-4 mb-4">
         <div class="d-flex gap-2 align-center flex-wrap">
             <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward" Disabled="@(string.IsNullOrEmpty(_path))" OnClick="GoUp" />
