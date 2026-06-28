@@ -47,7 +47,7 @@ namespace serverplatform
                 {
                     if (args[0] == "--firstrun")
                     {
-                        if (File.Exists("users.json") && File.Exists("appsettings.json"))
+                        if (File.Exists("config.ini"))
                         {
                             ConsoleLogging.LogWarning("First run has already been completed. Aborting setup.");
                             Environment.Exit(1);
@@ -72,6 +72,17 @@ namespace serverplatform
                             Environment.Exit(2);
                         }
                     }
+                }
+
+                if (!File.Exists("config.ini"))
+                {
+                    ConsoleLogging.LogWarning("Config file not found. Running first-run setup automatically.");
+                    Config.MakeDefaultConfig();
+                    ConsoleLogging.LogSuccess("First-run setup completed automatically.");
+                    Console.WriteLine();
+                    Console.WriteLine("Press Enter to continue...");
+                    Console.ReadLine();
+                    Console.Clear();
                 }
 
                 Console.CancelKeyPress += (sender, eventArgs) =>
@@ -168,7 +179,7 @@ namespace serverplatform
                 // Server stopping
                 ConsoleLogging.LogSuccess("Backend server has stopped cleanly.");
                 ConsoleLogging.LogMessage("Stopping backend server...");
-                Console.ReadLine();
+                Environment.Exit(0);
             }
             finally
             {
