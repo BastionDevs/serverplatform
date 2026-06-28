@@ -119,7 +119,7 @@ namespace serverplatform
 
                 Console.WriteLine();
                 Console.ForegroundColor = ConsoleColor.DarkGray;
-                ConsoleLogging.LogMessage("© 2025 Bastion Faculty of Computer Science");
+                ConsoleLogging.LogMessage("© 2026 Bastion Faculty of Computer Science");
 
                 Console.WriteLine();
                 Console.ForegroundColor = ConsoleColor.Gray;
