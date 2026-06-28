@@ -547,19 +547,45 @@ namespace serverplatform
 
         public static void HandleDownloadFile(HttpListenerContext context)
         {
+            // 1. Authenticate
             var principal = UserAuth.VerifyJwtFromContext(context);
             if (principal == null)
             {
                 context.Response.StatusCode = 401;
                 ApiHandler.RespondJson(context,
-                    "{\"success\":false,\"error\":\"unauthorised\"}");
+                    "{\"success\":false,\"message\":\"Unauthorised.\"}");
                 return;
             }
 
-            string serverId = context.Request.QueryString["id"];
-            string path = context.Request.QueryString["path"];
+            string username = UserAuth.GetUsernameFromPrincipal(principal);
+            var qs = context.Request.QueryString;
 
-            if (string.IsNullOrWhiteSpace(serverId) || string.IsNullOrWhiteSpace(path))
+            string serverId = qs["id"];
+            string path = qs["path"] ?? "";
+
+            if (string.IsNullOrWhiteSpace(serverId))
+            {
+                context.Response.StatusCode = 400;
+                ApiHandler.RespondJson(context,
+                    "{\"success\":false,\"error\":\"missingServerId\"}");
+                return;
+            }
+
+            // 2. Ownership check
+            var serverIndex = Config.serverIndex;
+            bool ownsServer = serverIndex
+                .GetServersForUser(username)
+                .Any(s => s.Id.Equals(serverId, StringComparison.OrdinalIgnoreCase));
+
+            if (!ownsServer)
+            {
+                context.Response.StatusCode = 404;
+                ApiHandler.RespondJson(context,
+                    "{\"success\":false,\"error\":\"serverNotFound\"}");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(path))
             {
                 context.Response.StatusCode = 400;
                 ApiHandler.RespondJson(context,
@@ -598,14 +624,17 @@ namespace serverplatform
 
         public static void HandleCreateDirectory(HttpListenerContext context)
         {
+            // 1. Authenticate
             var principal = UserAuth.VerifyJwtFromContext(context);
             if (principal == null)
             {
                 context.Response.StatusCode = 401;
                 ApiHandler.RespondJson(context,
-                    "{\"success\":false,\"error\":\"unauthorised\"}");
+                    "{\"success\":false,\"message\":\"Unauthorised.\"}");
                 return;
             }
+
+            string username = UserAuth.GetUsernameFromPrincipal(principal);
 
             JObject body;
             try
@@ -624,7 +653,29 @@ namespace serverplatform
             string serverId = body["id"]?.ToString();
             string path = body["path"]?.ToString();
 
-            if (string.IsNullOrWhiteSpace(serverId) || string.IsNullOrWhiteSpace(path))
+            if (string.IsNullOrWhiteSpace(serverId))
+            {
+                context.Response.StatusCode = 400;
+                ApiHandler.RespondJson(context,
+                    "{\"success\":false,\"error\":\"missingServerId\"}");
+                return;
+            }
+
+            // 2. Ownership check
+            var serverIndex = Config.serverIndex;
+            bool ownsServer = serverIndex
+                .GetServersForUser(username)
+                .Any(s => s.Id.Equals(serverId, StringComparison.OrdinalIgnoreCase));
+
+            if (!ownsServer)
+            {
+                context.Response.StatusCode = 404;
+                ApiHandler.RespondJson(context,
+                    "{\"success\":false,\"error\":\"serverNotFound\"}");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(path))
             {
                 context.Response.StatusCode = 400;
                 ApiHandler.RespondJson(context,
@@ -648,14 +699,17 @@ namespace serverplatform
 
         public static void HandleMoveFile(HttpListenerContext context)
         {
+            // 1. Authenticate
             var principal = UserAuth.VerifyJwtFromContext(context);
             if (principal == null)
             {
                 context.Response.StatusCode = 401;
                 ApiHandler.RespondJson(context,
-                    "{\"success\":false,\"error\":\"unauthorised\"}");
+                    "{\"success\":false,\"message\":\"Unauthorised.\"}");
                 return;
             }
+
+            string username = UserAuth.GetUsernameFromPrincipal(principal);
 
             JObject body;
             try
@@ -676,8 +730,29 @@ namespace serverplatform
             string to = body["to"]?.ToString();
             bool overwrite = body["overwrite"]?.ToObject<bool>() ?? false;
 
-            if (string.IsNullOrWhiteSpace(serverId) ||
-                string.IsNullOrWhiteSpace(from) ||
+            if (string.IsNullOrWhiteSpace(serverId))
+            {
+                context.Response.StatusCode = 400;
+                ApiHandler.RespondJson(context,
+                    "{\"success\":false,\"error\":\"missingServerId\"}");
+                return;
+            }
+
+            // 2. Ownership check
+            var serverIndex = Config.serverIndex;
+            bool ownsServer = serverIndex
+                .GetServersForUser(username)
+                .Any(s => s.Id.Equals(serverId, StringComparison.OrdinalIgnoreCase));
+
+            if (!ownsServer)
+            {
+                context.Response.StatusCode = 404;
+                ApiHandler.RespondJson(context,
+                    "{\"success\":false,\"error\":\"serverNotFound\"}");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(from) ||
                 string.IsNullOrWhiteSpace(to))
             {
                 context.Response.StatusCode = 400;
@@ -716,9 +791,11 @@ namespace serverplatform
                 {
                     ctx.Response.StatusCode = 401;
                     ApiHandler.RespondJson(ctx,
-                        "{\"success\":false,\"message\":\"Unauthorized\"}");
+                        "{\"success\":false,\"message\":\"Unauthorised.\"}");
                     return;
                 }
+
+                string username = UserAuth.GetUsernameFromPrincipal(principal);
 
                 // --- content type check ---
                 if (!ctx.Request.ContentType.StartsWith("multipart/form-data"))
@@ -730,6 +807,28 @@ namespace serverplatform
                 string serverId = form.GetParameterValue("id");
                 string path = form.GetParameterValue("path");
                 bool overwrite = false;
+
+                if (string.IsNullOrWhiteSpace(serverId))
+                {
+                    ctx.Response.StatusCode = 400;
+                    ApiHandler.RespondJson(ctx,
+                        "{\"success\":false,\"error\":\"missingServerId\"}");
+                    return;
+                }
+
+                // --- ownership check ---
+                var serverIndex = Config.serverIndex;
+                bool ownsServer = serverIndex
+                    .GetServersForUser(username)
+                    .Any(s => s.Id.Equals(serverId, StringComparison.OrdinalIgnoreCase));
+
+                if (!ownsServer)
+                {
+                    ctx.Response.StatusCode = 404;
+                    ApiHandler.RespondJson(ctx,
+                        "{\"success\":false,\"error\":\"serverNotFound\"}");
+                    return;
+                }
 
                 if (form.HasParameter("overwrite"))
                     bool.TryParse(
