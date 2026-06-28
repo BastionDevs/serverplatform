@@ -23,8 +23,8 @@ Open-source, Windows-based server management system designed for Minecraft serve
 
 - Windows 10 or newer recommended
 - [.NET Framework 4.7.2](https://dotnet.microsoft.com/download/dotnet-framework/net472)
-- A Web Server (for frontend)
-- Administrator privileges
+- A Web Server (for Frontend)
+- Administrator privileges (recommended)
 
 ## Installation
 
@@ -35,9 +35,13 @@ Open-source, Windows-based server management system designed for Minecraft serve
 
 2. **Install Server Platform** using the downloaded Installer executable.
 
-3. **Run Server Platform**'s components, including the *Backend* and *Frontend*.
+3. **Host the frontend**
 
-4. **Access the Web Frontend** via the URL shown in the *Frontend* server screen.
+    - Extract the Frontend package from the release ZIP, and upload to a Web Server.
+    - Set the necessary details for Backend connection in the `appsettings.json` file.
+      - `BackendUrl` should be set as your Backend server's **public** URL and Port.
+
+4. **Run Server Platform**'s components, including the *Backend* and *Frontend*.
 
 5. **Login with the default admin credentials:**
 
