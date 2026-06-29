@@ -7,9 +7,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("Backend Server for Bastion Server Platform")]
 [assembly: AssemblyDescription("Main server executable for Server Platform")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("BastionSG")]
+[assembly: AssemblyCompany("Bastion")]
 [assembly: AssemblyProduct("Server Platform")]
-[assembly: AssemblyCopyright("Copyright © BastionSG 2026")]
+[assembly: AssemblyCopyright("Copyright © Bastion 2026")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -28,5 +28,5 @@ using System.Runtime.InteropServices;
 //      Build Number
 //      Revision
 //
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyVersion("1.0.0")]
+[assembly: AssemblyFileVersion("1.0.0")]
