@@ -10,9 +10,6 @@ items as development functionality, not as a production security boundary.
 
 The page at `/servers/{id}/files` exposes every implemented file route.
 
-- Path containment uses a plain case-insensitive string prefix. A resolved
-  sibling path whose name starts with the expected root can pass the check. This
-  affects all file operations, including the owner-checked routes.
 - The backend has no upload limit, quota, text-file size limit, or download size
   limit. The browser client imposes a 64 MB upload cap and buffers uploads and
   downloads in memory; large transfers can still exhaust browser memory.
@@ -20,9 +17,6 @@ The page at `/servers/{id}/files` exposes every implemented file route.
   user enables the option. Neither operation has a recycle bin or undo.
 - The text editor attempts to decode any selected file as text. Binary and very
   large files may produce unusable output or memory pressure.
-
-Do not expose this panel to mutually untrusted accounts until separator-aware
-containment checks are fixed in the backend.
 
 ### Server creation and lifecycle
 
@@ -81,7 +75,7 @@ lookup is deliberately not exposed by the frontend.
 
 ## Production gate
 
-At minimum, fix file path containment, deploy through HTTPS, replace permissive
+At minimum, deploy through HTTPS, replace permissive
 CORS, secure first-run credentials/registration, add rate limiting and roles,
 standardize API responses, and add integration tests before treating this panel
 as production-safe.

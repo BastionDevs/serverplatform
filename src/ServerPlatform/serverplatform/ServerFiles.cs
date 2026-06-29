@@ -61,9 +61,39 @@ namespace serverplatform
         // ------------------------------------------------
         private static string GetServerFilesRoot(string serverId)
         {
-            return Path.GetFullPath(
-                Path.Combine(ServersDir, serverId, "files")
+            return RemoveTrailingDirectorySeparators(
+                Path.GetFullPath(
+                    Path.Combine(ServersDir, serverId, "files")
+                )
             );
+        }
+
+        private static string RemoveTrailingDirectorySeparators(string path)
+        {
+            string root = Path.GetPathRoot(path);
+            int minLength = string.IsNullOrEmpty(root) ? 0 : root.Length;
+
+            while (path.Length > minLength &&
+                (path[path.Length - 1] == Path.DirectorySeparatorChar ||
+                 path[path.Length - 1] == Path.AltDirectorySeparatorChar))
+            {
+                path = path.Substring(0, path.Length - 1);
+            }
+
+            return path;
+        }
+
+        private static string EnsureTrailingDirectorySeparator(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+                return Path.DirectorySeparatorChar.ToString();
+
+            char last = path[path.Length - 1];
+            if (last == Path.DirectorySeparatorChar ||
+                last == Path.AltDirectorySeparatorChar)
+                return path;
+
+            return path + Path.DirectorySeparatorChar;
         }
 
         private static string ResolveSafePath(string serverId, string relativePath)
@@ -74,12 +104,14 @@ namespace serverplatform
             relativePath = relativePath.Replace('\\', '/').TrimStart('/');
 
             string root = GetServerFilesRoot(serverId);
+            string rootWithSeparator = EnsureTrailingDirectorySeparator(root);
 
             string fullPath = Path.GetFullPath(
-                Path.Combine(root, relativePath)
+                Path.Combine(rootWithSeparator, relativePath)
             );
 
-            if (!fullPath.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+            if (!fullPath.Equals(root, StringComparison.OrdinalIgnoreCase) &&
+                !fullPath.StartsWith(rootWithSeparator, StringComparison.OrdinalIgnoreCase))
                 throw new UnauthorizedAccessException("Invalid file path.");
 
             return fullPath;
